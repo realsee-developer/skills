@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "repo": "realsee-skills",
+  "version": "1.0.0",
+  "channel": "stable",
+  "build_source": "main",
+  "skills": {
+    "argus": {
+      "state": "stable",
+      "codex_skill_id": "argus",
+      "claude_plugin": "realsee-skills",
+      "claude_skill_id": "argus",
+      "regions": ["global", "cn"],
+      "required_capability": "Argus / VGGT Gateway capability",
+      "stable_gate": "passed"
+    }
+  }
+}

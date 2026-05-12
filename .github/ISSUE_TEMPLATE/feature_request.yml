@@ -1,0 +1,44 @@
+name: Capability request
+description: Request clarification or support for a Realsee skill capability.
+title: "[Capability]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Workflow
+      description: Describe the Realsee skill workflow you are trying to run.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Requested capability
+      description: Describe the missing or unclear capability, expected inputs, and expected outputs.
+    validations:
+      required: true
+  - type: dropdown
+    id: upload
+    attributes:
+      label: Requires remote upload
+      options:
+        - "No"
+        - "Yes"
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Runtime context
+      description: Explain whether this affects async mode, live mode, local installation, or agent runtime usage.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checklist
+      options:
+        - label: I did not include secrets, generated credentials, private URLs, or account identifiers.
+          required: true

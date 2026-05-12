@@ -1,0 +1,62 @@
+name: Bug report
+description: Report a reproducible problem with a skill, script, or repository workflow.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: input
+    id: skill
+    attributes:
+      label: Skill or area
+      description: Name the affected skill or repository area.
+      placeholder: argus
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the problem and the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide sanitized commands and steps.
+      placeholder: |
+        1. Run `npm run test:skill`
+        2. See failure ...
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Execution mode
+      options:
+        - Synchronous (default)
+        - Asynchronous (--async)
+        - Resume (--resume)
+        - Not sure
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS, Node.js version, npm version, and relevant sanitized configuration names.
+      placeholder: |
+        OS:
+        Node:
+        npm:
+        REALSEE_REGION:
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety checklist
+      options:
+        - label: I removed secrets, generated credentials, private URLs, and account identifiers.
+          required: true
+

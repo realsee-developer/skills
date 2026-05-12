@@ -1,0 +1,13 @@
+{
+  "name": "realsee-skills",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Claude plugin packaging for Realsee skills.",
+  "scripts": {
+    "validate": "node scripts/validate-plugin.mjs",
+    "doctor:local": "node scripts/doctor-local-env.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
