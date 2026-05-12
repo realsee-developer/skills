@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "realsee-developer-skills",
+  "description": "Realsee developer skills marketplace.",
+  "owner": {
+    "name": "Realsee",
+    "url": "https://github.com/realsee-developer"
+  },
+  "plugins": [
+    {
+      "name": "realsee-skills",
+      "description": "Realsee skills for Claude Code. Exposes the argus skill (Realsee Argus GLB output from local images).",
+      "author": {
+        "name": "Realsee",
+        "url": "https://github.com/realsee-developer"
+      },
+      "source": "./plugins/realsee-skills",
+      "category": "development",
+      "homepage": "https://github.com/realsee-developer/skills/tree/main/plugins/realsee-skills",
+      "license": "SEE LICENSE IN LICENSE",
+      "keywords": ["realsee", "argus", "skill", "panorama", "glb"]
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "source": ".agents/skills/argus",
+  "target": "plugins/realsee-skills/skills/argus",
+  "files": [
+    {
+      "source": ".agents/skills/argus/README.md",
+      "target": "plugins/realsee-skills/skills/argus/README.md",
+      "size": 3068
+    },
+    {
+      "source": ".agents/skills/argus/README.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/argus/README.zh-CN.md",
+      "size": 2813
+    },
+    {
+      "source": ".agents/skills/argus/SKILL.md",
+      "target": "plugins/realsee-skills/skills/argus/SKILL.md",
+      "size": 11536
+    },
+    {
+      "source": ".agents/skills/argus/package-lock.json",
+      "target": "plugins/realsee-skills/skills/argus/package-lock.json",
+      "size": 134787
+    },
+    {
+      "source": ".agents/skills/argus/package.json",
+      "target": "plugins/realsee-skills/skills/argus/package.json",
+      "size": 356
+    },
+    {
+      "source": ".agents/skills/argus/references/api-workflow.md",
+      "target": "plugins/realsee-skills/skills/argus/references/api-workflow.md",
+      "size": 2043
+    },
+    {
+      "source": ".agents/skills/argus/references/argus-gateway-openapi.json",
+      "target": "plugins/realsee-skills/skills/argus/references/argus-gateway-openapi.json",
+      "size": 10819
+    },
+    {
+      "source": ".agents/skills/argus/references/troubleshooting.md",
+      "target": "plugins/realsee-skills/skills/argus/references/troubleshooting.md",
+      "size": 1256
+    },
+    {
+      "source": ".agents/skills/argus/scripts/run-argus.mjs",
+      "target": "plugins/realsee-skills/skills/argus/scripts/run-argus.mjs",
+      "size": 921
+    },
+    {
+      "source": ".agents/skills/argus/src/cli.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/cli.mjs",
+      "size": 13783
+    },
+    {
+      "source": ".agents/skills/argus/src/config.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/config.mjs",
+      "size": 3242
+    },
+    {
+      "source": ".agents/skills/argus/src/consent.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/consent.mjs",
+      "size": 580
+    },
+    {
+      "source": ".agents/skills/argus/src/downloader.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/downloader.mjs",
+      "size": 4100
+    },
+    {
+      "source": ".agents/skills/argus/src/errors.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/errors.mjs",
+      "size": 419
+    },
+    {
+      "source": ".agents/skills/argus/src/gateway-openapi-types.d.ts",
+      "target": "plugins/realsee-skills/skills/argus/src/gateway-openapi-types.d.ts",
+      "size": 1394
+    },
+    {
+      "source": ".agents/skills/argus/src/gateway.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/gateway.mjs",
+      "size": 5213
+    },
+    {
+      "source": ".agents/skills/argus/src/input.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/input.mjs",
+      "size": 6679
+    },
+    {
+      "source": ".agents/skills/argus/src/output.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/output.mjs",
+      "size": 451
+    },
+    {
+      "source": ".agents/skills/argus/src/preview-url.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/preview-url.mjs",
+      "size": 788
+    },
+    {
+      "source": ".agents/skills/argus/src/sanitizer.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/sanitizer.mjs",
+      "size": 680
+    },
+    {
+      "source": ".agents/skills/argus/src/state.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/state.mjs",
+      "size": 1179
+    },
+    {
+      "source": ".agents/skills/argus/src/workspace.mjs",
+      "target": "plugins/realsee-skills/skills/argus/src/workspace.mjs",
+      "size": 1174
+    },
+    {
+      "source": ".agents/skills/argus/test/ai-index.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/ai-index.test.mjs",
+      "size": 1166
+    },
+    {
+      "source": ".agents/skills/argus/test/cli.async-resume.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/cli.async-resume.test.mjs",
+      "size": 9315
+    },
+    {
+      "source": ".agents/skills/argus/test/cli.live.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/cli.live.test.mjs",
+      "size": 11495
+    },
+    {
+      "source": ".agents/skills/argus/test/config.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/config.test.mjs",
+      "size": 3156
+    },
+    {
+      "source": ".agents/skills/argus/test/consent.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/consent.test.mjs",
+      "size": 1189
+    },
+    {
+      "source": ".agents/skills/argus/test/downloader.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/downloader.test.mjs",
+      "size": 3707
+    },
+    {
+      "source": ".agents/skills/argus/test/gateway.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/gateway.test.mjs",
+      "size": 5288
+    },
+    {
+      "source": ".agents/skills/argus/test/helpers/jpeg.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/helpers/jpeg.mjs",
+      "size": 2383
+    },
+    {
+      "source": ".agents/skills/argus/test/input.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/input.test.mjs",
+      "size": 6500
+    },
+    {
+      "source": ".agents/skills/argus/test/openapi-doc.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/openapi-doc.test.mjs",
+      "size": 2010
+    },
+    {
+      "source": ".agents/skills/argus/test/output.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/output.test.mjs",
+      "size": 840
+    },
+    {
+      "source": ".agents/skills/argus/test/preview-url.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/preview-url.test.mjs",
+      "size": 1615
+    },
+    {
+      "source": ".agents/skills/argus/test/release-gate.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/release-gate.test.mjs",
+      "size": 2253
+    },
+    {
+      "source": ".agents/skills/argus/test/sanitizer.test.mjs",
+      "target": "plugins/realsee-skills/skills/argus/test/sanitizer.test.mjs",
+      "size": 2530
+    }
+  ]
+}

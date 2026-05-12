@@ -1,0 +1,47 @@
+{
+  "name": "realsee-skills",
+  "version": "1.0.0",
+  "description": "Source-available Realsee agent skill capability distribution.",
+  "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/realsee-developer/skills.git"
+  },
+  "bugs": {
+    "url": "https://github.com/realsee-developer/skills/issues"
+  },
+  "homepage": "https://github.com/realsee-developer/skills#readme",
+  "keywords": [
+    "realsee",
+    "skills",
+    "agents",
+    "argus",
+    "vggt"
+  ],
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "ci": "npm run scan:secrets && npm run validate:docs && npm run validate:ai && npm run validate:repo-boundary && npm run validate:skills && npm run rebuild && npm run validate:channel-metadata && npm run test:skill",
+    "doctor": "npm run doctor:local",
+    "rebuild": "npm run sync:claude-plugin && npm run check:claude-sync",
+    "test:skill": "node --test .agents/skills/argus/test/*.test.mjs",
+    "validate:docs": "node scripts/validate-docs.mjs",
+    "validate:ai": "node scripts/validate-ai-index.mjs",
+    "scan:secrets": "node scripts/scan-secrets.mjs",
+    "validate:repo-boundary": "node scripts/validate-repo-boundary.mjs",
+    "validate:skills": "node scripts/validate-skills.mjs",
+    "sync:claude-plugin": "node scripts/sync-claude-plugin.mjs",
+    "check:claude-sync": "node scripts/check-claude-sync.mjs",
+    "validate:channel-metadata": "node scripts/validate-channel-metadata.mjs",
+    "doctor:local": "node scripts/doctor-local.mjs",
+    "doctor:live": "node scripts/doctor-live.mjs",
+    "release:gate": "node scripts/release-gate.mjs",
+    "install:codex-skills": "node scripts/install-codex-skills.mjs",
+    "setup:local": "node scripts/bootstrap-local-env.mjs",
+    "smoke": "node scripts/ci-smoke.mjs"
+  }
+}

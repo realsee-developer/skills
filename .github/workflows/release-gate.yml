@@ -1,0 +1,48 @@
+name: Release Gate
+
+on:
+  push:
+    branches:
+      - main
+      - test/**
+      - stable/**
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Release channel to validate
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - stable
+      tag:
+        description: Release tag or validation label
+        required: true
+        default: manual-github-check
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  release-gate:
+    name: Release gate (${{ github.event_name == 'workflow_dispatch' && inputs.channel || (startsWith(github.ref_name, 'stable/') && 'stable' || 'preview') }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Run release gate
+        env:
+          RELEASE_CHANNEL: ${{ github.event_name == 'workflow_dispatch' && inputs.channel || (startsWith(github.ref_name, 'stable/') && 'stable' || 'preview') }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: npm run release:gate -- --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"

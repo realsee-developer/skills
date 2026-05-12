@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          # Root package.json has no dependencies — only the skill ships a
+          # lockfile, so point setup-node at that for cache hashing.
+          cache-dependency-path: .agents/skills/argus/package-lock.json
+
+      - name: Install skill dependencies
+        working-directory: .agents/skills/argus
+        run: npm ci
+
+      - name: Run repository validation
+        run: npm run ci
