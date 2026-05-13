@@ -19,9 +19,5 @@ export function buildPreviewUrl({ region, previewType, algTaskId }) {
   const encodedPreviewType = encodeURIComponent(previewType);
   const encodedAlgTaskId = encodeURIComponent(algTaskId);
 
-  if (region === 'global') {
-    return `${PREVIEW_BASE_URLS.global}/argus/${encodedPreviewType}/task/${encodedAlgTaskId}`;
-  }
-
-  return `${PREVIEW_BASE_URLS.cn}/argus?algTaskId=${encodedAlgTaskId}&type=${encodedPreviewType}`;
+  return `${PREVIEW_BASE_URLS[region]}/argus/${encodedPreviewType}/task/${encodedAlgTaskId}`;
 }
