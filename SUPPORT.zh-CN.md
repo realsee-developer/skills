@@ -18,7 +18,7 @@
 GitHub issue 不能授予 Argus VGGT API 接入。账号与能力相关问题：
 
 - 注册账号：[my.realsee.ai](https://my.realsee.ai/?utm_source=github)（global）/ [my.realsee.cn](https://my.realsee.cn/?utm_source=github)（cn）。
-- 申请 API 能力：邮件 [developer@realsee.com](mailto:developer@realsee.com?subject=Argus%20VGGT%20API%20Capability%20Request)，附账号 region、`UserID`、`IdentityID`。
+- 申请 API 能力：邮件 [developer@realsee.com](mailto:developer@realsee.com?subject=Argus%20VGGT%20API%20Capability%20Request)，附账号 region、`如视ID`、`组织账号`。
 
 ## 安全
 

@@ -39,6 +39,7 @@
     "validate:channel-metadata": "node scripts/validate-channel-metadata.mjs",
     "doctor:local": "node scripts/doctor-local.mjs",
     "doctor:live": "node scripts/doctor-live.mjs",
+    "build:arkclaw": "node scripts/build-arkclaw-zip.mjs",
     "release:gate": "node scripts/release-gate.mjs",
     "install:codex-skills": "node scripts/install-codex-skills.mjs",
     "setup:local": "node scripts/bootstrap-local-env.mjs",

@@ -1,0 +1,18 @@
+{
+  "name": "@realsee/argus-arkclaw",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "arkclaw distribution of the Realsee Argus skill (cn-only).",
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "argus": "node scripts/run-argus.mjs"
+  },
+  "dependencies": {
+    "@realsee/universal-uploader": "^0.0.11"
+  },
+  "devDependencies": {}
+}
