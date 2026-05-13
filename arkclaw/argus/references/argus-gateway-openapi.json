@@ -1,0 +1,423 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Realsee Argus/VGGT Gateway API",
+    "version": "0.1.0",
+    "description": "Public Gateway OpenAPI contract for Realsee Argus/VGGT generation. Secrets, signed URLs, object keys, and raw task locators are intentionally omitted."
+  },
+  "servers": [
+    {
+      "url": "https://app-gateway.realsee.ai",
+      "description": "global"
+    },
+    {
+      "url": "https://app-gateway.realsee.cn",
+      "description": "cn"
+    }
+  ],
+  "paths": {
+    "/auth/access_token": {
+      "post": {
+        "operationId": "getAccessToken",
+        "summary": "Get Gateway access token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gateway envelope containing access token data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/open/saas/v1/vggt/upload/token": {
+      "post": {
+        "operationId": "getArgusUploadToken",
+        "summary": "Create or continue an Argus input image upload token",
+        "security": [
+          {
+            "gatewayAccessToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadTokenRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gateway envelope containing upload token data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadTokenEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/open/saas/v1/vggt/trigger": {
+      "post": {
+        "operationId": "triggerArgusVggt",
+        "summary": "Trigger Argus/VGGT generation for an uploaded image",
+        "security": [
+          {
+            "gatewayAccessToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerVggtRequest"
+              }
+            },
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerVggtRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gateway envelope. H5 clients treat response data as opaque.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TriggerVggtEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/open/saas/v1/vggt/poll": {
+      "get": {
+        "operationId": "pollArgusVggt",
+        "summary": "Poll Argus/VGGT generation status",
+        "security": [
+          {
+            "gatewayAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/ArgusVggtType"
+            }
+          },
+          {
+            "name": "input_image_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gateway envelope containing generation status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PollVggtEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "gatewayAccessToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Raw Gateway access token value, without a Bearer prefix."
+      }
+    },
+    "schemas": {
+      "GatewayEnvelopeBase": {
+        "type": "object",
+        "required": ["code", "data"],
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "Gateway success code is 0."
+          },
+          "status": {
+            "type": "string",
+            "description": "Gateway status or error message."
+          }
+        },
+        "additionalProperties": true
+      },
+      "AccessTokenRequest": {
+        "type": "object",
+        "required": ["app_key", "app_secret"],
+        "properties": {
+          "app_key": {
+            "type": "string"
+          },
+          "app_secret": {
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AccessTokenData": {
+        "type": "object",
+        "required": ["access_token"],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "AccessTokenEnvelope": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GatewayEnvelopeBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/AccessTokenData"
+              }
+            }
+          }
+        ]
+      },
+      "ArgusVggtType": {
+        "type": "string",
+        "enum": ["pinhole", "pano"]
+      },
+      "UploadTokenRequest": {
+        "type": "object",
+        "required": ["input_image_id"],
+        "properties": {
+          "input_image_id": {
+            "type": "string",
+            "description": "Empty string starts a new upload input; later calls reuse the returned input_image_id."
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadTokenData": {
+        "type": "object",
+        "required": [
+          "tmpSecretId",
+          "sessionToken",
+          "tmpSecretKey",
+          "ttl",
+          "prefix",
+          "expire",
+          "app_id",
+          "bucket",
+          "region",
+          "is_accelerate",
+          "host",
+          "primaryid",
+          "download_type",
+          "download_host",
+          "custom_domain",
+          "custom_scheme"
+        ],
+        "properties": {
+          "tmpSecretId": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "sessionToken": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "tmpSecretKey": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "ttl": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "expire": {
+            "type": "number"
+          },
+          "app_id": {
+            "type": "string"
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "force_path_style": {
+            "type": "boolean"
+          },
+          "is_accelerate": {
+            "type": "string"
+          },
+          "host": {
+            "type": "string"
+          },
+          "primaryid": {
+            "type": "string"
+          },
+          "download_type": {
+            "type": "string",
+            "enum": ["presign", "direct"]
+          },
+          "download_host": {
+            "type": "string"
+          },
+          "custom_domain": {
+            "type": "string"
+          },
+          "custom_scheme": {
+            "type": "string"
+          },
+          "backup": true
+        },
+        "additionalProperties": true
+      },
+      "UploadTokenResponseData": {
+        "type": "object",
+        "required": ["input_image_id", "upload_token"],
+        "properties": {
+          "input_image_id": {
+            "type": "string"
+          },
+          "upload_token": {
+            "$ref": "#/components/schemas/UploadTokenData"
+          }
+        },
+        "additionalProperties": true
+      },
+      "UploadTokenEnvelope": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GatewayEnvelopeBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/UploadTokenResponseData"
+              }
+            }
+          }
+        ]
+      },
+      "TriggerVggtRequest": {
+        "type": "object",
+        "required": ["type", "input_image_id"],
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ArgusVggtType"
+          },
+          "input_image_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TriggerVggtEnvelope": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GatewayEnvelopeBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": ["object", "null"],
+                "additionalProperties": true
+              }
+            }
+          }
+        ]
+      },
+      "ArgusPollStatus": {
+        "type": "string",
+        "enum": ["pending", "success", "failed"]
+      },
+      "PollVggtData": {
+        "type": "object",
+        "required": ["status"],
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ArgusPollStatus"
+          },
+          "alg_task_id": {
+            "type": "string"
+          },
+          "result_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "failed_reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "PollVggtEnvelope": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/GatewayEnvelopeBase"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/PollVggtData"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

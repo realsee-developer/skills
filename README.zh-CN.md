@@ -25,7 +25,7 @@ Realsee Skills 提供可安装的 Realsee agent skills。用户和 agent runtime
 | `REALSEE_APP_SECRET` | Realsee Open Platform APP_SECRET | ✅ |
 | `REALSEE_REGION` | `global`（app-gateway.realsee.ai）或 `cn`（app-gateway.realsee.cn） | — |
 
-到 [my.realsee.ai](https://my.realsee.ai/?utm_source=github)（global）或 [my.realsee.cn](https://my.realsee.cn/?utm_source=github)（cn）注册账号，然后邮件 [developer@realsee.com](mailto:developer@realsee.com?subject=Argus%20VGGT%20API%20Capability%20Request) 申请 Argus VGGT API 能力，邮件附上账号 region、`UserID`、`IdentityID`。
+到 [my.realsee.ai](https://my.realsee.ai/?utm_source=github)（global）或 [my.realsee.cn](https://my.realsee.cn/?utm_source=github)（cn）注册账号，然后邮件 [developer@realsee.com](mailto:developer@realsee.com?subject=Argus%20VGGT%20API%20Capability%20Request) 申请 Argus VGGT API 能力，邮件附上账号 region、`如视ID`、`组织账号`。
 
 ## 安装与使用 — Claude Code
 
