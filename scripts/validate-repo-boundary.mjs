@@ -14,6 +14,7 @@ const deniedText = [
   ['i', 'app-gateway', 'realsee', 'com'].join('.'),
   [['ex', 'tracted from'].join(''), 'h5.realsee.ai'].join(' '),
   [['ex', 'tracted from'].join(''), 'h5.realsee.com'].join(' '),
+  [['ex', 'tracted from'].join(''), 'h5.realsee.cn'].join(' '),
   ['REQUIRED', 'SUB-SKILL'].join(' '),
   ['realsee-skill-workspace', ['realsee-skills-product-tech', 'spec'].join('-') + '.md'].join('/'),
   ['realsee-skills-product-tech', 'spec'].join('-') + '.md',
