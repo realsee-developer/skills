@@ -213,7 +213,7 @@ When `status === "success"`, the payload has:
 
 - `task_id` — Argus task id.
 - `output_glb_path` — absolute path to the downloaded `.glb`.
-- `preview_url` — H5 preview URL on `h5.realsee.ai` (global) or `h5.realsee.com` (CN) in the path form `/argus/{image|panorama}/task/{task_id}` (valid 7 days).
+- `preview_url` — H5 preview URL on `h5.realsee.ai` (global) or `h5.realsee.cn` (CN) in the path form `/argus/{image|panorama}/task/{task_id}` (valid 7 days).
 - `download.bytes` — file size.
 - `elapsed_ms` — total wall time.
 

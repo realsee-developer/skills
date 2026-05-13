@@ -1,6 +1,6 @@
 const PREVIEW_BASE_URLS = {
   global: 'https://h5.realsee.ai',
-  cn: 'https://h5.realsee.com'
+  cn: 'https://h5.realsee.cn'
 };
 
 export function buildPreviewUrl({ region, previewType, algTaskId }) {
