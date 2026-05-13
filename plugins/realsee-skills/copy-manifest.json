@@ -15,12 +15,12 @@
     {
       "source": ".agents/skills/argus/SKILL.md",
       "target": "plugins/realsee-skills/skills/argus/SKILL.md",
-      "size": 11536
+      "size": 11782
     },
     {
       "source": ".agents/skills/argus/package-lock.json",
       "target": "plugins/realsee-skills/skills/argus/package-lock.json",
-      "size": 134787
+      "size": 134779
     },
     {
       "source": ".agents/skills/argus/package.json",

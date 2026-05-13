@@ -1,7 +1,9 @@
 ---
 name: argus
-description: Generate Realsee Argus GLB output from a local JPEG image (square 1:1) or panorama (equirectangular 2:1) using Realsee Argus/VGGT.
-documentation: README.md
+description: Generate Realsee Argus GLB output from a local JPEG image (square 1:1) or panorama (equirectangular 2:1) using Realsee Argus/VGGT. Use when the user asks to turn a local JPEG or panorama into a Realsee Argus GLB, or mentions Realsee Argus / VGGT reconstruction.
+compatibility: Requires Node.js and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
+metadata:
+  documentation: README.md
 ---
 
 # argus
