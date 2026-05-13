@@ -139,7 +139,8 @@ export function validatePublicGatewayOpenApi(openapi) {
     ['live', 'smoke'].join(' '),
     ['i', 'app-gateway', 'realsee', 'com'].join('.'),
     [['ex', 'tracted from'].join(''), 'h5.realsee.ai'].join(' '),
-    [['ex', 'tracted from'].join(''), 'h5.realsee.com'].join(' ')
+    [['ex', 'tracted from'].join(''), 'h5.realsee.com'].join(' '),
+    [['ex', 'tracted from'].join(''), 'h5.realsee.cn'].join(' ')
   ];
   if (forbiddenText.some((needle) => serialized.includes(needle))) return false;
 
