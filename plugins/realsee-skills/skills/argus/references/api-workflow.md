@@ -37,4 +37,4 @@ When generation succeeds, use `result_url` as the GLB download URL. The URL come
 
 ## 6. Preview URL
 
-Construct the H5 preview URL from `alg_task_id` and UI preview type. Global H5 uses `/argus/{image|panorama}/task/{alg_task_id}`. CN H5 keeps the legacy query form `/argus?algTaskId={alg_task_id}&type={image|panorama}`.
+Construct the H5 preview URL from `alg_task_id` and UI preview type. Both global and CN H5 use the path form `/argus/{image|panorama}/task/{alg_task_id}` (CN: `https://h5.realsee.com`, global: `https://h5.realsee.ai`). The legacy CN query form `/argus?algTaskId=...&type=...` is still 301-redirected by the server for backwards compatibility with older share links — do not emit it from new code.

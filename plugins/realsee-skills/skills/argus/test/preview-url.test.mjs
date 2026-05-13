@@ -6,8 +6,8 @@ test('builds global path route', () => {
   assert.equal(buildPreviewUrl({ region: 'global', previewType: 'image', algTaskId: 'abc' }), 'https://h5.realsee.ai/argus/image/task/abc');
 });
 
-test('builds cn query route', () => {
-  assert.equal(buildPreviewUrl({ region: 'cn', previewType: 'panorama', algTaskId: 'abc' }), 'https://h5.realsee.com/argus?algTaskId=abc&type=panorama');
+test('builds cn path route', () => {
+  assert.equal(buildPreviewUrl({ region: 'cn', previewType: 'panorama', algTaskId: 'abc' }), 'https://h5.realsee.com/argus/panorama/task/abc');
 });
 
 test('throws for invalid region', () => {
@@ -36,14 +36,14 @@ test('throws when previewType is missing', () => {
   );
 });
 
-test('encodes preview url components and keeps cn query order stable', () => {
+test('encodes preview url components', () => {
   assert.equal(
     buildPreviewUrl({ region: 'global', previewType: 'image type', algTaskId: 'abc/123?' }),
     'https://h5.realsee.ai/argus/image%20type/task/abc%2F123%3F',
   );
 
   assert.equal(
-    buildPreviewUrl({ region: 'cn', previewType: 'pano&type', algTaskId: 'abc 123' }),
-    'https://h5.realsee.com/argus?algTaskId=abc%20123&type=pano%26type',
+    buildPreviewUrl({ region: 'cn', previewType: 'pano type', algTaskId: 'abc 123' }),
+    'https://h5.realsee.com/argus/pano%20type/task/abc%20123',
   );
 });
