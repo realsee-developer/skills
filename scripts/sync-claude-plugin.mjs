@@ -10,7 +10,7 @@ const expectedPluginRoot = join(repoRoot, 'plugins', 'realsee-skills');
 
 const pluginPackage = {
   name: 'realsee-skills',
-  version: '1.0.0',
+  version: '1.0.1',
   private: true,
   type: 'module',
   description: 'Claude plugin packaging for Realsee skills.',
