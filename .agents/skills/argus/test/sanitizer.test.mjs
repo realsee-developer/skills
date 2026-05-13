@@ -21,13 +21,13 @@ test('redacts upload and access token key variants', () => {
 
 test('redacts query outside user result sink', () => {
   assert.equal(
-    redactUrlForLog('https://h5.realsee.com/argus?algTaskId=abc&type=image'),
-    'https://h5.realsee.com/argus?[REDACTED_QUERY]'
+    redactUrlForLog('https://h5.realsee.cn/argus?algTaskId=abc&type=image'),
+    'https://h5.realsee.cn/argus?[REDACTED_QUERY]'
   );
 });
 
 test('leaves url without query unchanged', () => {
-  assert.equal(redactUrlForLog('https://h5.realsee.com/argus'), 'https://h5.realsee.com/argus');
+  assert.equal(redactUrlForLog('https://h5.realsee.cn/argus'), 'https://h5.realsee.cn/argus');
 });
 
 test('returns deterministic failure payload', () => {

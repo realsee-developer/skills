@@ -7,7 +7,7 @@ test('builds global path route', () => {
 });
 
 test('builds cn path route', () => {
-  assert.equal(buildPreviewUrl({ region: 'cn', previewType: 'panorama', algTaskId: 'abc' }), 'https://h5.realsee.com/argus/panorama/task/abc');
+  assert.equal(buildPreviewUrl({ region: 'cn', previewType: 'panorama', algTaskId: 'abc' }), 'https://h5.realsee.cn/argus/panorama/task/abc');
 });
 
 test('throws for invalid region', () => {
@@ -44,6 +44,6 @@ test('encodes preview url components', () => {
 
   assert.equal(
     buildPreviewUrl({ region: 'cn', previewType: 'pano type', algTaskId: 'abc 123' }),
-    'https://h5.realsee.com/argus/pano%20type/task/abc%20123',
+    'https://h5.realsee.cn/argus/pano%20type/task/abc%20123',
   );
 });
