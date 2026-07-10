@@ -12,7 +12,8 @@ const CI_COMMANDS = [
   ['npm', ['run', 'validate:skills']],
   ['npm', ['run', 'rebuild']],
   ['npm', ['run', 'validate:channel-metadata']],
-  ['npm', ['run', 'test:skill']]
+  ['npm', ['run', 'test:skill']],
+  ['npm', ['--prefix', '.agents/skills/argus', 'run', 'audit:prod']]
 ];
 
 if (isCliEntry()) {
@@ -40,7 +41,13 @@ export async function main(argv = process.argv.slice(2), options = {}) {
 
   const failures = [];
   if (!(await hasPublicGatewayOpenApiContract(commandRoot))) {
-    failures.push('missing or unsafe public Gateway OpenAPI contract for Realsee Argus/VGGT Gateway');
+    failures.push('missing or unsafe public Gateway OpenAPI contract for Realsee Argus Gateway');
+  }
+  const releaseMetadata = JSON.parse(await readFile(join(commandRoot, 'release-channel.json'), 'utf8'));
+  if (!validateStableReleaseMetadata(releaseMetadata, args.tag)) {
+    failures.push(
+      'stable promotion is not approved: record verified CN/global E2E and set channel/state/stable_gate to stable/stable/passed'
+    );
   }
 
   if (failures.length) {
@@ -144,21 +151,36 @@ export function validatePublicGatewayOpenApi(openapi) {
   ];
   if (forbiddenText.some((needle) => serialized.includes(needle))) return false;
 
-  const requiredPaths = [
-    '/auth/access_token',
-    '/open/saas/v1/vggt/upload/token',
-    '/open/saas/v1/vggt/trigger',
-    '/open/saas/v1/vggt/poll'
+  const requiredOperations = [
+    ['/auth/access_token', 'post'],
+    ['/open/v1/argus/file/token', 'get'],
+    ['/open/v1/argus/task/submit', 'post'],
+    ['/open/v1/argus/task/info', 'get']
   ];
   const requiredSchemas = [
     'AccessTokenRequest',
     'AccessTokenData',
-    'UploadTokenRequest',
     'UploadTokenData',
-    'TriggerVggtRequest',
-    'PollVggtData'
+    'SubmitTaskRequest',
+    'SubmitTaskData',
+    'TaskInfoData'
   ];
 
-  return requiredPaths.every((path) => openapi.paths?.[path])
-    && requiredSchemas.every((schema) => openapi.components?.schemas?.[schema]);
+  const serverUrls = new Set((openapi.servers ?? []).map((server) => server?.url));
+  return requiredOperations.every(([path, method]) => openapi.paths?.[path]?.[method])
+    && requiredSchemas.every((schema) => openapi.components?.schemas?.[schema])
+    && serverUrls.has('https://app-gateway.realsee.ai')
+    && serverUrls.has('https://app-gateway.realsee.cn');
+}
+
+export function validateStableReleaseMetadata(metadata, tag) {
+  const normalizedTag = String(tag ?? '').replace(/^v/, '');
+  const argus = metadata?.skills?.argus;
+  return metadata?.version === normalizedTag
+    && metadata?.channel === 'stable'
+    && argus?.state === 'stable'
+    && argus?.stable_gate === 'passed'
+    && Array.isArray(argus?.regions)
+    && argus.regions.includes('global')
+    && argus.regions.includes('cn');
 }

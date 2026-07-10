@@ -22,6 +22,10 @@ const requiredEntries = [
   '.agents/skills/argus/README.md',
   '.agents/skills/argus/README.zh-CN.md',
   '.agents/skills/argus/references/argus-gateway-openapi.json',
+  '.agents/skills/argus/references/algorithm-io.md',
+  '.agents/skills/argus/references/algorithm-io.zh-CN.md',
+  '.agents/skills/argus/references/argus-output.schema.json',
+  '.agents/skills/argus/references/migration-v2.md',
   '.agents/skills/argus/scripts/run-argus.mjs',
   '~/.realsee/credentials',
   '.claude-plugin/marketplace.json',
@@ -32,8 +36,10 @@ const requiredEntries = [
   'npm run setup:local',
   'npm run smoke',
   'npm run ci',
-  '--async',
-  '--resume',
+  'run-argus.mjs start',
+  'run-argus.mjs status',
+  'run-argus.mjs collect',
+  'check:arkclaw-sync',
   'remote upload',
   'user consent'
 ];

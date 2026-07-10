@@ -25,7 +25,7 @@
 - 内部 URL
 - 账号标识
 - 私有结果 URL
-- 下载的 GLB 文件或临时 workspace
+- 下载的 `output.zip`、解压后的 Argus 产物或临时 workspace
 
 仓库包含 `npm run scan:secrets`，但自动扫描不能替代提交前的人工审查。
 

@@ -1,4 +1,5 @@
-// Build the arkclaw distribution zip from the canonical arkclaw skill source.
+// Build the Arkclaw distribution ZIP from the generated canonical skill copy.
+// Run `npm run sync:arkclaw` first; package.json wires that automatically.
 //
 // Output layout (per agentskills.io spec — top-level entry is the skill dir):
 //   argus.zip

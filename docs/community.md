@@ -10,7 +10,7 @@ Use the bug report issue template and include:
 
 - Skill name, usually `argus`
 - Command that failed
-- Whether the run used `--async` or `--resume`
+- Lifecycle command that failed (`start`, `status`, or `collect`)
 - Sanitized error output
 - Operating system, Node.js version, and npm version
 
@@ -24,7 +24,7 @@ Use the capability request template when a supported workflow is missing a publi
 - Expected input and output
 - Whether remote upload is required
 - Any relevant public API references or capability documentation
-- Whether the issue is about local async mode, live usage, or installation
+- Whether the issue is about local lifecycle state, live usage, artifact validation, or installation
 
 ## Pull Requests
 

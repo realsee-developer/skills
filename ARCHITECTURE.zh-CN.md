@@ -2,111 +2,104 @@
 
 [English](ARCHITECTURE.md) | 简体中文
 
-本文档梳理 canonical skill 源、生成的 Claude plugin 包，以及三个分发渠道（Claude Code、Codex、`npx skills`）的关系。
+Argus Skill 2.0 使用一个 canonical source、显式持久化生命周期，以及面向不同 agent host 的生成包。
 
-## Source-of-Truth 地图
+## Source-of-truth 地图
 
-```
-.agents/skills/argus/                Canonical skill 源。形状：SKILL.md + 一个脚本。
-├── SKILL.md                         Frontmatter + 完整的 agent 流程（凭证 Q&A、尺寸预检、轮询、打开）。
-├── README.md / README.zh-CN.md      面向用户文档。
-├── package.json                     Skill 内 Node manifest（依赖 @realsee/universal-uploader）。
-├── package-lock.json                依赖树锁定。
-├── scripts/run-argus.mjs            **唯一**的脚本。Gateway pipeline（auth → upload → trigger → poll → download）。
-├── src/                             run-argus.mjs 背后的 runtime 模块（cli、config、gateway、downloader、state…）。
-├── test/                            单测 + 可注入假对象测试（不调用真实接口）。
-└── references/                      公开 OpenAPI 合同 + 参考文档。
+```text
+.agents/skills/argus/                 Canonical Skill source
+├── SKILL.md                          Agent 生命周期与安全规则
+├── README.md / README.zh-CN.md       用户文档
+├── package.json / package-lock.json  Node runtime 与锁定依赖
+├── scripts/run-argus.mjs             公开 CLI 入口
+├── src/                              Runtime 实现
+├── test/                             合同、输入、生命周期、产物测试
+└── references/
+    ├── argus-gateway-openapi.json    Gateway 四路径公开合同
+    ├── algorithm-io*.md              双语算法输入输出合同
+    ├── argus-output.schema.json      JSON Schema 2020-12 输出联合
+    └── migration-v2*.md              双语 1.x 迁移指南
 
-plugins/realsee-skills/              生成的 Claude plugin 包 —— 不要手工改。
-├── .claude-plugin/plugin.json       Plugin manifest（无 userConfig，无 MCP server —— 凭证运行时解析）。
-├── package.json                     Plugin 内 manifest（精简）。
-├── skills/argus/                    源 skill 的拷贝（由 scripts/sync-claude-plugin.mjs 保持同步）。
-└── scripts/{validate-plugin,doctor-local-env}.mjs
-
-.claude-plugin/marketplace.json      Marketplace manifest，指向 plugins/realsee-skills。
-
-release-channel.json                 发布状态（channel、version、每 skill 的 state、regions）。
-llms.txt                             机器可读仓库索引。
+plugins/realsee-skills/               生成的 Claude plugin copy
+arkclaw/argus/                        带 CN-only 入口 overlay 的 Arkclaw copy
+release-channel.json                  发布成熟度与版本元数据
+llms.txt                              机器可读仓库索引
 ```
 
-## Skill → Plugin → 分发 流程
+## 深 runtime 模块
 
-```
-                .agents/skills/argus/                  (单一源)
-                            │
-              ┌─────────────┼────────────────────┐
-              │             │                    │
-              ▼             ▼                    ▼
-      sync:claude-plugin   npx skills add     install-codex-skills
-              │             . --skill argus           │
-              ▼                                       ▼
-   plugins/realsee-skills/                  $CODEX_HOME/skills/argus
-              │                                       │
-              ▼                                       │
-   /plugin install                                    │
-   realsee-skills@                                    │
-   realsee-developer-skills                           │
-              │                                       │
-              └─────────┐                   ┌─────────┘
-                        ▼                   ▼
-                Claude Code 运行时    Codex 运行时
-                (没有安装期配置 —— 两个 runtime 都通过
-                 skill 的运行时凭证提示或预设的 shell
-                 env 获得 REALSEE_* )
+Runtime 只暴露三个生命周期操作：
+
+```text
+start   -> 校验 -> 规范化 ZIP -> 上传 -> 提交 -> 持久化 task_code
+status  -> 读取 state -> 查询一次 -> 映射 task_status -> 持久化
+collect -> 查询一次 -> 原子下载 -> 校验/解压 -> 写结果索引
 ```
 
-两个运行时最终都启动同一个 `scripts/run-argus.mjs`，命中同一份 `src/cli.mjs`。凭证解析在 **script 运行之前**，**完全由 agent 通过 Bash 完成**，按 SKILL.md "Step 1"：
+生命周期模块负责不变量、workspace 原子状态、幂等与错误分类。外部细节被隔离在两个可注入 port 后面：
 
-1. 探测 shell env（`printenv REALSEE_*`）。
-2. 文件存在就 source：`[ -f ~/.realsee/credentials ] && set -a && . ~/.realsee/credentials && set +a`。文件是可被 shell `source` 的 `KEY=VALUE` 片段，mode 0600。
-3. 还缺就一问一答收集（region → APP_KEY → APP_SECRET → 是否保存？）。
-4. 用户同意保存的话，agent 用 Bash heredoc 写文件 + `chmod 600`。
+- `ArgusTaskPort`：Gateway 鉴权、上传 token lease、任务提交与任务信息查询。
+- `ObjectTransferPort`：流式对象上传与原子结果下载。
 
-直接 shell env 永远覆盖凭证文件。不涉及 plugin `userConfig`、不涉及 MCP bridge，也不涉及 helper 脚本（check-credentials / save-credentials）—— agent 的 Bash tool 替代了所有这些。
+生产 adapter 对接 Gateway、AWS Node 或腾讯 COS Node；测试在 port 边界使用 fake，不依赖云 SDK 或 live 服务。
 
-## CLI 执行模式
+## 输入边界
 
-`scripts/run-argus.mjs` → `src/cli.mjs` 支持三种模式：
+`--image` 与 `--zip` 最终进入同一个规范化输入 pipeline。调用者给的 ZIP 不会被直接信任或原样上传。Pipeline 安全展开根条目，校验 1–99 张 JPEG/PNG/WebP RGB8 严格 2:1 全景图，把文件名规范化为 UTF-8 NFC，拒绝 stem/case-fold 冲突，按 NFC UTF-8 字节排序，再写出一个确定性的流式 ZIP。
 
-| 模式 | flag | 行为 |
-| --- | --- | --- |
-| 同步 | _(默认)_ | Auth → upload-token → upload → trigger → poll → download → 写 `result.json`。阻塞直到全程完成（数分钟）。 |
-| 异步 | `--async` | Auth → upload-token → upload → trigger → 写 `state.json` + spawn detached 子进程轮询。立即返回 `{status: in_progress, background_poll_pid}`。 |
-| 恢复 | `--resume --workspace <dir>` | 读 `state.json` 接着 poll → download → 写 `result.json`。用于 detached 子进程，以及人工恢复。 |
+产品容量继续由 Gateway 控制。本地只实施结构和资源保护：条目数、安全路径、实际展开字节、压缩行为与磁盘剩余空间。
 
-Claude Code / Codex 宿主调用 skill 时应优先使用 async，避免会话因 Argus 推理而卡住。
+## 持久化生命周期
 
-## 构建与校验流程
+Schema-v2 `state.json` 是一次运行的持久化事实源。它记录 region、phase、脱敏输入摘要、上传回执与 `task_code`；绝不记录 APP 凭证、临时上传凭证、access token、预签名 URL 或 provider 原始错误。
 
-`npm run ci`（也在 `.github/workflows/ci.yml` 跑）按顺序：
+任务提交不自动重试。请求可能已被服务端接受但响应丢失时，phase 变为 `submission_unknown`，阻止其他进程盲目创建重复任务。
 
-1. `scan:secrets` —— 扫 token、签名 URL、AWS Authorization 头、腾讯 COS tmpSecret 等模式。
-2. `validate:docs` —— 双语文档（英文 / 简体中文）覆盖检查。
-3. `validate:ai` —— `llms.txt` 必含的入口字符串校验。
-4. `validate:repo-boundary` —— 拒绝 home 目录绝对路径（macOS / Linux）、内部 hostname 等私有泄露。完整 deny list 见 `scripts/validate-repo-boundary.mjs`。
-5. `validate:skills` —— `.agents/skills/` 下每个 skill 的 SKILL.md / README 配对一致。
-6. `rebuild` —— 重新生成 `plugins/realsee-skills/`，并通过 `check:claude-sync` 比对字节级一致。
-7. `validate:channel-metadata` —— `release-channel.json` 形状和 id 一致性。
-8. `test:skill` —— 跑所有 `.agents/skills/argus/test/*.test.mjs`（`node --test`）。
+`status` 每次只查询一次。不启动 detached 子进程，也没有隐藏轮询。多个进程可以查看同一个 run；collect 通过 lock/原子 transition 保证只有一个进程下载和收尾。
 
-发布门禁（`scripts/release-gate.mjs`）跑同一套链，外加 `--channel stable` 时校验 `references/argus-gateway-openapi.json` 是公开 Realsee Argus/VGGT 合同、无内部证据文本。
+## 产物边界
 
-## 发布渠道
+`collect` 保留原始 `output.zip`，先解压到临时目录，再原子完成。它校验 HTTP 传输长度、Gateway 可选 size/MD5、ZIP CRC、安全路径、解压限制、[输出 Schema](.agents/skills/argus/references/argus-output.schema.json)、引用文件、成功/缺失 ID 集合以及 GLB/EXR magic。
 
-`release-channel.json` 携带机器可读状态：
+本地 `result.json` 明确分开：
 
-- `channel` —— feature 分支上为 `development`；切 release tag 时变为 `preview` / `stable`。
-- `state` —— 每 skill 的成熟度。两 region e2e 通过后，`argus` 标为 `stable`。
-- `stable_gate` —— `release:gate --channel stable` 通过后变 `passed`。
+- `task_status`：`queued`、`processing`、`succeeded` 或 `failed`；
+- `result_status`：`success`、`partial` 或 `error`。
 
-GitHub workflows 接入：
+partial 结果可用且退出码为 0，但一定包含警告和非空 `missing_ids`；error 非零退出。
 
-- `.github/workflows/ci.yml` —— 每次 push 到 `main` 或 PR 时跑 `npm run ci`。
-- `.github/workflows/release-gate.yml` —— `main`、`test/**`、`stable/**`、手动 dispatch 时跑发布门禁。
-- `.github/workflows/release.yml` —— tag push `v*` 时跑 stable 门禁并创建 GitHub release。
-- `.github/workflows/codeql.yml` —— 每周 + push/PR 静态安全分析。
+## Gateway 边界
 
-## 不要修改
+Gateway 基础地址与凭证/region 合同不变，只替换 Argus 接口：
 
-- `plugins/realsee-skills/**` —— 生成产物。改 `.agents/skills/argus/`，然后 `npm run rebuild`。
-- `node_modules/**`、`workspace/**`、`*.glb`、`.env`，以及 `validate-repo-boundary` deny list 上的任何路径。
+- `POST /auth/access_token`
+- `GET /open/v1/argus/file/token`
+- `POST /open/v1/argus/task/submit`
+- `GET /open/v1/argus/task/info`
+
+文件 token 响应是在内存中使用的 upload lease。`bucket + region + prefix` 构成 lease locator；只有 locator 不变时，刷新凭证才允许续传。
+
+## 分发流
+
+```text
+                         .agents/skills/argus
+                           canonical source
+                 ┌──────────────┼──────────────┐
+                 │              │              │
+                 ▼              ▼              ▼
+        Claude plugin copy   Codex / npx    Arkclaw copy
+        字节一致             直接用 source   canonical bytes +
+                                           CN-only CLI overlay
+```
+
+`npm run rebuild` 重新生成 Claude 与 Arkclaw 包，并与 canonical bytes 比较。Arkclaw overlay 只改变 `scripts/run-argus.mjs` 传入的环境，强制 `REALSEE_REGION=cn`；其他文件必须与 canonical source 字节级一致。
+
+## 校验与发布
+
+`npm run ci` 依次运行 secret 扫描、双语文档、AI 索引、仓库边界、Skill 校验、分发生成与一致性检查、发布元数据校验和完整 Skill 测试。
+
+`v1.0.2` 保持为冻结的旧版本。2.0 按以下顺序发布：先发布 uploader 0.1.0，再切 `v2.0.0-rc.1`，完成 CN/Global 真机 E2E（含 partial/error 收集），最后把 `v2.0.0` 标记为 stable。两区都通过前，release metadata 保持 preview/development，stable gate 为 pending。
+
+## 生成文件
+
+不要手工修改 `plugins/realsee-skills/**` 或 `arkclaw/argus/**`。修改 `.agents/skills/argus/**` 和窄范围 Arkclaw overlay generator，然后运行 `npm run rebuild`。

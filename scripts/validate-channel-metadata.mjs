@@ -3,6 +3,8 @@ import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const metadataPath = join(root, 'release-channel.json');
+const rootPackagePath = join(root, 'package.json');
+const skillPackagePath = join(root, '.agents', 'skills', 'argus', 'package.json');
 const allowedChannels = new Set(['development', 'preview', 'stable']);
 const requiredRegions = ['global', 'cn'];
 
@@ -11,9 +13,13 @@ function assert(condition, message) {
 }
 
 const metadata = JSON.parse(await readFile(metadataPath, 'utf8'));
+const rootPackage = JSON.parse(await readFile(rootPackagePath, 'utf8'));
+const skillPackage = JSON.parse(await readFile(skillPackagePath, 'utf8'));
 assert(metadata && typeof metadata === 'object' && !Array.isArray(metadata), 'release-channel.json must be an object');
 assert(metadata.repo === 'realsee-skills', 'repo must be realsee-skills');
 assert(typeof metadata.version === 'string' && metadata.version.length > 0, 'version must be a non-empty string');
+assert(rootPackage.version === metadata.version, 'root package version must match release-channel.json');
+assert(skillPackage.version === metadata.version, 'argus package version must match release-channel.json');
 assert(allowedChannels.has(metadata.channel), 'channel must be one of: development, preview, stable');
 assert(metadata.skills && typeof metadata.skills === 'object', 'skills must be an object');
 
@@ -26,6 +32,10 @@ assert(skill.claude_plugin === 'realsee-skills', 'claude plugin id must be reals
 assert(Array.isArray(skill.regions), 'skills.argus.regions must be an array');
 for (const region of requiredRegions) {
   assert(skill.regions.includes(region), `skills.argus.regions must include ${region}`);
+}
+assert(skill.legacy_release === 'v1.0.2', 'skills.argus.legacy_release must remain v1.0.2');
+if (metadata.channel === 'stable' || skill.state === 'stable') {
+  assert(skill.stable_gate === 'passed', 'stable metadata requires stable_gate=passed');
 }
 
 console.log('channel metadata validation ok');

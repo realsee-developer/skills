@@ -7,10 +7,11 @@ const pluginRoot = join(repoRoot, 'plugins', 'realsee-skills');
 const targetSkill = join(pluginRoot, 'skills', 'argus');
 const manifestPath = join(pluginRoot, 'copy-manifest.json');
 const expectedPluginRoot = join(repoRoot, 'plugins', 'realsee-skills');
+const rootPackage = JSON.parse(await readFile(join(repoRoot, 'package.json'), 'utf8'));
 
 const pluginPackage = {
   name: 'realsee-skills',
-  version: '1.0.2',
+  version: rootPackage.version,
   private: true,
   type: 'module',
   description: 'Claude plugin packaging for Realsee skills.',
@@ -28,7 +29,7 @@ const pluginPackage = {
 const pluginMetadata = {
   $schema: 'https://json.schemastore.org/claude-code-plugin-manifest.json',
   name: 'realsee-skills',
-  description: 'Realsee skills for Claude Code. Exposes the argus skill (Realsee Argus GLB output from local images).',
+  description: 'Realsee skills for Claude Code. Exposes Argus multi-panorama reconstruction with depth, merged GLB, and camera artifacts.',
   author: {
     name: 'Realsee',
     url: 'https://github.com/realsee-developer'

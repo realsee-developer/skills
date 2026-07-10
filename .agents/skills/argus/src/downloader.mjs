@@ -1,13 +1,13 @@
+import { createHash, randomUUID } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
-import { mkdir, rename, rm } from 'node:fs/promises';
+import { mkdir, rename, rm, statfs } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { basename, dirname, join } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { finished } from 'node:stream/promises';
 
 const MAX_REDIRECTS = 5;
-const MAX_DOWNLOAD_BYTES = 2 * 1024 * 1024 * 1024;
-const GLB_MAGIC = Buffer.from('glTF');
+const DEFAULT_TIMEOUT_MS = 60_000;
 
 export function parseDownloadUrl(url) {
   let parsed;
@@ -16,132 +16,166 @@ export function parseDownloadUrl(url) {
   } catch {
     throw new Error('download url is invalid');
   }
-
   if (!['http:', 'https:'].includes(parsed.protocol)) {
     throw new Error('download url must use http or https');
   }
-
   return parsed;
 }
 
-export async function downloadArgusGlb({
+export async function downloadFileAtomic({
   url,
   outputPath,
-  transport = httpsTransport,
-  maxRedirects = MAX_REDIRECTS,
-  maxBytes = MAX_DOWNLOAD_BYTES
+  expectedBytes,
+  expectedMd5,
+  signal,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+  transport = nodeTransport,
+  maxRedirects = MAX_REDIRECTS
 }) {
   let currentUrl = url;
 
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
     const parsed = parseDownloadUrl(currentUrl);
-    const response = await transport({
-      url: parsed,
-      maxBytes
-    });
-
+    const response = await transport({ url: parsed, signal, timeoutMs });
     if (isRedirect(response.statusCode)) {
-      if (redirectCount === maxRedirects) {
-        throw new Error('download redirect limit exceeded');
-      }
+      response.body?.destroy?.();
+      if (redirectCount === maxRedirects) throw new Error('download redirect limit exceeded');
       const location = response.headers?.location;
-      if (!location) {
-        throw new Error('download redirect missing location');
-      }
+      if (!location) throw new Error('download redirect missing location');
       currentUrl = new URL(location, parsed).toString();
       continue;
     }
-
     if (response.statusCode !== 200) {
+      response.body?.destroy?.();
       throw new Error(`download failed with HTTP ${response.statusCode}`);
     }
 
-    const bytes = await writeGlbAtomic({ body: response.body, outputPath, maxBytes });
+    const headerBytes = parseContentLength(response.headers?.['content-length']);
+    if (expectedBytes !== undefined && expectedBytes !== null && headerBytes !== null && headerBytes !== expectedBytes) {
+      response.body?.destroy?.();
+      throw new Error(`download Content-Length ${headerBytes} does not match expected size ${expectedBytes}`);
+    }
+    const requiredBytes = expectedBytes ?? headerBytes;
+    await assertDiskSpace(outputPath, requiredBytes);
+    const receipt = await writeBodyAtomic({
+      body: response.body,
+      outputPath,
+      expectedBytes: expectedBytes ?? headerBytes,
+      expectedMd5,
+      signal
+    });
     return {
-      bytes,
+      ...receipt,
       host: parsed.hostname,
-      redirected: redirectCount > 0
+      redirected: redirectCount > 0,
+      content_length: headerBytes
     };
   }
 
   throw new Error('download redirect limit exceeded');
 }
 
-function isRedirect(statusCode) {
-  return [301, 302, 303, 307, 308].includes(statusCode);
-}
-
-function httpsTransport({ url, maxBytes }) {
+function nodeTransport({ url, signal, timeoutMs }) {
   return new Promise((resolve, reject) => {
     const request = url.protocol === 'http:' ? httpRequest : httpsRequest;
-    const req = request(url, { method: 'GET' }, (res) => {
-      const expected = Number(res.headers['content-length'] ?? 0);
-      if (expected > maxBytes) {
-        res.destroy();
-        reject(new Error('download exceeds maximum size'));
-        return;
-      }
-      resolve({
-        statusCode: res.statusCode,
-        headers: res.headers,
-        body: res
-      });
+    const req = request(url, { method: 'GET', signal }, (res) => {
+      resolve({ statusCode: res.statusCode, headers: res.headers, body: res });
     });
+    req.setTimeout(timeoutMs, () => req.destroy(new Error('download request timed out')));
     req.on('error', reject);
     req.end();
   });
 }
 
-async function writeGlbAtomic({ body, outputPath, maxBytes }) {
+async function writeBodyAtomic({ body, outputPath, expectedBytes, expectedMd5, signal }) {
   const outputDir = dirname(outputPath);
   await mkdir(outputDir, { recursive: true });
   const tmpPath = join(outputDir, `.${basename(outputPath)}.${process.pid}.${randomUUID()}.tmp`);
+  const hash = createHash('md5');
   let bytes = 0;
-  let prefix = Buffer.alloc(0);
   let writer;
 
   try {
-    writer = createWriteStream(tmpPath, { flags: 'wx' });
+    writer = createWriteStream(tmpPath, { flags: 'wx', mode: 0o600 });
     for await (const chunk of chunks(body)) {
+      if (signal?.aborted) throw signal.reason ?? new Error('download aborted');
       const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       bytes += buffer.length;
-      if (bytes > maxBytes) {
-        throw new Error('download exceeds maximum size');
-      }
-      if (prefix.length < GLB_MAGIC.length) {
-        prefix = Buffer.concat([prefix, buffer]).subarray(0, GLB_MAGIC.length);
-      }
-      if (!writer.write(buffer)) {
-        await new Promise((resolve) => writer.once('drain', resolve));
-      }
+      hash.update(buffer);
+      if (!writer.write(buffer)) await onceDrain(writer);
     }
-    await new Promise((resolve, reject) => {
-      writer.end((error) => {
-        if (error) reject(error);
-        else resolve();
-      });
-    });
+    await endWriter(writer);
 
-    if (bytes === 0) {
-      throw new Error('downloaded GLB is empty');
+    if (expectedBytes !== undefined && expectedBytes !== null && bytes !== expectedBytes) {
+      throw new Error(`downloaded ${bytes} bytes; expected ${expectedBytes}`);
     }
-    if (!prefix.equals(GLB_MAGIC)) {
-      throw new Error('downloaded file is not a GLB');
+    if (bytes === 0) throw new Error('downloaded file is empty');
+    const md5 = hash.digest('hex');
+    if (expectedMd5 && md5 !== normalizeMd5(expectedMd5)) {
+      throw new Error('downloaded file MD5 does not match task metadata');
     }
-
     await rename(tmpPath, outputPath);
-    return bytes;
+    return { bytes, md5 };
   } catch (error) {
-    writer?.destroy();
+    if (writer) {
+      writer.destroy();
+      await finished(writer).catch(() => {});
+    }
     await rm(tmpPath, { force: true });
     throw error;
   }
+}
+
+async function assertDiskSpace(outputPath, requiredBytes) {
+  if (!Number.isSafeInteger(requiredBytes) || requiredBytes <= 0) return;
+  const dir = dirname(outputPath);
+  await mkdir(dir, { recursive: true });
+  const fs = await statfs(dir);
+  const available = Number(fs.bavail) * Number(fs.bsize);
+  if (Number.isFinite(available) && requiredBytes > available) {
+    throw new Error(`insufficient disk space for ${requiredBytes} byte download`);
+  }
+}
+
+function normalizeMd5(value) {
+  const md5 = String(value).trim().toLowerCase();
+  if (!/^[0-9a-f]{32}$/.test(md5)) throw new Error('expected MD5 must be 32 hexadecimal characters');
+  return md5;
+}
+
+function parseContentLength(value) {
+  if (value === undefined || value === null || value === '') return null;
+  if (!/^\d+$/.test(String(value))) throw new Error('invalid download Content-Length');
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 0) throw new Error('invalid download Content-Length');
+  return parsed;
+}
+
+function isRedirect(statusCode) {
+  return [301, 302, 303, 307, 308].includes(statusCode);
+}
+
+function onceDrain(stream) {
+  return new Promise((resolve, reject) => {
+    stream.once('drain', resolve);
+    stream.once('error', reject);
+  });
+}
+
+function endWriter(stream) {
+  return new Promise((resolve, reject) => {
+    stream.once('error', reject);
+    stream.end(resolve);
+  });
 }
 
 async function* chunks(body) {
   if (Buffer.isBuffer(body) || body instanceof Uint8Array || typeof body === 'string') {
     yield body;
     return;
+  }
+  if (!body || typeof body[Symbol.asyncIterator] !== 'function') {
+    throw new Error('download response body is not readable');
   }
   yield* body;
 }

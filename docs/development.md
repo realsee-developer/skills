@@ -2,7 +2,7 @@
 
 [English](development.md) | [简体中文](zh-CN/development.md)
 
-This repository is a Node.js workspace for Realsee agent skills. Runtime skill code lives under `.agents/skills/argus/`.
+This repository is a Node.js workspace for Realsee agent skills. Argus 2.0 runtime code and canonical contracts live under `.agents/skills/argus/`.
 
 ## Requirements
 
@@ -39,13 +39,13 @@ Use focused commands while editing:
 | `npm run validate:docs` | After changing bilingual repository docs. |
 | `npm run validate:skills` | After changing skill metadata, README files, or references. |
 | `npm run test:skill` | After changing `argus` code. |
-| `npm run rebuild` | After changing source skill files copied into `plugins/realsee-skills/`. |
+| `npm run rebuild` | Regenerate and byte-check the Claude plugin and CN-only Arkclaw copies. |
 | `npm run doctor` | Check local prerequisites through `doctor:local`. |
 | `npm run doctor:live` | Check live Argus prerequisites and environment. |
 
 ## Skill Workflow
 
-The source of truth for skills is `.agents/skills/`. The Claude plugin bundle is generated into `plugins/realsee-skills/`.
+The source of truth is `.agents/skills/argus/`. The Claude plugin is generated into `plugins/realsee-skills/`; the Arkclaw package is generated into `arkclaw/argus/` with one deterministic CN-only entrypoint overlay.
 
 When changing `argus`:
 
@@ -54,6 +54,8 @@ When changing `argus`:
 3. Run `npm run rebuild`.
 4. Run `npm run ci`.
 
+Do not edit either generated copy directly. New runtime behavior should be exercised through `ArgusTaskPort` and `ObjectTransferPort` fakes. Include focused input, lifecycle, output-contract, and idempotence tests.
+
 ## Configuration
 
 Public documentation uses only these environment variable names:
@@ -61,7 +63,5 @@ Public documentation uses only these environment variable names:
 - `REALSEE_APP_KEY`
 - `REALSEE_APP_SECRET`
 - `REALSEE_REGION`
-- `REALSEE_POLL_INTERVAL_MS`
-- `REALSEE_POLL_MAX_ATTEMPTS`
 
-Do not commit real values, account identifiers, internal URLs, generated credentials, downloaded GLB files, or temporary preview outputs.
+The existing agent-driven `~/.realsee/credentials` loading flow remains supported. Do not commit real values, account identifiers, internal URLs, generated credentials, `output.zip`, extracted artifacts, or temporary workspaces.

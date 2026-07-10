@@ -7,13 +7,13 @@ This repository is optimized for agents and automation that help users inspect, 
 ## Repository Intent
 
 - Audience: users, agent runtimes, and maintainers.
-- Primary capability: `argus`, which generates Realsee Argus GLB output from a local JPEG image or panorama.
+- Primary capability: `argus`, which processes 1–99 local 2:1 panoramas into depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated result index.
 - Distribution model: source-available capability packaging.
 
 ## Safe Operating Rules
 
 - Treat Argus runs as remote uploads. Confirm user consent before any upload.
-- Do not commit secrets, generated credentials, account identifiers, private URLs, downloaded GLB files, `.env` files, or temporary workspaces.
+- Do not commit secrets, generated credentials, account identifiers, private URLs, downloaded Argus archives or extracted artifacts, `.env` files, or temporary workspaces.
 - Keep public docs bilingual. English uses default paths. Simplified Chinese uses `docs/zh-CN/`, `README.zh-CN.md`, or same-directory `*.zh-CN.md` files.
 - Edit source skill files under `.agents/skills/`.
 - Run `npm run rebuild` after source skill changes.

@@ -1,244 +1,119 @@
 ---
 name: argus
-description: Generate Realsee Argus GLB output from a local JPEG image (square 1:1) or panorama (equirectangular 2:1) using Realsee Argus/VGGT. Use when the user asks to turn a local JPEG or panorama into a Realsee Argus GLB, or mentions Realsee Argus / VGGT reconstruction.
-compatibility: Requires Node.js and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
+description: Process one to 99 local 2:1 panorama images with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Use for multi-panorama Argus reconstruction, Argus ZIP input, or explicit start/status/collect task lifecycle requests.
+compatibility: Requires Node.js 22+ and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
 metadata:
+  version: "2.0.0"
   documentation: README.md
 ---
 
 # argus
 
-Use this Skill when the user asks to turn a local JPEG image or panorama into Realsee Argus GLB output.
+Use this Skill to submit 1–99 exact 2:1 equirectangular panoramas to Realsee Argus and collect a validated `output.zip`. The public entrypoint is `scripts/run-argus.mjs`; `<skillDir>` below means the directory containing this file.
 
-This is a **skill**, not a CLI suite. There is exactly one script — `scripts/run-argus.mjs` — which runs the Realsee Gateway pipeline (auth → upload-token → multipart upload → trigger → poll → download). Everything else (collecting credentials, validating inputs, polling status, opening results) is performed by **you, the agent, via the Bash tool** following the instructions in this file.
+Argus is a remote upload. Do not upload until the user has selected the input and consented. Never print, log, or persist credentials, upload tokens, presigned URLs, or raw provider errors. Do not open output files unless the user asks.
 
-`<skillDir>` below refers to the directory containing this `SKILL.md`. From the Bash tool, derive it from the path you used to invoke the script.
+## 1. Resolve credentials
 
----
+The runtime requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`). The Gateway base is unchanged: global uses `app-gateway.realsee.ai`; CN uses `app-gateway.realsee.cn`. In the CN-only Arkclaw distribution, use `cn` and do not offer the global region.
 
-## Step 1 — Resolve credentials
+Resolve values in the existing order:
 
-Argus needs three values in env: `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, `REALSEE_REGION` (`global` for `app-gateway.realsee.ai`, `cn` for `app-gateway.realsee.cn`).
+1. Probe the current shell environment without printing values:
 
-Resolution order:
-
-**Important: never run a command that prints credential values.** `printenv REALSEE_APP_KEY` *prints the value* — its stdout is captured by the Bash tool and lands in the Claude transcript. To check presence, redirect stdout to `/dev/null` and rely on the exit code, or compare the variable to empty using `[ -n "$VAR" ]`.
-
-1. **Already in shell env?** Probe by exit code only:
    ```bash
    printenv REALSEE_APP_KEY REALSEE_APP_SECRET REALSEE_REGION >/dev/null \
      && echo present || echo missing
    ```
-   If the output is `present`, skip to Step 2.
 
-2. **Stored in `~/.realsee/credentials`?** The file is a shell-sourceable env fragment — each line is `KEY=value`. Load and probe in one call:
+2. If `~/.realsee/credentials` already exists, load it into the shell and probe presence. Never display the file:
+
    ```bash
    [ -f ~/.realsee/credentials ] && set -a && . ~/.realsee/credentials && set +a; \
      [ -n "$REALSEE_APP_KEY" ] && [ -n "$REALSEE_APP_SECRET" ] && [ -n "$REALSEE_REGION" ] \
      && echo present || echo missing
    ```
-   If the output is `present`, skip to Step 2.
 
-   **If `.` fails with `command not found:` errors** (e.g. lines like `appKey: ...`), the file is from an older version. Delete it (`rm -f ~/.realsee/credentials`) and fall through to Step 1a — the user will re-enter the values once. We do not maintain a migration path; the format is exclusively `KEY=value`.
+3. Otherwise ask for region, APP_KEY, and APP_SECRET one field per turn. Never repeat a supplied value. If the user explicitly chooses to persist them, retain the existing mode-0600 `~/.realsee/credentials` flow. Never place credential values in a CLI argument or environment prefix recorded by the host.
 
-3. **Otherwise, collect from the user via one-question-per-turn Q&A.** See Step 1a.
+## 2. Select the input
 
-### Step 1a — Q&A flow (one field per turn)
+Two mutually exclusive modes are supported:
 
-**Hard rules:**
+- repeat `--image <absolute-path>` for 1–99 local images; or
+- pass one `--zip <absolute-path>` containing root-level images.
 
-- **One question per turn.** Never write "please send me APP_KEY, APP_SECRET, and region" in a single message. Ask one, wait for the reply, ask the next.
-- **Never echo a credential value back.** Once the user provides `APP_KEY`, do not repeat it in any subsequent natural-language reply. Refer to it as "the APP_KEY you provided".
-- **Never put credentials on a Bash command line.** Not as `--flag`, not as env-prefix (`REALSEE_APP_KEY=... node ...`). The Bash tool records the full command (including the env-prefix) in the Claude transcript and in the JSONL session file. Credentials in the command line = credentials leaked into permanent logs. The only safe pattern is `set -a; . ~/.realsee/credentials; set +a; node ...` — the values live on disk (mode 0600) and are loaded into the child process's env via `source`, never appearing in the command itself.
-- **Trim whitespace.** Paste-from-keyboard often leaves trailing whitespace. Strip it before use.
+The CLI performs authoritative validation and deterministic packaging. Inputs must be JPEG, PNG, or WebP, RGB, 8-bit, and exactly `width == 2 * height`. A resolution below 2048×1024 emits a warning. Square 1:1 images are rejected; users who require the old square/single-GLB workflow must pin `v1.0.2`.
 
-**Order:**
+ZIP mode is not a validation bypass. The CLI safely extracts, validates, Unicode-normalizes, sorts, and repacks it before upload. Do not manually rename output IDs: consumers trust the algorithm's `name_mapping`.
 
-1. **Region.** On Claude Code, prefer `AskUserQuestion` with two options:
-   - `global` — Realsee Open Platform global gateway (`app-gateway.realsee.ai`).
-   - `cn` — Realsee Open Platform China gateway (`app-gateway.realsee.cn`).
-   
-   On other hosts, ask in chat: "Which Realsee region — `global` or `cn`?" Re-ask if the response is not exactly one of the two values.
+## 3. Start once
 
-2. **APP_KEY** (next turn, one sentence):
-   > "Please paste your `REALSEE_APP_KEY`."
+The user selecting files for an Argus request is upload consent. If the user has not selected files, ask one question that also states the files will leave the machine for remote processing. Do not ask a redundant second confirmation.
 
-3. **APP_SECRET** (next turn, one sentence):
-   > "Now please paste your `REALSEE_APP_SECRET`."
-
-4. **Save?** On Claude Code, prefer `AskUserQuestion`:
-   - `Save (recommended)` — write to `~/.realsee/credentials` (mode 0600), skip the prompt next time.
-   - `Use once` — keep in memory for this run only.
-   
-   On other hosts, ask plain yes/no.
-
-5. **Always save.** Even if the user picked `Use once`, you still need the values on disk briefly so the run command can `source` them — otherwise the only way to pass them to `run-argus.mjs` is via the command line, which leaks them into the Claude transcript. So:
-
-   - User picked `Save (recommended)` → write the file once, leave it there.
-   - User picked `Use once` → write the file, run the pipeline, then delete it (`rm -f ~/.realsee/credentials`) once `result.json` shows `success` or `error`.
-
-   Write with a Bash heredoc + `chmod 600`. The heredoc DOES expose the values to the transcript exactly once (unavoidable — they were just typed in chat anyway, so they're already in the transcript). Every subsequent Bash call in this conversation must load via `source`, never re-print the values:
-   ```bash
-   mkdir -p ~/.realsee
-   umask 077
-   cat > ~/.realsee/credentials <<'EOF'
-   REALSEE_APP_KEY=<value>
-   REALSEE_APP_SECRET=<value>
-   REALSEE_REGION=<global|cn>
-   EOF
-   chmod 600 ~/.realsee/credentials
-   ```
-   Verify with `ls -l ~/.realsee/credentials` — the perms must be `-rw-------`.
-
----
-
-## Step 2 — Validate the input image
-
-Argus enforces strict aspect ratios:
-
-- **2:1 (±0.05)** → panorama (e.g. `4096×2048`, `8192×4096`). Upload key: `panoImage.jpg`.
-- **1:1 (±0.05)** → pinhole image (e.g. `1024×1024`, `2048×2048`). Upload key: `pinholeImage.jpg`.
-
-The script enforces this server-side as a defense-in-depth check, but **you should also pre-check** so the user gets fast feedback. Read the JPEG's dimensions in one Bash call. Cross-platform recipes (pick the first that works on the user's machine):
-
-```bash
-# macOS:
-sips -g pixelWidth -g pixelHeight "<path>" 2>/dev/null
-
-# ImageMagick (Linux / macOS with Homebrew):
-identify -format '%w %h\n' "<path>" 2>/dev/null
-
-# Pure Node fallback (always available):
-node -e "
-  const fs = require('fs');
-  const buf = fs.readFileSync(process.argv[1]);
-  if (buf[0] !== 0xff || buf[1] !== 0xd8) { console.error('Not JPEG'); process.exit(1); }
-  let off = 2;
-  while (off < buf.length) {
-    if (buf[off] !== 0xff) break;
-    const marker = buf[off + 1];
-    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
-      console.log(buf.readUInt16BE(off + 7), buf.readUInt16BE(off + 5));
-      process.exit(0);
-    }
-    off += 2 + buf.readUInt16BE(off + 2);
-  }
-  process.exit(1);
-" "<path>"
-```
-
-Compute `ratio = width / height`. Then:
-
-- `0.95 ≤ ratio ≤ 1.05` → call it `image`. Continue.
-- `1.95 ≤ ratio ≤ 2.05` → call it `panorama`. Continue.
-- Anything else → **stop**. Tell the user: "Detected `<W>×<H>` (ratio `<r>`). Argus accepts only 2:1 panoramas or 1:1 pinhole images. Crop or resize and retry." Do not upload.
-
-Tell the user what you detected before uploading — e.g. "Detected as panorama (4096×2048)."
-
----
-
-## Step 3 — Run
-
-**Do not ask a second confirmation here.** If the user named a specific image path when invoking the skill (e.g. "use argus on /path/to/photo.jpg") **or** answered a file-selection question you asked earlier, that IS the upload consent. Asking "confirm upload?" again is friction without value.
-
-Two cases:
-
-- **User already gave a path.** Proceed directly. After Step 2 detects the type, say one short line: "Detected as `<image|panorama>` (`<W>×<H>`). Uploading to Argus (region `<region>`) now." Then run.
-- **User did not give a path.** The selection question is where you obtain consent. Phrase it as one prompt: "Which image should I upload to Realsee Argus to generate a GLB? (The image will leave your machine and be processed by Argus.)" After they reply with a path, run Step 2 then run — no second prompt.
-
-Load credentials from disk and run in **one** Bash call. The credentials never appear in the command line — they live in the env-fragment file (mode 0600), `source` pulls them into the child process's env:
+For repeated images:
 
 ```bash
 set -a; . ~/.realsee/credentials; set +a; \
-  node <skillDir>/scripts/run-argus.mjs \
-  --image "<abs-path>" \
-  --type <image|panorama> \
-  --workspace "<workspace-parent>" \
-  --yes --json --async
+  node <skillDir>/scripts/run-argus.mjs start \
+  --image "/absolute/path/a.jpg" \
+  --image "/absolute/path/b.webp" \
+  --workspace "/absolute/workspace-root" \
+  --yes --json
 ```
 
-- `--type` matches what you detected in Step 2.
-- `--async` returns immediately; a detached process polls and writes `result.json`. Use `--async` by default so the conversation isn't blocked on Argus inference.
-- Drop `--async` for the synchronous variant if you need a single-call result.
-
-**Anti-pattern — do not do this.** The following form leaks `APP_SECRET` into the Claude transcript and the JSONL session log every time it runs:
-```bash
-# WRONG: env-prefix appears verbatim in the recorded Bash command.
-REALSEE_APP_KEY="..." REALSEE_APP_SECRET="..." REALSEE_REGION=... \
-  node <skillDir>/scripts/run-argus.mjs ...
-```
-Always `source` the file first.
-
-**On `Cannot find module '@realsee/universal-uploader'`:** the plugin install dir does not have `node_modules`. Run `npm install --prefix <skillDir>` once, then retry the same command. (Claude Code does not auto-install plugin deps.)
-
-The JSON line on stdout is the in-progress state:
-
-```json
-{
-  "status": "in_progress",
-  "workspace_dir": "...",
-  "input_image_id": "...",
-  "vggt_type": "pinhole" | "pano",
-  "background_poll_pid": 12345,
-  ...
-}
-```
-
-Capture `workspace_dir` — it's the handle for Steps 4 and 5.
-
----
-
-## Step 4 — Poll until done
-
-A detached process is writing `result.json` under `workspace_dir`. Read it directly:
-
-```bash
-cat "<workspace_dir>/result.json" 2>/dev/null || echo '{"status":"in_progress"}'
-```
-
-Loop every ~5–10 seconds. Parse the JSON. Stop when `.status` is no longer `"in_progress"`. Argus inference typically takes seconds to a few minutes.
-
-If the detached poller dies (rare), resume from the workspace — same `source`-then-run pattern:
+For an existing ZIP:
 
 ```bash
 set -a; . ~/.realsee/credentials; set +a; \
-  node <skillDir>/scripts/run-argus.mjs --resume --workspace "<workspace_dir>" --json
+  node <skillDir>/scripts/run-argus.mjs start \
+  --zip "/absolute/path/input.zip" \
+  --workspace "/absolute/workspace-root" \
+  --yes --json
 ```
 
----
+If credentials already exist in the inherited shell, omit the `source` prefix. Capture `workspace_dir` from the JSON response; it is the durable run handle for later commands.
 
-## Step 5 — Report and open the result
+`start` validates and packages locally, uploads one ZIP, submits once, persists `task_code`, and returns. It does not poll in the background. Never automatically rerun `start` after `submission_unknown`: the submit operation is not idempotent and a blind retry may create a duplicate task.
 
-When `status === "success"`, the payload has:
+## 4. Query status explicitly
 
-- `task_id` — Argus task id.
-- `output_glb_path` — absolute path to the downloaded `.glb`.
-- `preview_url` — H5 preview URL on `h5.realsee.ai` (global) or `h5.realsee.cn` (CN) in the path form `/argus/{image|panorama}/task/{task_id}` (valid 7 days).
-- `download.bytes` — file size.
-- `elapsed_ms` — total wall time.
-
-Summarise to the user, then ask: **"Open the local GLB / open the H5 preview in your browser / both / neither?"**
-
-On a positive answer, open via the OS opener. Pick by platform — never use a different platform's command:
+Run one status query:
 
 ```bash
-case "$(uname -s)" in
-  Darwin)            open "<path-or-url>" ;;
-  Linux)             xdg-open "<path-or-url>" ;;
-  CYGWIN*|MINGW*|MSYS*) start "" "<path-or-url>" ;;
-  *)                 echo "Unsupported platform: $(uname -s)" >&2 ;;
-esac
+set -a; . ~/.realsee/credentials; set +a; \
+  node <skillDir>/scripts/run-argus.mjs status \
+  --workspace "<workspace_dir>" --json
 ```
 
-Open the GLB and/or the preview URL based on the user's choice.
+Interpret `task_status` as `queued`, `processing`, `succeeded`, or `failed`. When queued or processing, report the current state and query again later only when appropriate. There is no detached poller and no `--resume` mode.
 
-On `status === "error"`: surface `error` from the payload to the user. Offer to retry (run Step 3 again) or escalate.
+## 5. Collect a terminal result
 
----
+When the task succeeds, run:
 
-## Other configuration (rarely needed)
+```bash
+set -a; . ~/.realsee/credentials; set +a; \
+  node <skillDir>/scripts/run-argus.mjs collect \
+  --workspace "<workspace_dir>" --json
+```
 
-- `REALSEE_POLL_INTERVAL_MS` (default 5000) — gateway poll cadence inside `run-argus.mjs`.
-- `REALSEE_POLL_MAX_ATTEMPTS` (default 120) — overall poll budget.
+`collect` retains the original `output.zip`, safely extracts it, validates `output.json` and all referenced artifacts, and writes a local `result.json` index. Repeating `collect` is safe: a completed run is not resubmitted or downloaded twice.
 
-Both can also be passed as `--poll-interval-ms` / `--poll-max-attempts` flags.
+Report these fields separately:
+
+- `task_status`: remote lifecycle state;
+- `result_status`: algorithm result (`success`, `partial`, or `error`);
+- local `output_zip_path`, output directory, manifest, merged GLB, depth-map, pose, and optional intrinsics paths;
+- `missing_ids` and warnings.
+
+For `partial`, the CLI exits 0. Still show a prominent warning and the complete non-empty `missing_ids` list. For `error`, surface the sanitized error and treat the command as failed. Do not present temporary result URLs as durable output.
+
+## References
+
+- [Gateway workflow](references/api-workflow.md)
+- [Gateway OpenAPI](references/argus-gateway-openapi.json)
+- [Algorithm I/O contract](references/algorithm-io.md) / [中文](references/algorithm-io.zh-CN.md)
+- [`output.json` JSON Schema](references/argus-output.schema.json)
+- [2.0 migration guide](references/migration-v2.md) / [中文](references/migration-v2.zh-CN.md)
+- [Troubleshooting](references/troubleshooting.md)

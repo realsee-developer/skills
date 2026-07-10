@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "realsee-skills",
-  "description": "Realsee skills for Claude Code. Exposes the argus skill (Realsee Argus GLB output from local images).",
+  "description": "Realsee skills for Claude Code. Exposes Argus multi-panorama reconstruction with depth, merged GLB, and camera artifacts.",
   "author": {
     "name": "Realsee",
     "url": "https://github.com/realsee-developer"

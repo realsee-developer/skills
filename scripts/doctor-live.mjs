@@ -28,7 +28,7 @@ if (!process.env.REALSEE_APP_SECRET) {
   process.exit(1);
 }
 
-console.log('unable to verify capability: no-side-effect Realsee Argus/VGGT probe is not implemented');
+console.log('unable to verify capability: no-side-effect Realsee Argus probe is not implemented');
 if (channel === 'stable') {
   console.error('FAIL: stable channel requires a successful no-side-effect live capability probe or owner-confirmed equivalent');
   process.exit(1);

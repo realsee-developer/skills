@@ -10,7 +10,7 @@
 
 - Skill 名称，通常是 `argus`
 - 失败的命令
-- 是否使用了 `--async` 或 `--resume`
+- 失败的生命周期命令（`start`、`status` 或 `collect`）
 - 已脱敏的错误输出
 - 操作系统、Node.js 版本和 npm 版本
 
@@ -24,7 +24,7 @@
 - 期望输入和输出
 - 是否需要远程上传
 - 相关公开 API 参考或能力文档
-- 问题涉及本地 async mode、live usage、安装还是 agent runtime
+- 问题涉及本地 lifecycle state、live usage、产物校验、安装还是 agent runtime
 
 ## Pull Requests
 

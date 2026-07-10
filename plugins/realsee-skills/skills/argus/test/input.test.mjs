@@ -1,161 +1,199 @@
+import { createHash } from 'node:crypto';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { deflateRawSync } from 'node:zlib';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-import { tmpdir } from 'node:os';
-import {
-  ASPECT_RATIO_BOUNDS,
-  assertInputTypeMatchesDimensions,
-  assertJpeg,
-  detectInputTypeFromDimensions,
-  mapInputType,
-  readJpegDimensions
-} from '../src/input.mjs';
-import { buildJpegWithApp0, buildJpegWithDimensions } from './helpers/jpeg.mjs';
+import { normalizeInputZip } from '../src/archive.mjs';
+import { inspectPanoramaImage, validateImageFiles } from '../src/input.mjs';
+import { buildJpegFrame, buildPngHeader, buildWebpVp8x } from './helpers/images.mjs';
+import { writeStoredZip } from './helpers/zip.mjs';
 
-test('maps image input type', () => {
-  assert.deepEqual(mapInputType('image'), {
-    inputType: 'image',
-    vggtType: 'pinhole',
-    previewType: 'image'
-  });
-});
-
-test('maps panorama input type', () => {
-  assert.deepEqual(mapInputType('panorama'), {
-    inputType: 'panorama',
-    vggtType: 'pano',
-    previewType: 'panorama'
-  });
-});
-
-test('rejects invalid input type', () => {
-  assert.throws(() => mapInputType('video'), /inputType.*image.*panorama/);
-});
-
-test('accepts jpeg magic bytes', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'argus-input-'));
+test('accepts one JPEG, PNG, and WebP strict 2:1 RGB8 panorama', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-formats-'));
   try {
-    const file = join(root, 'image.jpg');
-    await writeFile(file, Buffer.from([0xff, 0xd8, 0xff, 0x00]));
-
-    const stat = await assertJpeg(file);
-
-    assert.equal(stat.isFile(), true);
-    assert.equal(stat.size, 4);
+    const fixtures = [
+      ['one.jpg', buildJpegFrame(4096, 2048), 'jpeg'],
+      ['two.png', buildPngHeader(4096, 2048), 'png'],
+      ['three.webp', buildWebpVp8x(4096, 2048), 'webp']
+    ];
+    for (const [name, bytes, format] of fixtures) {
+      const path = join(root, name);
+      await writeFile(path, bytes);
+      const image = await inspectPanoramaImage(path);
+      assert.equal(image.format, format);
+      assert.equal(image.width, 4096);
+      assert.equal(image.height, 2048);
+      assert.equal(image.channels, 3);
+      assert.equal(image.bitDepth, 8);
+    }
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test('rejects non-jpeg magic bytes', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'argus-input-'));
+test('accepts 99 images, rejects 100 before reading files, and sorts by NFC UTF-8 bytes', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-count-'));
   try {
-    const file = join(root, 'not-image.txt');
-    await writeFile(file, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
-
-    await assert.rejects(() => assertJpeg(file), /JPEG.*magic/i);
+    const paths = [];
+    for (let index = 98; index >= 0; index -= 1) {
+      const path = join(root, `${String(index).padStart(6, '0')}.jpg`);
+      await writeFile(path, buildJpegFrame(2048, 1024));
+      paths.push(path);
+    }
+    const validated = await validateImageFiles(paths);
+    assert.equal(validated.images.length, 99);
+    assert.equal(validated.images[0].filename, '000000.jpg');
+    assert.equal(validated.images[98].filename, '000098.jpg');
+    await assert.rejects(
+      () => validateImageFiles(Array.from({ length: 100 }, (_, index) => `/missing/${index}.jpg`)),
+      /1\.\.99 images; got 100/
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test('readJpegDimensions reads width/height from SOF0', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'argus-jpeg-'));
+test('strictly rejects square and non-2:1 images, non-RGB channels, alpha, and non-8-bit', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-invalid-'));
+  const cases = [
+    ['square.jpg', buildJpegFrame(1024, 1024), /v1\.0\.2/],
+    ['ratio.jpg', buildJpegFrame(4096, 2050), /strict 2:1/],
+    ['gray.jpg', buildJpegFrame(4096, 2048, { channels: 1 }), /exactly 3 RGB channels/],
+    ['rgba.png', buildPngHeader(4096, 2048, { colorType: 6 }), /exactly 3 RGB channels/],
+    ['deep.png', buildPngHeader(4096, 2048, { bitDepth: 16 }), /must be 8-bit/],
+    ['alpha.webp', buildWebpVp8x(4096, 2048, { alpha: true }), /exactly 3 RGB channels/]
+  ];
   try {
-    const file = join(root, 'photo.jpg');
-    await writeFile(file, buildJpegWithDimensions(4096, 2048));
-    assert.deepEqual(await readJpegDimensions(file), { width: 4096, height: 2048 });
+    for (const [name, bytes, pattern] of cases) {
+      const path = join(root, name);
+      await writeFile(path, bytes);
+      await assert.rejects(() => inspectPanoramaImage(path), pattern);
+    }
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test('readJpegDimensions skips APP0 and reads SOF0 dimensions', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'argus-jpeg-'));
+test('resolution below 2048x1024 is a warning, not a failure', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-warning-'));
   try {
-    const file = join(root, 'photo.jpg');
-    await writeFile(file, buildJpegWithApp0(1920, 1080));
-    assert.deepEqual(await readJpegDimensions(file), { width: 1920, height: 1080 });
+    const path = join(root, 'small.jpg');
+    await writeFile(path, buildJpegFrame(1024, 512));
+    const validated = await validateImageFiles([path]);
+    assert.equal(validated.images.length, 1);
+    assert.equal(validated.warnings[0].code, 'LOW_RESOLUTION');
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test('readJpegDimensions rejects non-JPEG input', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'argus-jpeg-'));
+test('rejects duplicate stems and NFC/case-fold filename collisions', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-names-'));
   try {
-    const file = join(root, 'not-jpeg.bin');
-    await writeFile(file, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
-    await assert.rejects(() => readJpegDimensions(file), /JPEG/i);
+    const jpg = join(root, 'Room.jpg');
+    const png = join(root, 'Room.png');
+    const folded = join(root, 'room.webp');
+    const decomposed = join(root, 'e\u0301.jpg');
+    const composed = join(root, 'é.png');
+    await writeFile(jpg, buildJpegFrame(2048, 1024));
+    await writeFile(png, buildPngHeader(2048, 1024));
+    await writeFile(folded, buildWebpVp8x(2048, 1024));
+    await writeFile(decomposed, buildJpegFrame(2048, 1024));
+    await writeFile(composed, buildPngHeader(2048, 1024));
+    await assert.rejects(() => validateImageFiles([jpg, png]), /Duplicate panorama filename stem/);
+    await assert.rejects(() => validateImageFiles([jpg, folded]), /Case-folding filename collision/);
+    await assert.rejects(() => validateImageFiles([decomposed, composed]), /Duplicate panorama filename stem/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test('aspect-ratio bounds are 2:1 ±0.05 and 1:1 ±0.05', () => {
-  assert.equal(ASPECT_RATIO_BOUNDS.panorama.target, 2.0);
-  assert.equal(ASPECT_RATIO_BOUNDS.panorama.min, 1.95);
-  assert.equal(ASPECT_RATIO_BOUNDS.panorama.max, 2.05);
-  assert.equal(ASPECT_RATIO_BOUNDS.image.target, 1.0);
-  assert.equal(ASPECT_RATIO_BOUNDS.image.min, 0.95);
-  assert.equal(ASPECT_RATIO_BOUNDS.image.max, 1.05);
+test('ZIP mode rejects nested, traversal, encrypted, duplicate, corrupt CRC, and damaged archives', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-zip-invalid-'));
+  const image = buildJpegFrame(2048, 1024);
+  const cases = [
+    ['nested.zip', [{ name: 'folder/one.jpg', data: image }], /archive root|root-level|root files/i],
+    ['traversal.zip', [{ name: '../one.jpg', data: image }], /traversal|unsafe|absolute|relative path/i],
+    ['encrypted.zip', [{
+      name: 'one.jpg',
+      data: image,
+      storedData: Buffer.concat([Buffer.alloc(12), image]),
+      flags: 0x0801
+    }], /encrypted/i],
+    ['duplicate.zip', [{ name: 'one.jpg', data: image }, { name: 'ONE.jpg', data: image }], /collision|duplicate/i],
+    ['crc.zip', [{ name: 'one.jpg', data: image, crc32: 1 }], /CRC/i]
+  ];
+  try {
+    for (const [name, entries, pattern] of cases) {
+      const input = join(root, name);
+      await writeStoredZip(input, entries);
+      await assert.rejects(
+        () => normalizeInputZip(input, join(root, `${name}.stage`), join(root, `${name}.normalized`)),
+        pattern
+      );
+    }
+    const damaged = join(root, 'damaged.zip');
+    await writeFile(damaged, Buffer.from('not a zip'));
+    await assert.rejects(
+      () => normalizeInputZip(damaged, join(root, 'damaged-stage'), join(root, 'damaged-normalized')),
+      /ZIP|central directory|end of central/i
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
-test('detectInputTypeFromDimensions picks panorama for 2:1 within tolerance', () => {
-  assert.equal(detectInputTypeFromDimensions({ width: 4096, height: 2048 }), 'panorama');
-  assert.equal(detectInputTypeFromDimensions({ width: 8000, height: 4000 }), 'panorama');
-  assert.equal(detectInputTypeFromDimensions({ width: 3900, height: 2000 }), 'panorama'); // 1.950 exactly
-  assert.equal(detectInputTypeFromDimensions({ width: 4100, height: 2000 }), 'panorama'); // 2.050 exactly
+test('ZIP input is safely normalized and repacked byte-for-byte deterministically', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-zip-normalize-'));
+  try {
+    const input = join(root, 'input.zip');
+    await writeStoredZip(input, [
+      { name: 'z.webp', data: buildWebpVp8x(2048, 1024) },
+      { name: 'a.jpg', data: buildJpegFrame(2048, 1024) }
+    ]);
+    const first = join(root, 'first.zip');
+    const second = join(root, 'second.zip');
+    const one = await normalizeInputZip(input, join(root, 'stage-one'), first);
+    const two = await normalizeInputZip(input, join(root, 'stage-two'), second);
+    assert.deepEqual(one.images.map((image) => image.filename), ['a.jpg', 'z.webp']);
+    assert.equal(one.sha256, two.sha256);
+    assert.deepEqual(await readFile(first), await readFile(second));
+    assert.equal(createHash('sha256').update(await readFile(first)).digest('hex'), one.sha256);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
-test('detectInputTypeFromDimensions picks image for 1:1 within tolerance', () => {
-  assert.equal(detectInputTypeFromDimensions({ width: 1024, height: 1024 }), 'image');
-  assert.equal(detectInputTypeFromDimensions({ width: 2048, height: 2048 }), 'image');
-  assert.equal(detectInputTypeFromDimensions({ width: 1000, height: 1050 }), 'image'); // 0.952
-  assert.equal(detectInputTypeFromDimensions({ width: 1050, height: 1000 }), 'image'); // 1.050
-});
+test('ZIP extraction rejects bomb-like compression ratios and insufficient disk budgets', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-zip-bomb-'));
+  try {
+    const expanded = Buffer.concat([buildJpegFrame(2048, 1024), Buffer.alloc(1024 * 1024)]);
+    const bomb = join(root, 'bomb.zip');
+    await writeStoredZip(bomb, [{
+      name: 'one.jpg',
+      data: expanded,
+      storedData: deflateRawSync(expanded),
+      method: 8
+    }]);
+    await assert.rejects(
+      () => normalizeInputZip(bomb, join(root, 'bomb-stage'), join(root, 'bomb-normalized')),
+      /compression-?ratio/i
+    );
 
-test('detectInputTypeFromDimensions rejects anything that is neither 2:1 nor 1:1', () => {
-  assert.throws(() => detectInputTypeFromDimensions({ width: 1920, height: 1080 }), /Unsupported aspect ratio.*2:1.*1:1/s);  // 16:9
-  assert.throws(() => detectInputTypeFromDimensions({ width: 4000, height: 3000 }), /Unsupported aspect ratio/);             // 4:3
-  assert.throws(() => detectInputTypeFromDimensions({ width: 3000, height: 2000 }), /Unsupported aspect ratio/);             // 3:2
-  assert.throws(() => detectInputTypeFromDimensions({ width: 5000, height: 2000 }), /Unsupported aspect ratio/);             // 2.5:1
-  assert.throws(() => detectInputTypeFromDimensions({ width: 1200, height: 1000 }), /Unsupported aspect ratio/);             // 1.2:1 — outside ±0.05
-});
-
-test('detectInputTypeFromDimensions rejects invalid input', () => {
-  assert.throws(() => detectInputTypeFromDimensions({ width: 0, height: 100 }), /dimensions/);
-  assert.throws(() => detectInputTypeFromDimensions({ width: 100, height: -1 }), /dimensions/);
-  assert.throws(() => detectInputTypeFromDimensions({ width: NaN, height: 100 }), /dimensions/);
-  assert.throws(() => detectInputTypeFromDimensions({}), /dimensions/);
-});
-
-test('assertInputTypeMatchesDimensions accepts matching pairs', () => {
-  // panorama on 2:1
-  assert.doesNotThrow(() => assertInputTypeMatchesDimensions('panorama', { width: 4096, height: 2048 }));
-  // image on 1:1
-  assert.doesNotThrow(() => assertInputTypeMatchesDimensions('image', { width: 1024, height: 1024 }));
-});
-
-test('assertInputTypeMatchesDimensions rejects mismatched pairs', () => {
-  assert.throws(
-    () => assertInputTypeMatchesDimensions('panorama', { width: 1024, height: 1024 }),
-    /--type panorama.*2:1/
-  );
-  assert.throws(
-    () => assertInputTypeMatchesDimensions('image', { width: 4096, height: 2048 }),
-    /--type image.*1:1/
-  );
-  assert.throws(
-    () => assertInputTypeMatchesDimensions('panorama', { width: 1920, height: 1080 }),
-    /--type panorama.*2:1/
-  );
-});
-
-test('assertInputTypeMatchesDimensions rejects invalid input type', () => {
-  assert.throws(
-    () => assertInputTypeMatchesDimensions('video', { width: 100, height: 100 }),
-    /inputType.*image.*panorama/
-  );
+    const ordinary = join(root, 'ordinary.zip');
+    await writeStoredZip(ordinary, [{ name: 'one.jpg', data: buildJpegFrame(2048, 1024) }]);
+    await assert.rejects(
+      () => normalizeInputZip(
+        ordinary,
+        join(root, 'disk-stage'),
+        join(root, 'disk-normalized'),
+        { availableBytes: 0 }
+      ),
+      /Insufficient disk space/
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });

@@ -8,7 +8,7 @@ Realsee Skills is published to expose supported skill capabilities. External pul
 
 1. Read the relevant skill README under `.agents/skills/`.
 2. Check `release-channel.json` for the current skill state.
-3. Avoid committing generated outputs, credentials, account identifiers, private URLs, `.env` files, downloaded GLB files, or temporary workspace files.
+3. Avoid committing generated outputs, credentials, account identifiers, private URLs, `.env` files, downloaded Argus archives, extracted artifacts, or temporary workspace files.
 
 ## Maintainer Development Flow
 

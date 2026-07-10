@@ -25,7 +25,7 @@ Never commit:
 - Internal URLs
 - Account identifiers
 - Private result URLs
-- Downloaded GLB files or temporary workspaces
+- Downloaded `output.zip`, extracted Argus artifacts, or temporary workspaces
 
 The repository includes `npm run scan:secrets`, but automated scanning is not a substitute for reviewing changes before commit.
 

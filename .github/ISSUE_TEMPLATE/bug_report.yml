@@ -32,11 +32,13 @@ body:
   - type: dropdown
     id: mode
     attributes:
-      label: Execution mode
+      label: Lifecycle command
       options:
-        - Synchronous (default)
-        - Asynchronous (--async)
-        - Resume (--resume)
+        - Start
+        - Status
+        - Collect
+        - Input validation
+        - Output validation
         - Not sure
     validations:
       required: true
@@ -59,4 +61,3 @@ body:
       options:
         - label: I removed secrets, generated credentials, private URLs, and account identifiers.
           required: true
-
