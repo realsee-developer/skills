@@ -17,6 +17,7 @@ import {
   getWorkspacePaths,
   readResult,
   readState,
+  updateState,
   withWorkspaceLock,
   writeResult,
   writeState
@@ -178,10 +179,13 @@ export class ArgusTaskLifecycle {
     const state = await requireState(absoluteWorkspace);
     if (state.phase === 'submission_unknown') return publicStatus(state);
     if (!state.task_code) throw new Error('state.json does not contain task_code');
-    if (await readResult(absoluteWorkspace)) return publicStatus(state);
+    const existing = await readResult(absoluteWorkspace);
+    if (existing) {
+      return publicStatus(await reconcileResultState(absoluteWorkspace, existing, this.now()));
+    }
 
     const snapshot = normalizeRemoteSnapshot(await this.taskPort.inspect(state.task_code));
-    const next = await persistSnapshot(absoluteWorkspace, state, snapshot, this.now());
+    const next = await persistSnapshot(absoluteWorkspace, snapshot, this.now());
     return publicStatus(next);
   }
 
@@ -190,7 +194,10 @@ export class ArgusTaskLifecycle {
     await requireState(absoluteWorkspace);
     return withWorkspaceLock(absoluteWorkspace, async () => {
       const existing = await readResult(absoluteWorkspace);
-      if (existing) return existing;
+      if (existing) {
+        await reconcileResultState(absoluteWorkspace, existing, this.now());
+        return existing;
+      }
 
       let state = await requireState(absoluteWorkspace);
       if (state.phase === 'submission_unknown') {
@@ -202,7 +209,10 @@ export class ArgusTaskLifecycle {
       if (!state.task_code) throw new Error('state.json does not contain task_code');
 
       const snapshot = normalizeRemoteSnapshot(await this.taskPort.inspect(state.task_code));
-      state = await persistSnapshot(absoluteWorkspace, state, snapshot, this.now());
+      state = await persistSnapshot(absoluteWorkspace, snapshot, this.now());
+      if (state.task_status !== snapshot.taskStatus) {
+        return publicStatus(state);
+      }
       if (snapshot.taskStatus === 'queued' || snapshot.taskStatus === 'processing') {
         return publicStatus(state);
       }
@@ -313,27 +323,73 @@ function normalizeRemoteSnapshot(info) {
   };
 }
 
-async function persistSnapshot(workspaceDir, state, snapshot, now) {
+async function persistSnapshot(workspaceDir, snapshot, now) {
   const phase = {
     queued: 'submitted',
     processing: 'processing',
     succeeded: 'succeeded',
     failed: 'failed'
   }[snapshot.taskStatus];
-  const resultMetadata = snapshot.taskStatus === 'succeeded'
-    ? {
-        path: snapshot.path,
-        md5: snapshot.md5,
-        size: snapshot.size,
-        expiration_timestamp: snapshot.expirationTimestamp
-      }
-    : state.result_metadata;
-  return writeState(workspaceDir, {
-    phase,
-    task_status: snapshot.taskStatus,
-    result_metadata: resultMetadata,
-    remote_error: snapshot.taskStatus === 'failed' ? snapshot.errorMessage : null,
-    checked_at: now.toISOString()
+  return updateState(workspaceDir, (current) => {
+    if (
+      ['succeeded', 'failed'].includes(current.task_status) &&
+      current.task_status !== snapshot.taskStatus
+    ) {
+      return { ...current, checked_at: now.toISOString() };
+    }
+    if ((PHASE_RANK[current.phase] ?? -1) > (PHASE_RANK[phase] ?? -1)) {
+      return { ...current, checked_at: now.toISOString() };
+    }
+    const resultMetadata = snapshot.taskStatus === 'succeeded'
+      ? {
+          path: snapshot.path,
+          md5: snapshot.md5,
+          size: snapshot.size,
+          expiration_timestamp: snapshot.expirationTimestamp
+        }
+      : current.result_metadata;
+    return {
+      ...current,
+      phase,
+      task_status: snapshot.taskStatus,
+      result_metadata: resultMetadata,
+      remote_error: snapshot.taskStatus === 'failed' ? snapshot.errorMessage : null,
+      checked_at: now.toISOString()
+    };
+  });
+}
+
+const PHASE_RANK = Object.freeze({
+  submitted: 0,
+  processing: 1,
+  succeeded: 2,
+  finalizing: 3,
+  completed: 4,
+  failed: 4
+});
+
+async function reconcileResultState(workspaceDir, result, now) {
+  if (!['succeeded', 'failed'].includes(result?.task_status)) {
+    throw new Error(`result.json contains invalid task_status ${String(result?.task_status)}`);
+  }
+  if (!['success', 'partial', 'error'].includes(result?.result_status)) {
+    throw new Error(`result.json contains invalid result_status ${String(result?.result_status)}`);
+  }
+  return updateState(workspaceDir, (current) => {
+    if (current.task_code && result.task_code && current.task_code !== result.task_code) {
+      throw new Error('result.json task_code does not match state.json');
+    }
+    return {
+      ...current,
+      phase: result.task_status === 'succeeded' ? 'completed' : 'failed',
+      task_status: result.task_status,
+      result_status: result.result_status,
+      completed_at: result.task_status === 'succeeded'
+        ? current.completed_at ?? now.toISOString()
+        : current.completed_at,
+      last_error: result.task_status === 'succeeded' ? null : current.last_error,
+      remote_error: result.task_status === 'succeeded' ? null : current.remote_error
+    };
   });
 }
 

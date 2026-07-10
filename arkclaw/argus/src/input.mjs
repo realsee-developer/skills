@@ -1,5 +1,6 @@
 import { open } from 'node:fs/promises';
 import { basename, extname } from 'node:path';
+import { unicodeFullCaseFold } from './unicode-case-fold.mjs';
 
 const SUPPORTED_PANORAMA_EXTENSIONS = new Map([
   ['.jpg', 'jpeg'],
@@ -153,7 +154,7 @@ export async function validateImageFiles(files, options = {}) {
     }
     exactStems.set(image.stem, image.filename);
 
-    const folded = caseFold(image.stem);
+    const folded = unicodeFullCaseFold(image.stem);
     const priorFolded = foldedStems.get(folded);
     if (priorFolded) {
       throw new Error(
@@ -185,10 +186,6 @@ function normalizeArchiveFileName(value) {
     throw new Error(`Panorama image filename is too long for ZIP: "${value}".`);
   }
   return normalized;
-}
-
-function caseFold(value) {
-  return value.normalize('NFC').toLocaleLowerCase('und');
 }
 
 function compareUtf8(left, right) {

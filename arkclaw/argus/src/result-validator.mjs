@@ -1,5 +1,7 @@
 import { lstat, open, readFile, readdir } from 'node:fs/promises';
 import { extname, join, relative, resolve, sep } from 'node:path';
+import Ajv2020 from 'ajv/dist/2020.js';
+import { unicodeFullCaseFold } from './unicode-case-fold.mjs';
 
 const MANIFEST_VERSION = '1.0';
 const COORDINATE_SYSTEM = 'right-handed, Y-up';
@@ -8,6 +10,18 @@ const GLB_MAGIC = Buffer.from('glTF');
 const CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/u;
 const IMAGE_EXTENSION = /\.(?:jpe?g|png|webp)$/iu;
 const MAX_JSON_BYTES = 10 * 1024 * 1024;
+const OUTPUT_SCHEMA = JSON.parse(await readFile(
+  new URL('../references/argus-output.schema.json', import.meta.url),
+  'utf8'
+));
+const schemaCompiler = new Ajv2020({ allErrors: true, strict: true });
+const validateOutputSchema = schemaCompiler.compile(OUTPUT_SCHEMA);
+const validateOutputBranchByStatus = new Map(
+  ['success', 'partial', 'error'].map((status) => [
+    status,
+    schemaCompiler.getSchema(`${OUTPUT_SCHEMA.$id}#/$defs/${status}`)
+  ])
+);
 
 /**
  * Validate an already safely extracted Argus output directory and return a
@@ -23,6 +37,7 @@ export async function validateArgusResult(outputDir, options = {}) {
 
   const manifestPath = await assertRegularFile(root, 'output.json', 'output manifest');
   const manifest = await readJsonObject(manifestPath, 'output.json');
+  assertCanonicalOutputSchema(manifest);
   assertString(manifest.version, 'output.json.version');
   if (manifest.version !== MANIFEST_VERSION) {
     throw new Error(
@@ -37,6 +52,29 @@ export async function validateArgusResult(outputDir, options = {}) {
     return validateErrorResult(root, manifestPath, manifest);
   }
   return validateArtifactResult(root, manifestPath, manifest, options);
+}
+
+function assertCanonicalOutputSchema(manifest) {
+  if (validateOutputSchema(manifest)) return;
+
+  let relevantErrors = validateOutputSchema.errors ?? [];
+  const branchValidator = validateOutputBranchByStatus.get(manifest.status);
+  if (branchValidator) {
+    branchValidator(manifest);
+    if (branchValidator.errors?.length) relevantErrors = branchValidator.errors;
+  }
+  const details = relevantErrors.map(formatSchemaError).join('; ');
+  throw new Error(
+    `output.json violates canonical JSON Schema 2020-12${details ? `: ${details}` : '.'}`
+  );
+}
+
+function formatSchemaError(error) {
+  const path = `output.json${error.instancePath ?? ''}`;
+  if (error.keyword === 'additionalProperties') {
+    return `${path} contains unsupported field ${JSON.stringify(error.params.additionalProperty)}`;
+  }
+  return `${path} ${error.message ?? `failed ${error.keyword}`}`;
 }
 
 // Lifecycle-facing compatibility name. This preserves the validator as the
@@ -178,7 +216,7 @@ async function validateArtifactResult(root, manifestPath, manifest, options) {
       sourceFilename: nameMapping[imageId],
       depth: depthById[imageId],
       pose: poseById[imageId],
-      ...(intrinsicsById ? { intrinsics: intrinsicsById[imageId] } : {})
+      ...(intrinsicsById?.[imageId] ? { intrinsics: intrinsicsById[imageId] } : {})
     }))
   };
 }
@@ -191,7 +229,7 @@ function validateNameMapping(value) {
     validateImageId(imageId, 'output.json.name_mapping key');
     assertSafeRootImageName(filename, `output.json.name_mapping[${JSON.stringify(imageId)}]`);
     const stem = filename.slice(0, -extname(filename).length);
-    const folded = caseFold(stem);
+    const folded = unicodeFullCaseFold(stem);
     const prior = foldedStems.get(folded);
     if (prior) {
       throw new Error(`name_mapping contains duplicate or case-folding filename stems: "${prior}" and "${filename}".`);
@@ -303,6 +341,11 @@ async function validateIntrinsics(root, value, successfulIds, expectedFiles) {
     if (Object.hasOwn(byId, item.image_id)) {
       throw new Error(`Duplicate intrinsics for image_id "${item.image_id}".`);
     }
+    if (!successfulIds.has(item.image_id)) {
+      throw new Error(
+        `Intrinsics image_id "${item.image_id}" is absent from successful inputs.`
+      );
+    }
     const expectedPath = `intrinsics/${item.image_id}_intrinsics.json`;
     if (item.path !== expectedPath) {
       throw new Error(`Intrinsics "${item.image_id}" must use path "${expectedPath}".`);
@@ -333,7 +376,6 @@ async function validateIntrinsics(root, value, successfulIds, expectedFiles) {
     expectedFiles.add(item.path);
     byId[item.image_id] = { path: item.path, absolutePath, ...intrinsics };
   }
-  assertExactIdSet(new Set(Object.keys(byId)), successfulIds, 'intrinsics');
   return byId;
 }
 
@@ -556,8 +598,4 @@ function assertNonEmptyString(value, label) {
 
 function compareUtf8(left, right) {
   return Buffer.compare(Buffer.from(left, 'utf8'), Buffer.from(right, 'utf8'));
-}
-
-function caseFold(value) {
-  return value.normalize('NFC').toLocaleLowerCase('und');
 }

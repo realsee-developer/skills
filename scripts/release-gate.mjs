@@ -11,6 +11,9 @@ const CI_COMMANDS = [
   ['npm', ['run', 'validate:repo-boundary']],
   ['npm', ['run', 'validate:skills']],
   ['npm', ['run', 'rebuild']],
+  ['node', ['scripts/check-generated-clean.mjs']],
+  ['npm', ['run', 'smoke']],
+  ['node', ['scripts/check-worktree-clean.mjs']],
   ['npm', ['run', 'validate:channel-metadata']],
   ['npm', ['run', 'test:skill']],
   ['npm', ['--prefix', '.agents/skills/argus', 'run', 'audit:prod']]

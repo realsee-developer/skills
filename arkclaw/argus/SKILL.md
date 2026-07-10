@@ -13,7 +13,21 @@ Use this Skill to submit 1–99 exact 2:1 equirectangular panoramas to Realsee A
 
 Argus is a remote upload. Do not upload until the user has selected the input and consented. Never print, log, or persist credentials, upload tokens, presigned URLs, or raw provider errors. Do not open output files unless the user asks.
 
-## 1. Resolve credentials
+## 1. Ensure runtime dependencies
+
+Skill installers copy the canonical package but may not install its Node.js dependencies. Before the first Argus command in an installed Skill directory, check all four runtime packages without printing any sensitive data. If any are absent, install the exact lockfile once:
+
+```bash
+test -f "<skillDir>/node_modules/@realsee/universal-uploader/package.json" \
+  && test -f "<skillDir>/node_modules/@aws-sdk/client-s3/package.json" \
+  && test -f "<skillDir>/node_modules/ajv/package.json" \
+  && test -f "<skillDir>/node_modules/yauzl/package.json" \
+  || (cd "<skillDir>" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
+```
+
+Do not replace `npm ci` with an unlocked install. If the package cannot be resolved, stop and report the install error; do not begin an upload.
+
+## 2. Resolve credentials
 
 The runtime requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`). The Gateway base is unchanged: global uses `app-gateway.realsee.ai`; CN uses `app-gateway.realsee.cn`. In the CN-only Arkclaw distribution, use `cn` and do not offer the global region.
 
@@ -36,7 +50,7 @@ Resolve values in the existing order:
 
 3. Otherwise ask for region, APP_KEY, and APP_SECRET one field per turn. Never repeat a supplied value. If the user explicitly chooses to persist them, retain the existing mode-0600 `~/.realsee/credentials` flow. Never place credential values in a CLI argument or environment prefix recorded by the host.
 
-## 2. Select the input
+## 3. Select the input
 
 Two mutually exclusive modes are supported:
 
@@ -47,7 +61,7 @@ The CLI performs authoritative validation and deterministic packaging. Inputs mu
 
 ZIP mode is not a validation bypass. The CLI safely extracts, validates, Unicode-normalizes, sorts, and repacks it before upload. Do not manually rename output IDs: consumers trust the algorithm's `name_mapping`.
 
-## 3. Start once
+## 4. Start once
 
 The user selecting files for an Argus request is upload consent. If the user has not selected files, ask one question that also states the files will leave the machine for remote processing. Do not ask a redundant second confirmation.
 
@@ -76,7 +90,7 @@ If credentials already exist in the inherited shell, omit the `source` prefix. C
 
 `start` validates and packages locally, uploads one ZIP, submits once, persists `task_code`, and returns. It does not poll in the background. Never automatically rerun `start` after `submission_unknown`: the submit operation is not idempotent and a blind retry may create a duplicate task.
 
-## 4. Query status explicitly
+## 5. Query status explicitly
 
 Run one status query:
 
@@ -88,7 +102,7 @@ set -a; . ~/.realsee/credentials; set +a; \
 
 Interpret `task_status` as `queued`, `processing`, `succeeded`, or `failed`. When queued or processing, report the current state and query again later only when appropriate. There is no detached poller and no `--resume` mode.
 
-## 5. Collect a terminal result
+## 6. Collect a terminal result
 
 When the task succeeds, run:
 

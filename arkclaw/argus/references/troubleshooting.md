@@ -1,5 +1,7 @@
 # Troubleshooting
 
+[English](troubleshooting.md) | [简体中文](troubleshooting.zh-CN.md)
+
 ## Missing credentials or region
 
 Argus requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`). Never place credential values in command arguments, logs, issue reports, `state.json`, or `result.json`.

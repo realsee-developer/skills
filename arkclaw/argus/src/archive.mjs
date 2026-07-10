@@ -16,6 +16,7 @@ import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { validateImageFiles } from './input.mjs';
+import { unicodeFullCaseFold } from './unicode-case-fold.mjs';
 
 const require = createRequire(import.meta.url);
 const ZIP_LOCAL_FILE_HEADER = 0x04034b50;
@@ -64,7 +65,7 @@ export async function writeDeterministicZip(entries, outputPath, options = {}) {
       throw new Error('Each deterministic ZIP entry requires a local path.');
     }
     const name = normalizeRootFileName(requestedName);
-    const folded = caseFold(name);
+    const folded = unicodeFullCaseFold(name);
     const prior = seenNames.get(folded);
     if (prior) {
       throw new Error(`Duplicate or case-folding ZIP entry collision: "${prior}" and "${name}".`);
@@ -404,7 +405,7 @@ function inspectZipEntry(entry, options) {
 }
 
 function assertNoPathCollision(descriptor, entries, seen) {
-  const folded = caseFold(descriptor.name);
+  const folded = unicodeFullCaseFold(descriptor.name);
   const prior = seen.get(folded);
   if (prior) {
     throw new Error(`Duplicate or case-folding ZIP path collision: "${prior}" and "${descriptor.name}".`);
@@ -412,7 +413,7 @@ function assertNoPathCollision(descriptor, entries, seen) {
   const components = descriptor.name.split('/');
   for (let index = 1; index < components.length; index += 1) {
     const parent = components.slice(0, index).join('/');
-    const parentEntry = seen.get(caseFold(parent));
+    const parentEntry = seen.get(unicodeFullCaseFold(parent));
     if (parentEntry && !entries.find((entry) => entry.name === parentEntry)?.directory) {
       throw new Error(`ZIP file/directory path collision at "${parent}".`);
     }
@@ -804,10 +805,6 @@ function updateCrc32(crc, buffer) {
     value = CRC32_TABLE[(value ^ byte) & 0xff] ^ (value >>> 8);
   }
   return value >>> 0;
-}
-
-function caseFold(value) {
-  return value.normalize('NFC').toLocaleLowerCase('und');
 }
 
 async function sha256File(path, signal) {

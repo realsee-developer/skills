@@ -19,7 +19,10 @@
 
 import { mkdir, rm, stat, readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
-import { dirname, join, relative, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+import { listDistributionFiles } from './distribution-files.mjs';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const skillSource = join(repoRoot, 'arkclaw', 'argus');
@@ -40,8 +43,8 @@ async function readJson(path) {
   return JSON.parse(await readFile(path, 'utf8'));
 }
 
-async function assertFrontmatterMatchesArkclawSpec() {
-  const skillMd = join(skillSource, 'SKILL.md');
+async function assertFrontmatterMatchesArkclawSpec(activeSkillSource) {
+  const skillMd = join(activeSkillSource, 'SKILL.md');
   const text = await readFile(skillMd, 'utf8');
   const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!match) throw new Error('SKILL.md is missing YAML frontmatter');
@@ -63,7 +66,7 @@ async function assertFrontmatterMatchesArkclawSpec() {
     throw new Error('SKILL.md frontmatter must include metadata.version for arkclaw');
   }
 
-  const pkg = await readJson(join(skillSource, 'package.json'));
+  const pkg = await readJson(join(activeSkillSource, 'package.json'));
   if (pkg.version !== versionMatch[1]) {
     throw new Error(
       `package.json version (${pkg.version}) does not match SKILL.md metadata.version (${versionMatch[1]})`
@@ -71,30 +74,33 @@ async function assertFrontmatterMatchesArkclawSpec() {
   }
 }
 
-async function main() {
-  if (!(await exists(skillSource))) {
-    throw new Error(`missing arkclaw skill source: ${relative(repoRoot, skillSource)}`);
+export async function buildArkclawZip(options = {}) {
+  const activeRepoRoot = options.repoRoot ?? repoRoot;
+  const activeSkillSource = options.skillSource ?? skillSource;
+  const activeDistDir = options.distDir ?? distDir;
+  const activeZipPath = options.zipPath ?? join(activeDistDir, 'argus.zip');
+
+  if (!(await exists(activeSkillSource))) {
+    throw new Error(`missing arkclaw skill source: ${relative(activeRepoRoot, activeSkillSource)}`);
   }
 
-  await assertFrontmatterMatchesArkclawSpec();
+  await assertFrontmatterMatchesArkclawSpec(activeSkillSource);
 
-  await mkdir(distDir, { recursive: true });
-  if (await exists(zipPath)) {
-    await rm(zipPath);
+  await mkdir(activeDistDir, { recursive: true });
+  if (await exists(activeZipPath)) {
+    await rm(activeZipPath);
   }
 
-  // Run `zip` from the parent of the skill dir, so the archive's top-level
-  // entry is `argus/` (per agentskills.io convention).
-  const parent = dirname(skillSource);
-  const entry = 'argus';
-  const excludes = [
-    `${entry}/node_modules/*`,
-    `${entry}/.DS_Store`,
-    `${entry}/**/.DS_Store`,
-    `${entry}/.git/*`
-  ];
-
-  const args = ['-r', '-q', zipPath, entry, '-x', ...excludes];
+  // Enumerate the exact distributable files first. This applies the repository
+  // .gitignore to every entry, so ignored credentials and local artifacts can
+  // never enter the archive even if someone injects them directly under the
+  // generated Arkclaw tree after sync.
+  const files = await listDistributionFiles({ repoRoot: activeRepoRoot, sourceRoot: activeSkillSource });
+  if (files.length === 0) throw new Error('Arkclaw distribution contains no files');
+  const parent = dirname(activeSkillSource);
+  const entry = basename(activeSkillSource);
+  const archiveEntries = files.map((file) => `${entry}/${file.split(sep).join('/')}`);
+  const args = ['-q', activeZipPath, '--', ...archiveEntries];
   const result = spawnSync('zip', args, { cwd: parent, stdio: 'inherit' });
   if (result.error) {
     if (result.error.code === 'ENOENT') {
@@ -106,11 +112,16 @@ async function main() {
     throw new Error(`zip failed with exit code ${result.status}`);
   }
 
-  const archiveStat = await stat(zipPath);
-  console.log(`arkclaw zip ok: ${relative(repoRoot, zipPath)} (${(archiveStat.size / 1024).toFixed(1)} KB)`);
+  const archiveStat = await stat(activeZipPath);
+  console.log(
+    `arkclaw zip ok: ${relative(activeRepoRoot, activeZipPath)} (${(archiveStat.size / 1024).toFixed(1)} KB)`
+  );
+  return activeZipPath;
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error?.stack || error}\n`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  buildArkclawZip().catch((error) => {
+    process.stderr.write(`${error?.stack || error}\n`);
+    process.exitCode = 1;
+  });
+}

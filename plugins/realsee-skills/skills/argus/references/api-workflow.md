@@ -1,5 +1,7 @@
 # Argus Gateway Workflow
 
+[English](api-workflow.md) | [简体中文](api-workflow.zh-CN.md)
+
 This document records the public Gateway workflow used by Argus Skill 2.x. The machine-readable contract is [argus-gateway-openapi.json](argus-gateway-openapi.json).
 
 ## 1. Preflight and normalization
