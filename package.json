@@ -1,6 +1,6 @@
 {
   "name": "realsee-skills",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "Source-available Realsee agent skill capability distribution.",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
@@ -18,7 +18,9 @@
     "skills",
     "agents",
     "argus",
-    "vggt"
+    "panorama",
+    "point-cloud",
+    "depth-map"
   ],
   "engines": {
     "node": ">=22",
@@ -27,7 +29,7 @@
   "scripts": {
     "ci": "npm run scan:secrets && npm run validate:docs && npm run validate:ai && npm run validate:repo-boundary && npm run validate:skills && npm run rebuild && npm run validate:channel-metadata && npm run test:skill",
     "doctor": "npm run doctor:local",
-    "rebuild": "npm run sync:claude-plugin && npm run check:claude-sync",
+    "rebuild": "npm run sync:claude-plugin && npm run sync:arkclaw && npm run check:claude-sync && npm run check:arkclaw-sync",
     "test:skill": "node --test .agents/skills/argus/test/*.test.mjs",
     "validate:docs": "node scripts/validate-docs.mjs",
     "validate:ai": "node scripts/validate-ai-index.mjs",
@@ -36,10 +38,12 @@
     "validate:skills": "node scripts/validate-skills.mjs",
     "sync:claude-plugin": "node scripts/sync-claude-plugin.mjs",
     "check:claude-sync": "node scripts/check-claude-sync.mjs",
+    "sync:arkclaw": "node scripts/sync-arkclaw.mjs",
+    "check:arkclaw-sync": "node scripts/check-arkclaw-sync.mjs",
     "validate:channel-metadata": "node scripts/validate-channel-metadata.mjs",
     "doctor:local": "node scripts/doctor-local.mjs",
     "doctor:live": "node scripts/doctor-live.mjs",
-    "build:arkclaw": "node scripts/build-arkclaw-zip.mjs",
+    "build:arkclaw": "npm run sync:arkclaw && node scripts/build-arkclaw-zip.mjs",
     "release:gate": "node scripts/release-gate.mjs",
     "install:codex-skills": "node scripts/install-codex-skills.mjs",
     "setup:local": "node scripts/bootstrap-local-env.mjs",

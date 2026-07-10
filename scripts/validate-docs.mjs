@@ -39,6 +39,11 @@ const requiredFiles = [
   'docs/zh-CN/community.md',
   '.agents/skills/argus/README.md',
   '.agents/skills/argus/README.zh-CN.md',
+  '.agents/skills/argus/references/algorithm-io.md',
+  '.agents/skills/argus/references/algorithm-io.zh-CN.md',
+  '.agents/skills/argus/references/migration-v2.md',
+  '.agents/skills/argus/references/migration-v2.zh-CN.md',
+  '.agents/skills/argus/references/argus-output.schema.json',
   '.github/dependabot.yml',
   '.github/ISSUE_TEMPLATE/bug_report.yml',
   '.github/ISSUE_TEMPLATE/feature_request.yml',
@@ -83,7 +88,11 @@ const languageSwitches = [
   ['docs/community.md', 'zh-CN/community.md'],
   ['docs/zh-CN/community.md', '../community.md'],
   ['.agents/skills/argus/README.md', 'README.zh-CN.md'],
-  ['.agents/skills/argus/README.zh-CN.md', 'README.md']
+  ['.agents/skills/argus/README.zh-CN.md', 'README.md'],
+  ['.agents/skills/argus/references/algorithm-io.md', 'algorithm-io.zh-CN.md'],
+  ['.agents/skills/argus/references/algorithm-io.zh-CN.md', 'algorithm-io.md'],
+  ['.agents/skills/argus/references/migration-v2.md', 'migration-v2.zh-CN.md'],
+  ['.agents/skills/argus/references/migration-v2.zh-CN.md', 'migration-v2.md']
 ];
 
 for (const file of requiredFiles) {

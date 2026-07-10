@@ -1,131 +1,121 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { GatewayError, GatewayClient } from '../src/gateway.mjs';
+import { GatewayClient, GatewayError, mapTaskStatus } from '../src/gateway.mjs';
 
-test('gateway client requests access token with public gateway openapi form contract', async () => {
-  const calls = [];
-  const gateway = new GatewayClient({
-    baseUrl: 'https://gateway.example',
-    appKey: 'ak',
-    appSecret: 'sk',
-    userAgent: 'realsee-skill-test/0.0.0',
-    fetchImpl: async (url, init) => {
-      calls.push({ url, init });
-      return jsonResponse({ code: 0, data: { access_token: 'tok' }, status: 'ok' });
-    }
-  });
-
-  const token = await gateway.getAccessToken();
-
-  assert.equal(token, 'tok');
-  assert.equal(calls.length, 1);
-  assert.equal(calls[0].url, 'https://gateway.example/auth/access_token');
-  assert.equal(calls[0].init.method, 'POST');
-  assert.equal(calls[0].init.headers['Content-Type'], 'application/x-www-form-urlencoded');
-  assert.equal(calls[0].init.headers['User-Agent'], 'realsee-skill-test/0.0.0');
-  assert.equal(calls[0].init.body.toString(), 'app_key=ak&app_secret=sk');
-});
-
-test('gateway client calls upload-token, trigger, and poll paths with public contract shapes', async () => {
+test('gateway adapter uses the four Argus 2.0 paths and envelopes', async () => {
   const calls = [];
   const gateway = new GatewayClient({
     baseUrl: 'https://gateway.example/',
     appKey: 'ak',
     appSecret: 'sk',
-    userAgent: 'realsee-skill-test/0.0.0',
+    userAgent: 'argus-test',
     fetchImpl: async (url, init) => {
       calls.push({ url, init });
-      if (url.endsWith('/auth/access_token')) {
-        return jsonResponse({ code: 0, data: { access_token: 'tok' }, status: 'ok' });
-      }
-      if (url.endsWith('/open/saas/v1/vggt/upload/token')) {
-        return jsonResponse({ code: 0, data: { input_image_id: 'img-1', upload_token: { bucket: 'b' } }, status: 'ok' });
-      }
-      if (url.endsWith('/open/saas/v1/vggt/trigger')) {
-        return jsonResponse({ code: 0, data: {}, status: 'ok' });
-      }
-      return jsonResponse({
-        code: 0,
-        data: { status: 'success', alg_task_id: 'task-1', result_url: 'https://download.example/task-1.glb' },
-        status: 'ok'
-      });
+      if (url.endsWith('/auth/access_token')) return response({ code: 0, data: { access_token: 'token' } });
+      if (url.endsWith('/open/v1/argus/file/token')) return response({ code: 0, data: { bucket: 'b', prefix: 'p/' } });
+      if (url.endsWith('/open/v1/argus/task/submit')) return response({ code: 0, data: { task_code: 'task-1' } });
+      return response({ code: 0, data: { status: 2, output_url: 'https://cdn.invalid/output.zip' } });
     }
   });
 
-  const upload = await gateway.getUploadToken({ inputImageId: 'img-1' });
-  const trigger = await gateway.triggerVGGT({ type: 'pinhole', inputImageId: 'img-1' });
-  const poll = await gateway.pollVGGT({ type: 'pinhole', inputImageId: 'img-1' });
+  assert.equal((await gateway.getFileToken()).bucket, 'b');
+  assert.equal((await gateway.submitTask({ privateCosKey: 'p/input.zip', title: 'job' })).task_code, 'task-1');
+  assert.equal((await gateway.getTaskInfo({ taskCode: 'task-1' })).status, 2);
 
-  assert.equal(upload.input_image_id, 'img-1');
-  assert.deepEqual(trigger, {});
-  assert.equal(poll.alg_task_id, 'task-1');
+  assert.equal(calls[0].url, 'https://gateway.example/auth/access_token');
+  assert.equal(calls[0].init.method, 'POST');
+  assert.equal(calls[0].init.body.toString(), 'app_key=ak&app_secret=sk');
 
-  const uploadCall = calls.find((call) => call.url.endsWith('/open/saas/v1/vggt/upload/token'));
-  assert.equal(uploadCall.init.method, 'POST');
-  assert.equal(uploadCall.init.headers.Authorization, 'tok');
-  assert.equal(uploadCall.init.headers['User-Agent'], 'realsee-skill-test/0.0.0');
-  assert.equal(uploadCall.init.headers['Content-Type'], 'application/json');
-  assert.equal(uploadCall.init.headers['X-FE-Real-IP'], undefined);
-  assert.equal(uploadCall.init.headers['X-Frontend-Ip-Address'], undefined);
-  assert.equal(uploadCall.init.headers.Cookie, undefined);
-  assert.equal(uploadCall.init.body, JSON.stringify({ input_image_id: 'img-1' }));
+  assert.equal(calls[1].url, 'https://gateway.example/open/v1/argus/file/token');
+  assert.equal(calls[1].init.method, 'GET');
+  assert.equal(calls[1].init.body, undefined);
+  assert.equal(calls[1].init.headers.Authorization, 'token');
 
-  const triggerCall = calls.find((call) => call.url.endsWith('/open/saas/v1/vggt/trigger'));
-  assert.equal(triggerCall.init.method, 'POST');
-  assert.equal(triggerCall.init.headers['Content-Type'], 'application/json');
-  assert.equal(triggerCall.init.body, JSON.stringify({ type: 'pinhole', input_image_id: 'img-1' }));
+  assert.equal(calls[2].url, 'https://gateway.example/open/v1/argus/task/submit');
+  assert.equal(calls[2].init.method, 'POST');
+  assert.equal(calls[2].init.body, JSON.stringify({ private_cos_key: 'p/input.zip', title: 'job' }));
 
-  const pollCall = calls.find((call) => call.url.includes('/open/saas/v1/vggt/poll'));
-  assert.equal(pollCall.init.method, 'GET');
-  assert.equal(pollCall.url, 'https://gateway.example/open/saas/v1/vggt/poll?type=pinhole&input_image_id=img-1');
-  assert.equal(pollCall.init.body, undefined);
+  assert.equal(calls[3].url, 'https://gateway.example/open/v1/argus/task/info?task_code=task-1');
+  assert.equal(calls[3].init.method, 'GET');
+  assert.equal(calls[3].init.body, undefined);
 });
 
-test('gateway client does not retry ordinary 401 or unknown envelopes', async () => {
-  const calls = [];
+test('submit is never retried when its response is lost', async () => {
+  let submits = 0;
   const gateway = new GatewayClient({
     baseUrl: 'https://gateway.example',
     appKey: 'ak',
     appSecret: 'sk',
-    fetchImpl: async (url, init) => {
-      calls.push({ url, init });
-      if (url.endsWith('/auth/access_token')) {
-        return jsonResponse({ code: 0, data: { access_token: 'tok' }, status: 'ok' });
-      }
-      return jsonResponse({ code: 401, status: 'denied' }, { status: 401 });
+    fetchImpl: async (url) => {
+      if (url.endsWith('/auth/access_token')) return response({ code: 0, data: { access_token: 'token' } });
+      submits += 1;
+      throw new Error('socket closed');
     }
   });
 
   await assert.rejects(
-    () => gateway.getUploadToken({ inputImageId: 'img-1' }),
-    (error) => error instanceof GatewayError && error.remoteCode === 401
+    () => gateway.submitTask({ privateCosKey: 'p/input.zip', title: 'job' }),
+    (error) => error instanceof GatewayError && error.submissionUnknown === true
   );
+  assert.equal(submits, 1);
+});
 
-  assert.equal(calls.length, 2);
-
-  const unknownCalls = [];
-  const unknownEnvelopeGateway = new GatewayClient({
+test('submit does not refresh auth and retry on an expired-token envelope', async () => {
+  let accessTokens = 0;
+  let submits = 0;
+  const gateway = new GatewayClient({
     baseUrl: 'https://gateway.example',
     appKey: 'ak',
     appSecret: 'sk',
     fetchImpl: async (url) => {
-      unknownCalls.push(url);
       if (url.endsWith('/auth/access_token')) {
-        return jsonResponse({ code: 0, data: { access_token: 'tok' }, status: 'ok' });
+        accessTokens += 1;
+        return response({ code: 0, data: { access_token: `token-${accessTokens}` } });
       }
-      return jsonResponse({ unexpected: true });
+      submits += 1;
+      return response({ code: -3, message: 'token expired', data: null });
     }
   });
 
   await assert.rejects(
-    () => unknownEnvelopeGateway.pollVGGT({ type: 'pinhole', inputImageId: 'img-1' }),
-    /Unexpected Gateway response envelope/
+    () => gateway.submitTask({ privateCosKey: 'p/input.zip', title: 'job' }),
+    (error) => error instanceof GatewayError && error.remoteCode === -3
   );
-
-  assert.equal(unknownCalls.length, 2);
+  assert.equal(accessTokens, 1);
+  assert.equal(submits, 1);
 });
 
-function jsonResponse(payload, init = {}) {
+test('read-only task info may refresh auth once', async () => {
+  let accessTokens = 0;
+  let infoCalls = 0;
+  const gateway = new GatewayClient({
+    baseUrl: 'https://gateway.example',
+    appKey: 'ak',
+    appSecret: 'sk',
+    fetchImpl: async (url) => {
+      if (url.endsWith('/auth/access_token')) {
+        accessTokens += 1;
+        return response({ code: 0, data: { access_token: `token-${accessTokens}` } });
+      }
+      infoCalls += 1;
+      return infoCalls === 1
+        ? response({ code: -3, message: 'token expired', data: null })
+        : response({ code: 0, data: { status: 1 } });
+    }
+  });
+
+  assert.equal((await gateway.getTaskInfo({ taskCode: 'task' })).status, 1);
+  assert.equal(accessTokens, 2);
+  assert.equal(infoCalls, 2);
+});
+
+test('maps all public numeric task statuses and rejects unknown values', () => {
+  assert.deepEqual([0, 1, 2, 3].map(mapTaskStatus), ['queued', 'processing', 'succeeded', 'failed']);
+  assert.equal(mapTaskStatus('2'), 'succeeded');
+  assert.throws(() => mapTaskStatus(9), /Unexpected Argus task status/);
+});
+
+function response(payload, init = {}) {
   return new Response(JSON.stringify(payload), {
     status: init.status ?? 200,
     headers: { 'Content-Type': 'application/json' }

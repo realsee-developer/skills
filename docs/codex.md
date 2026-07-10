@@ -2,37 +2,21 @@
 
 [English](codex.md) | [简体中文](zh-CN/codex.md)
 
-Install the `argus` skill into Codex so it can be referenced from any Codex prompt.
-
-This file works in two modes:
-
-1. Run the commands yourself in a shell.
-2. Share the GitHub URL with Codex and ask it to follow the guide on your machine.
-
-For reproducible installs, share the URL on a tagged release (e.g. `v1.0.0`).
-
-## What Codex Installs
-
-Codex discovers the canonical skill through a directory under `$CODEX_HOME`:
-
-- source: `.agents/skills/argus`
-- target: `${CODEX_HOME:-$HOME/.codex}/skills/argus`
-
-Symlinked when installed from a local clone (source edits flow through automatically); copied when installed via `npx skills add ... --agent codex`.
-
-## One-Line Install (public)
+Install the canonical `argus` Skill into Codex:
 
 ```bash
 npx skills add realsee-developer/skills --skill argus --agent codex
 ```
 
-Pin to a release tag:
+Pin the stable 2.0 release when available:
 
 ```bash
-npx skills add realsee-developer/skills@v1.0.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.0.0 --skill argus --agent codex
 ```
 
-## Local-Clone Install
+Use `@v1.0.2` instead only for legacy square 1:1 or single-GLB behavior.
+
+## Local checkout
 
 ```bash
 git clone https://github.com/realsee-developer/skills.git
@@ -42,97 +26,47 @@ npm install --prefix .agents/skills/argus
 CODEX_HOME=$HOME/.codex npm run install:codex-skills
 ```
 
-For a pinned revision:
-
-```bash
-VERSION=v1.0.0
-git clone --branch "$VERSION" --depth 1 https://github.com/realsee-developer/skills.git
-cd skills
-npm install
-npm install --prefix .agents/skills/argus
-CODEX_HOME=$HOME/.codex npm run install:codex-skills
-```
-
-## Verify the Install
+Codex discovers the Skill at `${CODEX_HOME:-$HOME/.codex}/skills/argus`. Verify:
 
 ```bash
 ls -la "${CODEX_HOME:-$HOME/.codex}/skills/argus"
-cat "${CODEX_HOME:-$HOME/.codex}/skills/argus/SKILL.md" | head
-```
-
-Optional broader environment check:
-
-```bash
-npm run doctor
+head "${CODEX_HOME:-$HOME/.codex}/skills/argus/SKILL.md"
 ```
 
 ## Credentials
 
-The skill resolves credentials at runtime via the following precedence (agent-driven through Bash, no helper script):
+The existing runtime contract is unchanged:
 
-1. `REALSEE_*` environment variables set in the current shell.
-2. `~/.realsee/credentials` — a shell-sourceable env fragment. The agent loads it with `[ -f ~/.realsee/credentials ] && set -a && . ~/.realsee/credentials && set +a`.
-3. Interactive Q&A in the Codex session — one field per turn (see SKILL.md "Step 1a").
+1. inherited `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION`;
+2. an existing `~/.realsee/credentials` loaded by the agent;
+3. one-field-per-turn collection in the Codex session.
 
-To skip the prompt entirely, export the values before launching Codex:
+Do not print values or put them in recorded command arguments. To avoid prompts, export the variables before launching Codex.
 
-```bash
-export REALSEE_APP_KEY=...
-export REALSEE_APP_SECRET=...
-export REALSEE_REGION=global   # or cn
-```
-
-To persist them across sessions, the agent (with your explicit consent) writes the file via a Bash heredoc:
-
-```bash
-mkdir -p ~/.realsee
-umask 077
-cat > ~/.realsee/credentials <<'EOF'
-REALSEE_APP_KEY=...
-REALSEE_APP_SECRET=...
-REALSEE_REGION=global
-EOF
-chmod 600 ~/.realsee/credentials
-```
-
-## First Prompts to Try
+## Prompt examples
 
 ```text
-Use $argus on /path/to/photo.jpg (image mode) and report the GLB path. Use --async and tell me the workspace dir.
-Use $argus on /path/to/pano.jpg (panorama). Resume once the background poll finishes.
+Use $argus to start a batch from /path/a.jpg and /path/b.webp. Report the run workspace.
+Use $argus to check the status of /workspace/<run-dir> once.
+Use $argus to collect /workspace/<run-dir>, then report result_status, missing_ids, and local artifacts.
 ```
 
-## Manual Recovery
-
-Check on an async run from a shell — just read the workspace's `result.json`:
+Codex should invoke the explicit lifecycle:
 
 ```bash
-cat <workspace_dir>/result.json
+node "${CODEX_HOME:-$HOME/.codex}/skills/argus/scripts/run-argus.mjs" start \
+  --image /absolute/a.jpg --image /absolute/b.webp \
+  --workspace /absolute/workspace --yes --json
+
+node "${CODEX_HOME:-$HOME/.codex}/skills/argus/scripts/run-argus.mjs" status \
+  --workspace /absolute/workspace/<run-dir> --json
+
+node "${CODEX_HOME:-$HOME/.codex}/skills/argus/scripts/run-argus.mjs" collect \
+  --workspace /absolute/workspace/<run-dir> --json
 ```
 
-Resume a stalled run — `source` the credentials file so secrets never appear in the command line:
+There is no detached poller or resume flag. A completed collect is idempotent. Codex must highlight `partial` and its non-empty `missing_ids`, even though that command exits 0.
 
-```bash
-set -a; . ~/.realsee/credentials; set +a; \
-  node "${CODEX_HOME:-$HOME/.codex}/skills/argus/scripts/run-argus.mjs" \
-  --resume --workspace <workspace_dir> --json
-```
+## Release policy
 
-## Open The Result
-
-Once `result.json#status` is `success`, Codex should ask the user whether to open the local GLB, the H5 preview, or both. With user consent, invoke the OS opener directly:
-
-```bash
-case "$(uname -s)" in
-  Darwin)               open "<path-or-url>" ;;
-  Linux)                xdg-open "<path-or-url>" ;;
-  CYGWIN*|MINGW*|MSYS*) start "" "<path-or-url>" ;;
-esac
-```
-
-Do not open anything until `result.json#status` is `success`.
-
-## Release Policy
-
-- `main` is the integration branch.
-- Stable installs should use a Git tag and GitHub Release such as `v1.0.0`.
+`main` is the integration branch. Stable installs use a Git tag. Version 2.0 is promoted only after uploader 0.1.0 and real global/CN E2E have passed.

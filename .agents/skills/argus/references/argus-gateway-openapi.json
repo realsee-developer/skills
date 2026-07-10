@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Realsee Argus/VGGT Gateway API",
-    "version": "0.1.0",
-    "description": "Public Gateway OpenAPI contract for Realsee Argus/VGGT generation. Secrets, signed URLs, object keys, and raw task locators are intentionally omitted."
+    "title": "Realsee Argus Gateway API",
+    "version": "2.0.0",
+    "description": "Public Gateway contract used by Argus Skill 2.x. The same paths are available on the global and China Gateway bases. Upload credentials and temporary result URLs must not be persisted or logged."
   },
   "servers": [
     {
@@ -19,7 +19,7 @@
     "/auth/access_token": {
       "post": {
         "operationId": "getAccessToken",
-        "summary": "Get Gateway access token",
+        "summary": "Get a Gateway access token",
         "requestBody": {
           "required": true,
           "content": {
@@ -32,7 +32,7 @@
         },
         "responses": {
           "200": {
-            "description": "Gateway envelope containing access token data",
+            "description": "Gateway envelope containing an access token",
             "content": {
               "application/json": {
                 "schema": {
@@ -44,86 +44,68 @@
         }
       }
     },
-    "/open/saas/v1/vggt/upload/token": {
-      "post": {
-        "operationId": "getArgusUploadToken",
-        "summary": "Create or continue an Argus input image upload token",
-        "security": [
-          {
-            "gatewayAccessToken": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UploadTokenRequest"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/UploadTokenRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Gateway envelope containing upload token data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UploadTokenEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/open/saas/v1/vggt/trigger": {
-      "post": {
-        "operationId": "triggerArgusVggt",
-        "summary": "Trigger Argus/VGGT generation for an uploaded image",
-        "security": [
-          {
-            "gatewayAccessToken": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TriggerVggtRequest"
-              }
-            },
-            "application/x-www-form-urlencoded": {
-              "schema": {
-                "$ref": "#/components/schemas/TriggerVggtRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Gateway envelope. H5 clients treat response data as opaque.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TriggerVggtEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/open/saas/v1/vggt/poll": {
+    "/open/v1/argus/file/token": {
       "get": {
-        "operationId": "pollArgusVggt",
-        "summary": "Poll Argus/VGGT generation status",
+        "operationId": "getArgusFileToken",
+        "summary": "Get a temporary upload lease for one normalized input ZIP",
+        "description": "The bucket, region, and prefix together identify the upload lease. Credentials are temporary and must never be persisted.",
+        "security": [
+          {
+            "gatewayAccessToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gateway envelope containing object-storage upload credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileTokenEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/open/v1/argus/task/submit": {
+      "post": {
+        "operationId": "submitArgusTask",
+        "summary": "Submit one Argus task",
+        "description": "This operation is not idempotent. Clients must not retry automatically when the response outcome is unknown.",
+        "security": [
+          {
+            "gatewayAccessToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitTaskRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gateway envelope containing the durable task code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmitTaskEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/open/v1/argus/task/info": {
+      "get": {
+        "operationId": "getArgusTaskInfo",
+        "summary": "Get task state and terminal result metadata",
         "security": [
           {
             "gatewayAccessToken": []
@@ -131,29 +113,22 @@
         ],
         "parameters": [
           {
-            "name": "type",
+            "name": "task_code",
             "in": "query",
             "required": true,
             "schema": {
-              "$ref": "#/components/schemas/ArgusVggtType"
-            }
-          },
-          {
-            "name": "input_image_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Gateway envelope containing generation status",
+            "description": "Gateway envelope containing task state. output_url is temporary and appears only after success.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PollVggtEnvelope"
+                  "$ref": "#/components/schemas/TaskInfoEnvelope"
                 }
               }
             }
@@ -174,7 +149,10 @@
     "schemas": {
       "GatewayEnvelopeBase": {
         "type": "object",
-        "required": ["code", "data"],
+        "required": [
+          "code",
+          "status"
+        ],
         "properties": {
           "code": {
             "type": "integer",
@@ -183,19 +161,34 @@
           "status": {
             "type": "string",
             "description": "Gateway status or error message."
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "trace_id": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "integer",
+            "minimum": 0
           }
         },
         "additionalProperties": true
       },
       "AccessTokenRequest": {
         "type": "object",
-        "required": ["app_key", "app_secret"],
+        "required": [
+          "app_key",
+          "app_secret"
+        ],
         "properties": {
           "app_key": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "app_secret": {
             "type": "string",
+            "minLength": 1,
             "writeOnly": true
           }
         },
@@ -203,11 +196,18 @@
       },
       "AccessTokenData": {
         "type": "object",
-        "required": ["access_token"],
+        "required": [
+          "access_token"
+        ],
         "properties": {
           "access_token": {
             "type": "string",
+            "minLength": 1,
             "writeOnly": true
+          },
+          "expire_at": {
+            "type": "integer",
+            "description": "Unix timestamp at which the access token expires."
           }
         },
         "additionalProperties": true
@@ -219,6 +219,9 @@
           },
           {
             "type": "object",
+            "required": [
+              "data"
+            ],
             "properties": {
               "data": {
                 "$ref": "#/components/schemas/AccessTokenData"
@@ -227,47 +230,19 @@
           }
         ]
       },
-      "ArgusVggtType": {
-        "type": "string",
-        "enum": ["pinhole", "pano"]
-      },
-      "UploadTokenRequest": {
-        "type": "object",
-        "required": ["input_image_id"],
-        "properties": {
-          "input_image_id": {
-            "type": "string",
-            "description": "Empty string starts a new upload input; later calls reuse the returned input_image_id."
-          }
-        },
-        "additionalProperties": false
-      },
       "UploadTokenData": {
         "type": "object",
         "required": [
           "tmpSecretId",
-          "sessionToken",
           "tmpSecretKey",
-          "ttl",
-          "prefix",
-          "expire",
-          "app_id",
+          "sessionToken",
           "bucket",
           "region",
-          "is_accelerate",
-          "host",
-          "primaryid",
-          "download_type",
-          "download_host",
-          "custom_domain",
-          "custom_scheme"
+          "prefix",
+          "expire"
         ],
         "properties": {
           "tmpSecretId": {
-            "type": "string",
-            "writeOnly": true
-          },
-          "sessionToken": {
             "type": "string",
             "writeOnly": true
           },
@@ -275,39 +250,60 @@
             "type": "string",
             "writeOnly": true
           },
-          "ttl": {
-            "type": "string"
+          "sessionToken": {
+            "type": "string",
+            "writeOnly": true
+          },
+          "bucket": {
+            "type": "string",
+            "minLength": 1
+          },
+          "region": {
+            "type": "string",
+            "minLength": 1
           },
           "prefix": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           },
           "expire": {
             "type": "number"
           },
+          "ttl": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
           "app_id": {
             "type": "string"
           },
-          "bucket": {
-            "type": "string"
-          },
-          "region": {
+          "host": {
             "type": "string"
           },
           "force_path_style": {
             "type": "boolean"
           },
           "is_accelerate": {
-            "type": "string"
-          },
-          "host": {
-            "type": "string"
-          },
-          "primaryid": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "download_type": {
             "type": "string",
-            "enum": ["presign", "direct"]
+            "enum": [
+              "presign",
+              "direct"
+            ]
           },
           "download_host": {
             "type": "string"
@@ -318,101 +314,137 @@
           "custom_scheme": {
             "type": "string"
           },
-          "backup": true
-        },
-        "additionalProperties": true
-      },
-      "UploadTokenResponseData": {
-        "type": "object",
-        "required": ["input_image_id", "upload_token"],
-        "properties": {
-          "input_image_id": {
-            "type": "string"
-          },
-          "upload_token": {
-            "$ref": "#/components/schemas/UploadTokenData"
+          "backup": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": true
           }
         },
         "additionalProperties": true
       },
-      "UploadTokenEnvelope": {
+      "FileTokenEnvelope": {
         "allOf": [
           {
             "$ref": "#/components/schemas/GatewayEnvelopeBase"
           },
           {
             "type": "object",
+            "required": [
+              "data"
+            ],
             "properties": {
               "data": {
-                "$ref": "#/components/schemas/UploadTokenResponseData"
+                "$ref": "#/components/schemas/UploadTokenData"
               }
             }
           }
         ]
       },
-      "TriggerVggtRequest": {
+      "SubmitTaskRequest": {
         "type": "object",
-        "required": ["type", "input_image_id"],
+        "required": [
+          "private_cos_key",
+          "title"
+        ],
         "properties": {
-          "type": {
-            "$ref": "#/components/schemas/ArgusVggtType"
+          "private_cos_key": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Full object path returned by upload: token prefix plus upload key."
           },
-          "input_image_id": {
-            "type": "string"
+          "title": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "additionalProperties": false
       },
-      "TriggerVggtEnvelope": {
+      "SubmitTaskData": {
+        "type": "object",
+        "required": [
+          "task_code"
+        ],
+        "properties": {
+          "task_code": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": true
+      },
+      "SubmitTaskEnvelope": {
         "allOf": [
           {
             "$ref": "#/components/schemas/GatewayEnvelopeBase"
           },
           {
             "type": "object",
+            "required": [
+              "data"
+            ],
             "properties": {
               "data": {
-                "type": ["object", "null"],
-                "additionalProperties": true
+                "$ref": "#/components/schemas/SubmitTaskData"
               }
             }
           }
         ]
       },
-      "ArgusPollStatus": {
-        "type": "string",
-        "enum": ["pending", "success", "failed"]
+      "ArgusTaskStatus": {
+        "type": "integer",
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "description": "0=queued, 1=processing, 2=succeeded, 3=failed."
       },
-      "PollVggtData": {
+      "TaskInfoData": {
         "type": "object",
-        "required": ["status"],
+        "required": [
+          "status"
+        ],
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/ArgusPollStatus"
+            "$ref": "#/components/schemas/ArgusTaskStatus"
           },
-          "alg_task_id": {
-            "type": "string"
-          },
-          "result_url": {
+          "output_url": {
             "type": "string",
-            "format": "uri"
+            "format": "uri",
+            "description": "Temporary output.zip URL. Clients must not persist it."
           },
-          "failed_reason": {
+          "expiration_timestamp": {
+            "type": "integer",
+            "description": "Unix timestamp at which output_url expires."
+          },
+          "error_message": {
             "type": "string"
+          },
+          "create_timestamp": {
+            "type": "integer"
+          },
+          "modify_timestamp": {
+            "type": "integer"
           }
         },
         "additionalProperties": true
       },
-      "PollVggtEnvelope": {
+      "TaskInfoEnvelope": {
         "allOf": [
           {
             "$ref": "#/components/schemas/GatewayEnvelopeBase"
           },
           {
             "type": "object",
+            "required": [
+              "data"
+            ],
             "properties": {
               "data": {
-                "$ref": "#/components/schemas/PollVggtData"
+                "$ref": "#/components/schemas/TaskInfoData"
               }
             }
           }

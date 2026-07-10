@@ -2,69 +2,85 @@
 
 [English](usage.md) | [简体中文](zh-CN/usage.md)
 
-This repository provides installable Realsee skills for agent runtimes.
+This repository provides the installable `argus` Skill for Claude Code, Codex, and other hosts supported by `npx skills`.
 
 ## Install
 
-Install with the open agent skills CLI:
-
 ```bash
 npx skills add realsee-developer/skills --skill argus
-```
-
-Install for Claude Code:
-
-```bash
 npx skills add realsee-developer/skills --skill argus --agent claude-code
-```
-
-Install for Codex:
-
-```bash
 npx skills add realsee-developer/skills --skill argus --agent codex
-```
-
-Install for all detected agents:
-
-```bash
 npx skills add realsee-developer/skills --skill argus --agent '*'
 ```
 
-Install from a local checkout:
+From a local checkout:
 
 ```bash
 npx skills add . --skill argus
 ```
 
-## Use `argus`
+## Start
 
-Synchronous invocation (blocks until the GLB is downloaded; Argus inference can take several minutes):
-
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json
-```
-
-Asynchronous invocation (returns immediately; detached process polls + downloads):
+Use repeated images:
 
 ```bash
-node .agents/skills/argus/scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json --async
+node .agents/skills/argus/scripts/run-argus.mjs start \
+  --image /absolute/path/a.jpg \
+  --image /absolute/path/b.png \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-Resume or recover an async run from its workspace directory:
+Or one existing ZIP:
 
 ```bash
-node .agents/skills/argus/scripts/run-argus.mjs --resume --workspace ./workspace/<run-dir> --json
+node .agents/skills/argus/scripts/run-argus.mjs start \
+  --zip /absolute/path/input.zip \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-Input type is auto-detected from the JPEG dimensions and strictly enforced: 2:1 (±0.05) → panorama, 1:1 (±0.05) → pinhole image, anything else is rejected before upload. `--type panorama` / `--type image` may be passed to override auto-detection, but the override is still validated against the file's dimensions.
+The two input modes are mutually exclusive. `start` validates, normalizes, uploads, and submits, then returns `workspace_dir` without polling.
 
-## Skill Files
+## Status
+
+Each invocation makes one remote query:
+
+```bash
+node .agents/skills/argus/scripts/run-argus.mjs status \
+  --workspace /absolute/workspace-root/<run-dir> --json
+```
+
+Repeat later while `task_status` is `queued` or `processing`.
+
+## Collect
+
+After `task_status` becomes `succeeded`:
+
+```bash
+node .agents/skills/argus/scripts/run-argus.mjs collect \
+  --workspace /absolute/workspace-root/<run-dir> --json
+```
+
+Collection retains `output.zip`, safely extracts it, validates the manifest and artifacts, and writes a local result index. Repeating collect after completion does not submit or download again.
+
+`task_status` and `result_status` are separate. `partial` exits 0 with a warning and non-empty `missing_ids`; `error` exits non-zero.
+
+## Input rules
+
+- 1–99 root-level JPEG, PNG, or WebP images.
+- RGB, 8-bit, exact 2:1 dimensions.
+- Below 2048×1024 is a warning, not a hard failure.
+- ZIP paths must be safe and flat; the Skill rejects duplicate stems and Unicode/case-fold collisions.
+- A single 2:1 panorama is valid. A square image is not; pin `v1.0.2` for the legacy square workflow.
+
+## Skill files
 
 - Runtime definition: [SKILL.md](../.agents/skills/argus/SKILL.md)
 - Skill README: [README.md](../.agents/skills/argus/README.md)
-- OpenAPI contract: [argus-gateway-openapi.json](../.agents/skills/argus/references/argus-gateway-openapi.json)
-- Machine-readable index: [llms.txt](../llms.txt)
+- Gateway contract: [argus-gateway-openapi.json](../.agents/skills/argus/references/argus-gateway-openapi.json)
+- Algorithm contract: [algorithm-io.md](../.agents/skills/argus/references/algorithm-io.md)
+- Output schema: [argus-output.schema.json](../.agents/skills/argus/references/argus-output.schema.json)
+- Machine index: [llms.txt](../llms.txt)
 
-## Upload Safety
-
-Real Argus runs upload the selected local image to Realsee remote services. Confirm user consent before any upload.
+Real Argus runs are remote uploads. Obtain user consent first and do not persist credentials, upload tokens, or signed result URLs.

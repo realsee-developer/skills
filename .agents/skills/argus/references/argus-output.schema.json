@@ -1,0 +1,293 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/realsee-developer/skills/main/.agents/skills/argus/references/argus-output.schema.json",
+  "title": "Argus output.json",
+  "description": "Algorithm output manifest for Argus Skill 2.x. Cross-entry ID and file-existence constraints documented in algorithm-io.md require semantic validation after JSON Schema validation.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/success"
+    },
+    {
+      "$ref": "#/$defs/partial"
+    },
+    {
+      "$ref": "#/$defs/error"
+    }
+  ],
+  "$defs": {
+    "imageId": {
+      "type": "string",
+      "pattern": "^[0-9]{6}$"
+    },
+    "nameMapping": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 99,
+      "propertyNames": {
+        "$ref": "#/$defs/imageId"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[^/\\\\\\u0000-\\u001F\\u007F]+$"
+      }
+    },
+    "resolution": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "depthMap": {
+      "type": "object",
+      "required": [
+        "image_id",
+        "path",
+        "format",
+        "resolution",
+        "unit"
+      ],
+      "properties": {
+        "image_id": {
+          "$ref": "#/$defs/imageId"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^depth/[0-9]{6}_depth\\.exr$"
+        },
+        "format": {
+          "const": "exr"
+        },
+        "resolution": {
+          "$ref": "#/$defs/resolution"
+        },
+        "unit": {
+          "const": "meter"
+        }
+      },
+      "additionalProperties": false
+    },
+    "pointCloud": {
+      "type": "object",
+      "required": [
+        "path",
+        "format",
+        "vertex_count",
+        "has_color",
+        "has_normals",
+        "coordinate_system"
+      ],
+      "properties": {
+        "path": {
+          "const": "pointcloud/merged.glb"
+        },
+        "format": {
+          "const": "glb"
+        },
+        "vertex_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "has_color": {
+          "type": "boolean"
+        },
+        "has_normals": {
+          "type": "boolean"
+        },
+        "coordinate_system": {
+          "const": "right-handed, Y-up"
+        }
+      },
+      "additionalProperties": false
+    },
+    "pose": {
+      "type": "object",
+      "required": [
+        "image_id",
+        "path",
+        "format"
+      ],
+      "properties": {
+        "image_id": {
+          "$ref": "#/$defs/imageId"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^pose/[0-9]{6}_pose\\.json$"
+        },
+        "format": {
+          "const": "json"
+        }
+      },
+      "additionalProperties": false
+    },
+    "intrinsics": {
+      "type": "object",
+      "required": [
+        "image_id",
+        "path"
+      ],
+      "properties": {
+        "image_id": {
+          "$ref": "#/$defs/imageId"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^intrinsics/[0-9]{6}_intrinsics\\.json$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "depthMaps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 99,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/depthMap"
+      }
+    },
+    "poses": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 99,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/pose"
+      }
+    },
+    "intrinsicsList": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 99,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/intrinsics"
+      }
+    },
+    "success": {
+      "type": "object",
+      "required": [
+        "version",
+        "status",
+        "name_mapping",
+        "depth_maps",
+        "point_cloud",
+        "poses"
+      ],
+      "properties": {
+        "version": {
+          "const": "1.0"
+        },
+        "status": {
+          "const": "success"
+        },
+        "name_mapping": {
+          "$ref": "#/$defs/nameMapping"
+        },
+        "depth_maps": {
+          "$ref": "#/$defs/depthMaps"
+        },
+        "point_cloud": {
+          "$ref": "#/$defs/pointCloud"
+        },
+        "poses": {
+          "$ref": "#/$defs/poses"
+        },
+        "intrinsics": {
+          "$ref": "#/$defs/intrinsicsList"
+        }
+      },
+      "additionalProperties": false
+    },
+    "partial": {
+      "type": "object",
+      "required": [
+        "version",
+        "status",
+        "name_mapping",
+        "depth_maps",
+        "point_cloud",
+        "poses",
+        "missing_ids"
+      ],
+      "properties": {
+        "version": {
+          "const": "1.0"
+        },
+        "status": {
+          "const": "partial"
+        },
+        "name_mapping": {
+          "$ref": "#/$defs/nameMapping"
+        },
+        "depth_maps": {
+          "$ref": "#/$defs/depthMaps"
+        },
+        "point_cloud": {
+          "$ref": "#/$defs/pointCloud"
+        },
+        "poses": {
+          "$ref": "#/$defs/poses"
+        },
+        "intrinsics": {
+          "$ref": "#/$defs/intrinsicsList"
+        },
+        "missing_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 99,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/imageId"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "error": {
+      "type": "object",
+      "required": [
+        "version",
+        "status",
+        "error"
+      ],
+      "properties": {
+        "version": {
+          "const": "1.0"
+        },
+        "status": {
+          "const": "error"
+        },
+        "error": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

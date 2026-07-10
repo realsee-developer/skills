@@ -1,62 +1,100 @@
-# argus — arkclaw 版
+# argus
 
-Realsee Argus / VGGT skill 的 **arkclaw 分发版本**。把本地 JPEG 单图(1:1)或全景图(2:1)上传到 Realsee Argus,生成 GLB。
+![Skill argus](https://img.shields.io/badge/skill-realsee--argus-6f42c1?style=flat-square)
+![Version 2.0](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
+![Upload consent](https://img.shields.io/badge/upload-consent%20required-brown?style=flat-square)
 
-- **仅支持 CN 环境** — Gateway 固定 `app-gateway.realsee.cn`,无需区域选择。
-- **独立维护**,不与主仓库的 `.agents/skills/argus/` 联动。
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-## 前置条件
+`argus` packages 1–99 local 2:1 panoramas into one normalized ZIP, submits a Realsee Argus task, and collects a validated `output.zip` containing EXR depth maps, one merged GLB point cloud, per-image poses, optional intrinsics, and `output.json`.
 
-- Node.js ≥ 22、npm ≥ 10
-- 到 `app-gateway.realsee.cn` 的网络访问
-- 一对 Realsee Argus VGGT 的 API 凭证:`APP_KEY` / `APP_SECRET`
-  - 在 [my.realsee.cn](https://my.realsee.cn) 注册账号,然后邮件 [developer@realsee.com](mailto:developer@realsee.com?subject=Argus%20VGGT%20API%20Capability%20Request) 申请 Argus VGGT API 能力,邮件附上账号 region(填 `cn`)、**如视ID**、**组织账号**。
-  - 审核通过后通过邮件下发凭证。
+Version 2.0 keeps the Skill ID `argus` but does not include the old single-image VGGT fallback. Pin `v1.0.2` for square 1:1 input, the old single-GLB-only output, or legacy preview behavior. See the [migration guide](references/migration-v2.md).
 
-## 安装
+## Install dependencies
 
-把 zip 解压到本地任意目录,然后:
+From this package directory:
 
 ```bash
-cd <解压目录>
 npm install
 ```
 
-## 使用
+Node.js 22 or newer is required.
 
-完整的 agent 使用流程见 `SKILL.md`。直接命令行:
+## Explicit lifecycle
+
+Start from repeated images:
 
 ```bash
-# 1. 凭证写入磁盘(只做一次,权限 0600)
-mkdir -p ~/.realsee && umask 077
-cat > ~/.realsee/credentials <<'EOF'
-REALSEE_APP_KEY=<your-app-key>
-REALSEE_APP_SECRET=<your-app-secret>
-REALSEE_REGION=cn
-EOF
-chmod 600 ~/.realsee/credentials
-
-# 2. 运行
-set -a; . ~/.realsee/credentials; set +a; \
-  node scripts/run-argus.mjs \
-  --image /absolute/path/input.jpg \
-  --type panorama \
-  --workspace ./workspace \
-  --yes --json --async
+node scripts/run-argus.mjs start \
+  --image /absolute/path/a.jpg \
+  --image /absolute/path/b.png \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-## 演示样例
+Or start from one existing ZIP:
 
-CDN 上的两组样例可直接拉来跑:
+```bash
+node scripts/run-argus.mjs start \
+  --zip /absolute/path/input.zip \
+  --workspace /absolute/workspace-root \
+  --yes --json
+```
 
-| 类型 | 输入 JPEG | 期望产出 GLB |
-| --- | --- | --- |
-| 全景(2:1) | `https://vr-public.realsee-cdn.cn/release/web/argus/pano-v2/example1/photo.d188e5b1.jpg` | `https://vr-public.realsee-cdn.cn/release/web/argus/pano-v2/example1/scene.e74c193b.glb` |
-| 单图(1:1) | `https://vr-public.realsee-cdn.cn/release/web/argus/pinhole-v2/example3/photo.9cbad3a3.jpg` | `https://vr-public.realsee-cdn.cn/release/web/argus/pinhole-v2/example3/scene.b77ac8a2.glb` |
+Capture the returned `workspace_dir`, then query once per invocation:
 
-## 参考
+```bash
+node scripts/run-argus.mjs status --workspace /absolute/workspace-root/<run-dir> --json
+```
 
-- 技能流程与文案规则:[SKILL.md](SKILL.md)
-- Gateway 流程细节:[references/api-workflow.md](references/api-workflow.md)
-- 排障:[references/troubleshooting.md](references/troubleshooting.md)
-- Gateway OpenAPI 契约:[references/argus-gateway-openapi.json](references/argus-gateway-openapi.json)
+Collect after the remote task succeeds:
+
+```bash
+node scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir> --json
+```
+
+There is no detached poller, `--async`, or `--resume`. `start`, `status`, and `collect` are independently resumable through schema-v2 `state.json`. A completed `collect` is idempotent.
+
+## Input contract
+
+- 1–99 JPEG, PNG, or WebP images.
+- RGB, 8-bit, exact `width == 2 * height`.
+- At least 2048×1024 is recommended; smaller images produce a warning.
+- `--image` is repeatable and mutually exclusive with `--zip`.
+- ZIPs may contain only images at the root. The Skill safely validates and deterministically repacks them.
+
+The Skill rejects nested entries, path traversal, control characters, duplicate stems, and Unicode/case-fold name collisions before upload.
+
+## Result contract
+
+`task_status` describes the remote lifecycle: `queued`, `processing`, `succeeded`, or `failed`. `result_status` independently describes the algorithm output: `success`, `partial`, or `error`.
+
+The local `result.json` indexes:
+
+- the retained `output.zip` and extracted directory;
+- `output.json`;
+- `pointcloud/merged.glb`;
+- EXR depth maps and JSON poses;
+- optional intrinsics;
+- warnings and `missing_ids`.
+
+`partial` exits 0 but always carries an explicit warning and a non-empty missing-ID list. `error` exits non-zero.
+
+## Configuration and safety
+
+Configuration uses the existing environment contract:
+
+- `REALSEE_APP_KEY`
+- `REALSEE_APP_SECRET`
+- `REALSEE_REGION` (`global` or `cn`)
+
+Real runs upload the normalized input ZIP to Realsee remote services. Obtain user consent before upload. Credentials, upload tokens, provider errors, and signed result URLs must not be stored in workspace state or public logs.
+
+The Arkclaw build is CN-only. Canonical, Claude plugin, Codex, and `npx skills` installs support both Gateway regions.
+
+## Contracts
+
+- [Gateway OpenAPI](references/argus-gateway-openapi.json)
+- [Algorithm I/O](references/algorithm-io.md) / [中文](references/algorithm-io.zh-CN.md)
+- [`output.json` JSON Schema](references/argus-output.schema.json)
+- [Migration from 1.x](references/migration-v2.md) / [中文](references/migration-v2.zh-CN.md)

@@ -4,223 +4,128 @@
 [![Release gate](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/release-gate.yml?branch=main&label=release%20gate&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/release-gate.yml)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/codeql.yml?branch=main&label=CodeQL&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/codeql.yml)
 [![Latest release](https://img.shields.io/github/v/release/realsee-developer/skills?display_name=tag&style=flat-square)](https://github.com/realsee-developer/skills/releases)
-![Agent skills](https://img.shields.io/badge/agent-skills-0b7285?style=flat-square)
-![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-555?style=flat-square)
-![Codex](https://img.shields.io/badge/Codex-supported-555?style=flat-square)
 ![Node >=22](https://img.shields.io/badge/node-%3E%3D22-339933?style=flat-square)
 
 English | [简体中文](README.zh-CN.md)
 
-Realsee Skills provides installable agent skills for Realsee workflows. Users and agent runtimes can install these skills to generate Realsee outputs from local inputs.
+Realsee Skills provides installable agent skills for Realsee workflows. The current Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
 
-The current skill is `argus`. It generates Realsee Argus GLB output from a local JPEG image or panorama.
+The Skill ID remains `argus`. Version 2.0 has no legacy single-image VGGT fallback. Pin `v1.0.2` when a workflow needs square 1:1 input, the old single-GLB-only result, or the old H5 preview behavior.
 
 ## Credentials
 
-Every install path needs three values:
+Every install path uses the unchanged runtime contract:
 
 | Key | Purpose | Sensitive |
 | --- | --- | --- |
-| `REALSEE_APP_KEY` | Realsee Open Platform APP_KEY | ✅ |
-| `REALSEE_APP_SECRET` | Realsee Open Platform APP_SECRET | ✅ |
-| `REALSEE_REGION` | `global` (app-gateway.realsee.ai) or `cn` (app-gateway.realsee.cn) | — |
+| `REALSEE_APP_KEY` | Realsee Open Platform APP_KEY | yes |
+| `REALSEE_APP_SECRET` | Realsee Open Platform APP_SECRET | yes |
+| `REALSEE_REGION` | `global` (`app-gateway.realsee.ai`) or `cn` (`app-gateway.realsee.cn`) | no |
 
-Register at [my.realsee.ai](https://my.realsee.ai/?utm_source=github) (global) or [my.realsee.cn](https://my.realsee.cn/?utm_source=github) (cn), then email [developer@realsee.com](mailto:developer@realsee.com?subject=Argus%20VGGT%20API%20Capability%20Request) with your account region, `UserID`, and `IdentityID` to request Argus VGGT API capability.
+Register at [my.realsee.ai](https://my.realsee.ai/?utm_source=github) or [my.realsee.cn](https://my.realsee.cn/?utm_source=github), then request the Argus Gateway capability through the support channel described in [SUPPORT.md](SUPPORT.md).
 
-## Install & Use — Claude Code
+## Install
 
-**One-line install** (inside a Claude Code session):
+Claude Code marketplace:
 
-```
+```text
 /plugin marketplace add realsee-developer/skills
 /plugin install realsee-skills@realsee-developer-skills
 ```
 
-Claude Code will prompt you for `REALSEE_APP_KEY` / `REALSEE_APP_SECRET` / `REALSEE_REGION` via the plugin config dialog. The two secrets are stored in the system keychain (not in `settings.json`).
-
-**Use** — just describe the task in chat; Claude picks the skill based on its `SKILL.md` description. Examples:
-
-```
-Turn /path/to/photo.jpg into a Realsee Argus GLB (image mode).
-Generate an Argus GLB from /path/to/pano.jpg (panorama, 2:1 aspect).
-```
-
-Need an explicit handle? The plugin-namespaced id is `realsee-skills:argus`.
-
-Development install from a clone:
-
-```bash
-git clone https://github.com/realsee-developer/skills.git
-cd skills
-npm install && npm run rebuild
-claude --plugin-dir ./plugins/realsee-skills
-```
-
-## Install & Use — Codex
-
-**One-line install** (host machine):
+Codex:
 
 ```bash
 npx skills add realsee-developer/skills --skill argus --agent codex
 ```
 
-This copies `.agents/skills/argus/` into `$CODEX_HOME/skills/argus` (default `$HOME/.codex/skills/argus`).
-
-**Use** — export credentials, then reference the skill in your Codex prompt:
-
-```bash
-export REALSEE_APP_KEY=...
-export REALSEE_APP_SECRET=...
-export REALSEE_REGION=global   # or cn
-```
-
-```
-Use $argus on /path/to/photo.jpg (image mode) and report the GLB path.
-```
-
-Install from a clone instead (sets `CODEX_HOME` if you want a custom location):
-
-```bash
-CODEX_HOME=$HOME/.codex npm run install:codex-skills
-```
-
-## Install & Use — `npx skills` (any detected host)
-
-**One-line install** for the currently-active agent:
+Any detected agent host:
 
 ```bash
 npx skills add realsee-developer/skills --skill argus
-```
-
-Install for all detected hosts in one call:
-
-```bash
 npx skills add realsee-developer/skills --skill argus --agent '*'
-```
-
-Or target a specific host:
-
-```bash
-npx skills add realsee-developer/skills --skill argus --agent claude-code
-npx skills add realsee-developer/skills --skill argus --agent codex
-```
-
-List skills without installing:
-
-```bash
-npx skills add realsee-developer/skills --list
 ```
 
 Install from a local checkout:
 
 ```bash
-npx skills add . --skill argus
+git clone https://github.com/realsee-developer/skills.git
+cd skills
+npm install
+npm install --prefix .agents/skills/argus
+npm run rebuild
 ```
 
-**Use** — once installed, invoke the skill exactly as you would on each host (see the Claude Code / Codex sections above).
+See [the install overview](docs/install-guides.md), [Claude Code](docs/claude-plugin.md), and [Codex](docs/codex.md) for host-specific details.
 
-## Direct CLI Use (no host required)
+## Direct CLI
 
-Synchronous run (blocks until GLB download; Argus inference can take several minutes):
+Start from repeated images:
 
 ```bash
-node .agents/skills/argus/scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json
+node .agents/skills/argus/scripts/run-argus.mjs start \
+  --image /absolute/path/a.jpg \
+  --image /absolute/path/b.webp \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-Asynchronous (returns immediately with `status: in_progress`; a detached process polls + downloads):
+Or start from one existing ZIP:
 
 ```bash
-node .agents/skills/argus/scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json --async
+node .agents/skills/argus/scripts/run-argus.mjs start \
+  --zip /absolute/path/input.zip \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-Resume or recover an async run from its workspace directory:
+Capture the returned `workspace_dir`. Each status call makes one query:
 
 ```bash
-node .agents/skills/argus/scripts/run-argus.mjs --resume --workspace ./workspace/<run-dir> --json
+node .agents/skills/argus/scripts/run-argus.mjs status \
+  --workspace /absolute/workspace-root/<run-dir> --json
 ```
 
-Input type is auto-detected from the JPEG dimensions and strictly enforced: 2:1 (±0.05) → panorama, 1:1 (±0.05) → pinhole image, anything else is rejected before upload. `--type panorama` / `--type image` may be passed to override auto-detection, but the override is still validated against the file's dimensions.
-
-Argus generation uploads the selected local image to Realsee remote services. Confirm user consent before any upload.
-
-## Open The Result
-
-The skill does not ship an opener script. Read the workspace's `result.json` directly:
+Collect after success:
 
 ```bash
-cat ./workspace/<run-dir>/result.json
+node .agents/skills/argus/scripts/run-argus.mjs collect \
+  --workspace /absolute/workspace-root/<run-dir> --json
 ```
 
-When `result.json#status === "success"`, ask the user whether to open the local GLB, the H5 preview, both, or neither. Then invoke the OS-native opener (see SKILL.md "Step 5"):
+There is no detached poller, `--async`, or `--resume`. Completed collection is idempotent.
 
-```bash
-case "$(uname -s)" in
-  Darwin)               open "<path-or-url>" ;;
-  Linux)                xdg-open "<path-or-url>" ;;
-  CYGWIN*|MINGW*|MSYS*) start "" "<path-or-url>" ;;
-esac
-```
+## Input and output
 
-Do not open anything until `result.json#status` is `success`.
+Inputs are 1–99 JPEG, PNG, or WebP RGB8 panoramas with exact `width == 2 * height`. At least 2048×1024 is recommended; lower resolution is a warning. `--image` is repeatable and mutually exclusive with `--zip`. ZIP mode is safely extracted, validated, normalized to Unicode NFC, sorted, and repacked before upload.
 
-## Agent Runtime Files
+Remote `task_status` (`queued`, `processing`, `succeeded`, `failed`) is separate from algorithm `result_status` (`success`, `partial`, `error`). A partial result exits 0 but includes a prominent warning and non-empty `missing_ids`; an error exits non-zero.
 
-| File | Purpose |
-| --- | --- |
-| [`llms.txt`](llms.txt) | Machine-readable repository map. |
-| [`AGENTS.md`](AGENTS.md) | Safe operating rules for automation. |
-| [`SKILL.md`](.agents/skills/argus/SKILL.md) | Runtime-facing skill definition. |
-| [`README.md`](.agents/skills/argus/README.md) | Skill-specific user documentation. |
-| [`argus-gateway-openapi.json`](.agents/skills/argus/references/argus-gateway-openapi.json) | Public Gateway contract used by the skill. |
+The collector retains `output.zip`, safely extracts it, and indexes `output.json`, the merged GLB, EXR depth maps, poses, and optional intrinsics in local `result.json`.
 
-## Skill
+Real Argus runs upload the normalized input ZIP to Realsee remote services. Obtain user consent before upload. Never commit or log credentials, upload tokens, private result URLs, or generated artifacts.
 
-| Skill | State | Description |
-| --- | --- | --- |
-| [`argus`](.agents/skills/argus/README.md) | Stable | Generate Realsee Argus GLB output from a local JPEG image or panorama. |
+## Contracts and migration
 
-Release metadata lives in [`release-channel.json`](release-channel.json).
+- [Skill README](.agents/skills/argus/README.md)
+- [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json)
+- [Algorithm I/O contract](.agents/skills/argus/references/algorithm-io.md)
+- [`output.json` JSON Schema](.agents/skills/argus/references/argus-output.schema.json)
+- [Migration from 1.x](.agents/skills/argus/references/migration-v2.md)
+- [Machine-readable index](llms.txt)
 
-## Local Checks
+## Development
 
-Check local prerequisites:
+Canonical source lives in `.agents/skills/argus/`. The Claude plugin and CN-only Arkclaw package are generated from it and checked for byte consistency (with one deterministic Arkclaw region overlay).
 
 ```bash
 npm run doctor
-```
-
-Run skill tests:
-
-```bash
 npm run test:skill
-```
-
-## Contribute
-
-Source skill files live under `.agents/skills/`. The Claude plugin package under `plugins/realsee-skills/` is generated from the source skill files.
-
-After changing source skill files, run:
-
-```bash
 npm run rebuild
 npm run ci
 ```
 
-Documentation:
-
-- [Architecture](ARCHITECTURE.md) / [架构](ARCHITECTURE.zh-CN.md)
-- [Install guide overview](docs/install-guides.md) / [安装指南总览](docs/zh-CN/install-guides.md)
-- [Claude Code install](docs/claude-plugin.md) / [Claude Code 安装](docs/zh-CN/claude-plugin.md)
-- [Codex install](docs/codex.md) / [Codex 安装](docs/zh-CN/codex.md)
-- [Usage guide](docs/usage.md) / [使用指南](docs/zh-CN/usage.md)
-- [Maintainer guide](docs/development.md) / [维护者指南](docs/zh-CN/development.md)
-- [Release guide](docs/release.md) / [发布指南](docs/zh-CN/release.md)
-- [Public distribution checklist](docs/public-distribution.md) / [公开分发检查清单](docs/zh-CN/public-distribution.md)
-- [Support](SUPPORT.md) / [支持](SUPPORT.zh-CN.md)
-- [Community guide](docs/community.md) / [社区指南](docs/zh-CN/community.md)
-- [Contribution guide](CONTRIBUTING.md) / [贡献指南](CONTRIBUTING.zh-CN.md)
-- [Security policy](SECURITY.md) / [安全政策](SECURITY.zh-CN.md)
-- [License](LICENSE)
+See [Architecture](ARCHITECTURE.md), [development](docs/development.md), [release](docs/release.md), and [public distribution](docs/public-distribution.md).
 
 ## License
 

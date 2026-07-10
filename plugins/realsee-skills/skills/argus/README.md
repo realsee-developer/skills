@@ -1,81 +1,100 @@
 # argus
 
 ![Skill argus](https://img.shields.io/badge/skill-realsee--argus-6f42c1?style=flat-square)
-![Live tested](https://img.shields.io/badge/live-tested-2ea44f?style=flat-square)
+![Version 2.0](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
 ![Upload consent](https://img.shields.io/badge/upload-consent%20required-brown?style=flat-square)
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-`argus` is a local Skill package for generating Realsee Argus GLB output from a local JPEG image or panorama.
+`argus` packages 1–99 local 2:1 panoramas into one normalized ZIP, submits a Realsee Argus task, and collects a validated `output.zip` containing EXR depth maps, one merged GLB point cloud, per-image poses, optional intrinsics, and `output.json`.
 
-## Install and Use
+Version 2.0 keeps the Skill ID `argus` but does not include the old single-image VGGT fallback. Pin `v1.0.2` for square 1:1 input, the old single-GLB-only output, or legacy preview behavior. See the [migration guide](references/migration-v2.md).
 
-Install dependencies from this package directory when dependencies are added:
+## Install dependencies
+
+From this package directory:
 
 ```bash
 npm install
 ```
 
-Synchronous invocation (blocks until the GLB is downloaded; Argus inference can take several minutes):
+Node.js 22 or newer is required.
+
+## Explicit lifecycle
+
+Start from repeated images:
 
 ```bash
-node scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json
+node scripts/run-argus.mjs start \
+  --image /absolute/path/a.jpg \
+  --image /absolute/path/b.png \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-Asynchronous invocation (returns immediately with `status: in_progress`; a detached process polls + downloads and writes `state.json` + `result.json` under the workspace):
+Or start from one existing ZIP:
 
 ```bash
-node scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json --async
+node scripts/run-argus.mjs start \
+  --zip /absolute/path/input.zip \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-Resume or recover an async run from its workspace directory:
+Capture the returned `workspace_dir`, then query once per invocation:
 
 ```bash
-node scripts/run-argus.mjs --resume --workspace ./workspace/<run-dir> --json
+node scripts/run-argus.mjs status --workspace /absolute/workspace-root/<run-dir> --json
 ```
 
-Input type is auto-detected from the JPEG dimensions and strictly enforced:
-
-- **2:1 (±0.05)** → panorama (e.g. 4096×2048).
-- **1:1 (±0.05)** → pinhole image (e.g. 1024×1024).
-- Anything else is rejected with `Unsupported aspect ratio` before any remote upload.
-
-`--type panorama` / `--type image` may be passed to override auto-detection, but the override is still validated against the file's dimensions.
-
-## Open The Result
-
-After `cat ./workspace/<run-dir>/result.json` reports `"status": "success"`, ask the user which preview path they want and invoke the OS opener directly:
+Collect after the remote task succeeds:
 
 ```bash
-case "$(uname -s)" in
-  Darwin)               open "<path-or-url>" ;;
-  Linux)                xdg-open "<path-or-url>" ;;
-  CYGWIN*|MINGW*|MSYS*) start "" "<path-or-url>" ;;
-esac
+node scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir> --json
 ```
 
-Open the GLB (`<run-dir>/<task_id>.glb`) and/or the `preview_url` from `result.json` depending on the user's choice. Do not open anything until `status === "success"`.
+There is no detached poller, `--async`, or `--resume`. `start`, `status`, and `collect` are independently resumable through schema-v2 `state.json`. A completed `collect` is idempotent.
 
-## Configuration
+## Input contract
 
-Configuration is read from environment variables only:
+- 1–99 JPEG, PNG, or WebP images.
+- RGB, 8-bit, exact `width == 2 * height`.
+- At least 2048×1024 is recommended; smaller images produce a warning.
+- `--image` is repeatable and mutually exclusive with `--zip`.
+- ZIPs may contain only images at the root. The Skill safely validates and deterministically repacks them.
+
+The Skill rejects nested entries, path traversal, control characters, duplicate stems, and Unicode/case-fold name collisions before upload.
+
+## Result contract
+
+`task_status` describes the remote lifecycle: `queued`, `processing`, `succeeded`, or `failed`. `result_status` independently describes the algorithm output: `success`, `partial`, or `error`.
+
+The local `result.json` indexes:
+
+- the retained `output.zip` and extracted directory;
+- `output.json`;
+- `pointcloud/merged.glb`;
+- EXR depth maps and JSON poses;
+- optional intrinsics;
+- warnings and `missing_ids`.
+
+`partial` exits 0 but always carries an explicit warning and a non-empty missing-ID list. `error` exits non-zero.
+
+## Configuration and safety
+
+Configuration uses the existing environment contract:
 
 - `REALSEE_APP_KEY`
 - `REALSEE_APP_SECRET`
-- `REALSEE_REGION`
-- `REALSEE_POLL_INTERVAL_MS`
-- `REALSEE_POLL_MAX_ATTEMPTS`
+- `REALSEE_REGION` (`global` or `cn`)
 
-Do not commit real secrets, account identifiers, internal URLs, or generated credentials.
+Real runs upload the normalized input ZIP to Realsee remote services. Obtain user consent before upload. Credentials, upload tokens, provider errors, and signed result URLs must not be stored in workspace state or public logs.
 
-## Upload Consent
+The Arkclaw build is CN-only. Canonical, Claude plugin, Codex, and `npx skills` installs support both Gateway regions.
 
-Real Argus generation uploads the selected local image file to Realsee remote services. Before running any command that performs a real upload, confirm that the user understands and consents to that upload.
+## Contracts
 
-## Output Handling
-
-Store durable output artifacts locally when the workflow provides them. Do not treat generated remote links as permanent records.
-
-## Gateway Status
-
-The public Gateway request boundary is recorded in `references/argus-gateway-openapi.json`. Stable live usage still requires the target account or app to have the required Argus/VGGT capability enabled.
+- [Gateway OpenAPI](references/argus-gateway-openapi.json)
+- [Algorithm I/O](references/algorithm-io.md) / [中文](references/algorithm-io.zh-CN.md)
+- [`output.json` JSON Schema](references/argus-output.schema.json)
+- [Migration from 1.x](references/migration-v2.md) / [中文](references/migration-v2.zh-CN.md)

@@ -13,14 +13,19 @@ test('argus gateway openapi document includes public gateway paths and schemas',
     Object.keys(openapi.paths).sort(),
     [
       '/auth/access_token',
-      '/open/saas/v1/vggt/poll',
-      '/open/saas/v1/vggt/trigger',
-      '/open/saas/v1/vggt/upload/token'
+      '/open/v1/argus/file/token',
+      '/open/v1/argus/task/info',
+      '/open/v1/argus/task/submit'
     ]
   );
   assert.ok(openapi.components.schemas.UploadTokenData.properties.backup);
-  assert.deepEqual(openapi.components.schemas.ArgusVggtType.enum, ['pinhole', 'pano']);
-  assert.deepEqual(openapi.components.schemas.ArgusPollStatus.enum, ['pending', 'success', 'failed']);
+  assert.deepEqual(openapi.components.schemas.ArgusTaskStatus.enum, [0, 1, 2, 3]);
+  assert.ok(openapi.components.schemas.SubmitTaskRequest.properties.private_cos_key);
+  assert.ok(openapi.components.schemas.TaskInfoData.properties.output_url);
+  assert.deepEqual(
+    new Set((openapi.servers ?? []).map((server) => server.url)),
+    new Set(['https://app-gateway.realsee.ai', 'https://app-gateway.realsee.cn'])
+  );
 });
 
 test('gateway openapi document is safe for public source-available release', async () => {
@@ -45,9 +50,9 @@ test('gateway openapi type declarations expose public response types', async () 
   for (const name of [
     'GatewayEnvelope',
     'AccessTokenData',
-    'UploadTokenResponseData',
-    'TriggerVggtRequest',
-    'PollVggtResponseData'
+    'ArgusFileTokenData',
+    'ArgusTaskSubmitRequest',
+    'ArgusTaskInfoData'
   ]) {
     assert.match(declarations, new RegExp(`interface ${name}|type ${name}`));
   }

@@ -1,40 +1,52 @@
-# Argus API Workflow
+# Argus Gateway Workflow
 
-This document records the public Realsee Argus/VGGT Gateway workflow used by this skill.
+This document records the public Gateway workflow used by Argus Skill 2.x. The machine-readable contract is [argus-gateway-openapi.json](argus-gateway-openapi.json).
 
-The machine-readable OpenAPI document is `argus-gateway-openapi.json`; TypeScript declarations for the public contract are in `src/gateway-openapi-types.d.ts`.
+## 1. Preflight and normalization
 
-## 1. Preflight
+Before any network request, the Skill:
 
-Validate the local input before contacting remote services:
+- resolves `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION`;
+- confirms upload consent;
+- validates 1–99 JPEG, PNG, or WebP RGB8 panoramas with exact 2:1 dimensions;
+- safely expands a supplied ZIP when necessary, then normalizes and repacks all input into one deterministic ZIP;
+- records only non-secret input metadata in schema-v2 `state.json`.
 
-- The image path is absolute and points to an existing readable file.
-- The input type is supported, such as `image` or `panorama`.
-- Required environment variables are present: `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION`.
-- The user has consented to uploading the local file to Realsee remote services.
-- The target app or account has the required Argus/VGGT capability enabled.
+The Gateway bases remain:
 
-## 2. Access Token and Upload Token
+- `global`: `https://app-gateway.realsee.ai`
+- `cn`: `https://app-gateway.realsee.cn`
 
-Use the Gateway authentication and upload-token endpoints:
+## 2. Start
 
-- `POST /auth/access_token`
-- `POST /open/saas/v1/vggt/upload/token`
+`start` performs exactly four remote operations:
 
-The access-token request is form encoded and returns `data.access_token`. The `Authorization` header for later Gateway requests is the raw token value. Do not hard-code credentials.
+1. `POST /auth/access_token`
+2. `GET /open/v1/argus/file/token`
+3. stream one normalized ZIP to object storage
+4. `POST /open/v1/argus/task/submit` with `private_cos_key` and `title`
 
-## 3. Upload
+The upload lease locator is `bucket + region + prefix`. Upload credentials may refresh in memory but must never be written to state. `start` persists the returned `task_code` atomically, then returns immediately.
 
-Upload the validated JPEG input using the returned uploader token and retain `input_image_id` for the Argus job trigger.
+Task submission is not idempotent and is never retried automatically. If the request may have reached the server but its response is unavailable, the state becomes `submission_unknown`. A caller must not blindly submit again.
 
-## 4. Trigger and Poll
+## 3. Status
 
-Trigger Argus/VGGT generation with `POST /open/saas/v1/vggt/trigger`, then poll `GET /open/saas/v1/vggt/poll` until the job succeeds, fails, or reaches `REALSEE_POLL_MAX_ATTEMPTS`. Use `REALSEE_POLL_INTERVAL_MS` for the polling interval.
+`status` makes one `GET /open/v1/argus/task/info?task_code=...` request and maps the numeric Gateway state as follows:
 
-## 5. Download
+| Gateway | Local `task_status` |
+| --- | --- |
+| `0` | `queued` |
+| `1` | `processing` |
+| `2` | `succeeded` |
+| `3` | `failed` |
 
-When generation succeeds, use `result_url` as the GLB download URL. The URL comes from Realsee Gateway/API output and is treated as trusted; the downloader follows redirects and only enforces download robustness checks such as non-empty response, GLB magic, size limit, and atomic write.
+It does not poll in the background. The agent or caller decides when to invoke it again. Temporary result URLs are used in memory only and are never persisted in `state.json` or `result.json`.
 
-## 6. Preview URL
+## 4. Collect
 
-Construct the H5 preview URL from `alg_task_id` and UI preview type. Both global and CN H5 use the path form `/argus/{image|panorama}/task/{alg_task_id}` (CN: `https://h5.realsee.cn`, global: `https://h5.realsee.ai`). The legacy CN query form `/argus?algTaskId=...&type=...` is still 301-redirected by the server for backwards compatibility with older share links — do not emit it from new code.
+`collect` performs one task-info query. For a successful remote task it downloads `output.zip` atomically, checks transfer length and any Gateway-provided size or MD5, validates ZIP CRC and safe extraction limits, retains the original archive, and safely extracts it.
+
+The collector then validates [argus-output.schema.json](argus-output.schema.json), artifact paths and IDs, referenced-file existence, GLB/EXR magic, and success/missing-set consistency. It writes a local `result.json` index containing durable local paths. A completed `collect` is idempotent: repeated calls neither submit another task nor download the output again.
+
+The algorithm manifest's `status` becomes local `result_status` (`success`, `partial`, or `error`). This is distinct from remote `task_status`. `partial` is a successful CLI outcome with an explicit warning and non-empty `missing_ids`; `error` is a non-zero CLI outcome.

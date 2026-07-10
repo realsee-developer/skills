@@ -2,61 +2,51 @@
 
 [English](public-distribution.md) | [简体中文](zh-CN/public-distribution.md)
 
-Run through this checklist before cutting a public release tag.
+Run this checklist before promoting Argus Skill 2.0.
 
-## 1. Repository Hygiene
+## Repository and versions
 
-- [ ] `npm run ci` is green locally on a clean clone (`npm ci` + `npm install --prefix .agents/skills/argus`).
-- [ ] `npm run release:gate -- --channel stable --tag <next>` passes.
-- [ ] `git status` is clean; no committed `.env`, `node_modules/`, `workspace/`, `*.glb`, or generated runtime artifacts.
-- [ ] No absolute home-directory paths, internal hostnames, or other denied substrings in tracked files. Run `npm run validate:repo-boundary`; the full deny list lives in `scripts/validate-repo-boundary.mjs`.
+- [ ] `v1.0.2` remains unchanged; no `v1.0` alias exists.
+- [ ] Root, Skill package, plugin package, and `release-channel.json` versions agree.
+- [ ] Preview metadata remains pending until real two-region E2E passes.
+- [ ] `npm run ci` and the selected release gate pass on a clean clone.
+- [ ] Git status contains no credentials, `.env`, workspaces, output ZIPs, or extracted artifacts.
 
-## 2. Skill State
+## Canonical distribution
 
-- [ ] `release-channel.json#skills.argus.state` reflects current maturity (`preview` or `stable`).
-- [ ] `release-channel.json#skills.argus.stable_gate` is `passed` when promoting to stable.
-- [ ] `release-channel.json#version` matches the planned tag (e.g. `1.0.0` for `v1.0.0`).
-- [ ] `package.json#version` and `.agents/skills/argus/package.json#version` match `release-channel.json#version`.
+- [ ] `npm run rebuild` regenerates both `plugins/realsee-skills/` and `arkclaw/argus/`.
+- [ ] Claude plugin files are byte-identical to `.agents/skills/argus/`.
+- [ ] Arkclaw files are canonical bytes except the deterministic CLI environment overlay that forces `REALSEE_REGION=cn`.
+- [ ] Codex install and `npx skills add . --skill argus` both resolve the same canonical Skill.
+- [ ] Plugin manifest has no `userConfig` and no MCP server.
 
-## 3. Generated Artifacts
+## Contracts and docs
 
-- [ ] `npm run rebuild` regenerates `plugins/realsee-skills/` and `check:claude-sync` is byte-identical to `.agents/skills/argus/`.
-- [ ] `plugins/realsee-skills/.claude-plugin/plugin.json` carries the expected `$schema`, `name`, and `description`. It must NOT declare `userConfig` — credentials are resolved at runtime by the skill, not at install time.
-- [ ] `plugins/realsee-skills/.mcp.json` does NOT exist — the skill runs via Bash, not via an MCP server.
-- [ ] `.claude-plugin/marketplace.json` plugin entry points at `./plugins/realsee-skills`.
+- [ ] Gateway OpenAPI contains exactly the four public methods and both bases.
+- [ ] Bilingual algorithm I/O docs agree on auto IDs, `missing_ids`, `error`, optional normals, fixed `right-handed, Y-up`, and EXR-only stable depth.
+- [ ] JSON Schema 2020-12 discriminates success/partial/error and requires non-empty unique `missing_ids` for partial.
+- [ ] English/Chinese usage and migration docs explain that square/single-GLB users pin `v1.0.2`.
+- [ ] No document mentions detached polling, `--async`, `--resume`, or a 2.0 H5 preview as supported behavior.
 
-## 4. Docs
+## Runtime verification
 
-- [ ] English + Simplified Chinese pairs exist for every user-facing doc (`README.md` / `README.zh-CN.md`, `AGENTS.md` / `AGENTS.zh-CN.md`, `docs/*.md` / `docs/zh-CN/*.md`, `SUPPORT.md` / `SUPPORT.zh-CN.md`, `ARCHITECTURE.md` / `ARCHITECTURE.zh-CN.md`).
-- [ ] `llms.txt` references every install command, doc path, and validation script (`scripts/validate-ai-index.mjs` enforces this).
-- [ ] Install examples reference `vX.Y.Z` tags when used for pinned installs.
+- [ ] Input tests cover 1, 99, and 100 images; JPEG/PNG/WebP; invalid ratio/RGB8; duplicate names; nested/corrupt/Zip Slip/Bomb archives.
+- [ ] Gateway tests cover paths, methods, envelopes, status mapping, and both region bases.
+- [ ] Lifecycle tests cover upload interruption/lease change, submission-unknown, processing/failure, repeated and concurrent collect, interrupted download, and expired URLs.
+- [ ] Artifact tests cover success/partial/error, ID consistency, invalid paths, invalid GLB/EXR, missing pose/depth, optional intrinsics, and atomic recovery.
+- [ ] `start`, `status`, and `collect` return the documented JSON and exit codes.
 
-## 5. Real-World Verification
+## Uploader gate
 
-- [ ] Argus e2e is green for `REALSEE_REGION=global` (AWS adaptor).
-- [ ] Argus e2e is green for `REALSEE_REGION=cn` (Tencent COS adaptor).
-- [ ] Async + resume flow verified: `--async` returns `status: in_progress`, the detached poller writes `result.json`, and `--resume` continues a paused run.
-- [ ] Smoke test for the three install paths: `claude --plugin-dir ./plugins/realsee-skills`, `npm run install:codex-skills`, `npx skills add . --skill argus`.
+- [ ] `@realsee/universal-uploader@0.1.0` is published and installable.
+- [ ] Unit tests, typecheck, build, `npm pack` smoke, and GitLab CI pass.
+- [ ] Production dependency audit has no high or critical finding.
+- [ ] Argus installs only AWS Node and Tencent COS Node adapter dependencies; no browser COS, OSS, or uploader CLI dependency is pulled in for the Skill.
 
-## 6. Security Surface
+## Real E2E and promotion
 
-- [ ] No credentials in tracked files (`scripts/scan-secrets.mjs` enforces this).
-- [ ] OpenAPI contract at `.agents/skills/argus/references/argus-gateway-openapi.json` is the public Realsee Argus/VGGT contract — no internal evidence text (`scripts/release-gate.mjs#validatePublicGatewayOpenApi`).
-- [ ] CodeQL workflow has no open alerts.
-
-## 7. Tag & Release
-
-```bash
-git tag -a vX.Y.Z -m "vX.Y.Z"
-git push origin vX.Y.Z
-```
-
-- [ ] `.github/workflows/release.yml` ran successfully on the tag (it runs the stable gate then `gh release create --generate-notes --latest`).
-- [ ] GitHub Release exists with auto-generated notes; manually edit if needed.
-
-## 8. Post-Release
-
-- [ ] Test install from the release tag on a fresh machine:
-  - `npx skills add realsee-developer/skills@vX.Y.Z`
-  - Or `/plugin marketplace add realsee-developer/skills` in Claude Code.
-- [ ] Update any external pointers (docs sites, share-links, demos) to the new tag.
+- [ ] `v2.0.0-rc.1` completes a real multi-image run in global/AWS.
+- [ ] `v2.0.0-rc.1` completes a real multi-image run in CN/Tencent COS.
+- [ ] Both regions verify download plus success, partial, and error handling.
+- [ ] Only after those checks, set `state: stable`, `stable_gate: passed`, and publish `v2.0.0`.
+- [ ] Test fresh installs through Claude plugin, Codex, `npx skills`, and CN-only Arkclaw.

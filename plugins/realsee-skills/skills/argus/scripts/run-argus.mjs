@@ -1,24 +1,20 @@
-// argus skill entrypoint.
-//
-// All orchestration (credential collection, dimension validation, status
-// polling, result opening) is described in SKILL.md as agent instructions
-// against the Bash tool. This script is the one piece of work the agent
-// cannot do via Bash — the Realsee Gateway HMAC auth, signed multipart
-// upload, trigger, poll, and download pipeline.
-//
-// Requires REALSEE_APP_KEY, REALSEE_APP_SECRET, REALSEE_REGION in env.
-// Usage:
-//   node scripts/run-argus.mjs --image <abs-path> [--type image|panorama] \
-//     --workspace <dir> --yes --json [--async]
-//   node scripts/run-argus.mjs --resume --workspace <dir> --json
+#!/usr/bin/env node
 import { main } from '../src/cli.mjs';
+import { redactText, redactUrlForLog } from '../src/sanitizer.mjs';
 
-main(process.argv.slice(2), {
-  env: process.env,
-  stdout: process.stdout,
-  stderr: process.stderr,
-  now: () => new Date()
-}).catch((error) => {
-  process.stderr.write(`${error?.stack || error}\n`);
+try {
+  const result = await main(process.argv.slice(2), {
+    env: process.env,
+    stdout: process.stdout,
+    stderr: process.stderr,
+    now: () => new Date()
+  });
+  if (result?.result_status === 'error') process.exitCode = 2;
+} catch (error) {
+  const code = error?.code ? `[${error.code}] ` : '';
+  const workspace = error?.workspaceDir ? `\nWorkspace: ${error.workspaceDir}` : '';
+  const message = redactText(error?.message ?? String(error))
+    .replace(/https?:\/\/[^\s]+/gu, (url) => redactUrlForLog(url));
+  process.stderr.write(`${code}${message}${workspace}\n`);
   process.exitCode = 1;
-});
+}

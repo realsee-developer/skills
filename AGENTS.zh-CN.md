@@ -7,13 +7,13 @@
 ## 仓库定位
 
 - 受众：用户、agent runtimes 和维护者。
-- 主要能力：`argus`，从本地 JPEG 图片或全景图生成 Realsee Argus GLB 输出。
+- 主要能力：`argus`，把 1–99 张本地 2:1 全景图处理成深度图、合并 GLB 点云、相机位姿、可选内参与经过校验的结果索引。
 - 分发模型：source-available 能力打包。
 
 ## 安全操作规则
 
 - Argus 运行视为远程上传。任何上传前都必须确认用户同意。
-- 不要提交 secrets、生成凭证、账号标识、私有 URL、下载的 GLB 文件、`.env` 文件或临时 workspace。
+- 不要提交 secrets、生成凭证、账号标识、私有 URL、下载的 Argus 压缩包或解压产物、`.env` 文件或临时 workspace。
 - 公开文档保持双语。英文使用默认路径。简体中文使用 `docs/zh-CN/`、`README.zh-CN.md` 或同目录 `*.zh-CN.md` 文件。
 - 编辑 `.agents/skills/` 下的 source skill 文件。
 - 修改 source skill 后运行 `npm run rebuild`。

@@ -1,80 +1,89 @@
 # Realsee Skills
 
-Purpose: Source-available Realsee agent skill capability distribution for users and agent runtimes.
-Agent priority: inspect this file first, then README.md, README.zh-CN.md, docs/usage.md, and AGENTS.md.
-Language: English is the default documentation path. Simplified Chinese documentation is available in README.zh-CN.md, docs/zh-CN/, same-directory *.zh-CN.md policy docs, and .agents/skills/argus/README.zh-CN.md.
+Purpose: Source-available Realsee agent Skill distribution for users and agent runtimes.
+Current release line: Argus Skill 2.0.0; legacy square/single-GLB workflows remain pinned at v1.0.2.
+Agent priority: inspect this file, then README.md, docs/usage.md, AGENTS.md, and .agents/skills/argus/SKILL.md.
+Languages: English default; Simplified Chinese in README.zh-CN.md, docs/zh-CN/, and same-directory *.zh-CN.md pairs.
 
-Primary skill:
-- Name: argus
-- State: stable
-- Shape: a SKILL.md instructing the agent + exactly one script (the gateway pipeline)
+Primary Skill:
+- ID: argus
+- State: preview until real global and cn E2E gates pass
 - Definition: .agents/skills/argus/SKILL.md
-- English documentation: .agents/skills/argus/README.md
-- Simplified Chinese documentation: .agents/skills/argus/README.zh-CN.md
-- Public OpenAPI contract: .agents/skills/argus/references/argus-gateway-openapi.json
-- CLI entrypoint: .agents/skills/argus/scripts/run-argus.mjs (the only script; everything else is agent + Bash, per SKILL.md)
+- English docs: .agents/skills/argus/README.md
+- Chinese docs: .agents/skills/argus/README.zh-CN.md
+- CLI: .agents/skills/argus/scripts/run-argus.mjs
+- Public Gateway contract: .agents/skills/argus/references/argus-gateway-openapi.json
+- Algorithm I/O: .agents/skills/argus/references/algorithm-io.md and .agents/skills/argus/references/algorithm-io.zh-CN.md
+- Algorithm manifest schema: .agents/skills/argus/references/argus-output.schema.json
+- Migration: .agents/skills/argus/references/migration-v2.md and .agents/skills/argus/references/migration-v2.zh-CN.md
 
-User and runtime map:
-- Agent rules: AGENTS.md and AGENTS.zh-CN.md
-- Architecture: ARCHITECTURE.md and ARCHITECTURE.zh-CN.md
-- Support: SUPPORT.md and SUPPORT.zh-CN.md
-- Install guide overview: docs/install-guides.md and docs/zh-CN/install-guides.md
-- Claude Code plugin install: docs/claude-plugin.md and docs/zh-CN/claude-plugin.md
-- Codex install: docs/codex.md and docs/zh-CN/codex.md
-- Usage guide: docs/usage.md and docs/zh-CN/usage.md
-- User README: README.md and README.zh-CN.md
-- Maintainer docs: docs/development.md and docs/zh-CN/development.md
-- Release docs: docs/release.md and docs/zh-CN/release.md
-- Public distribution checklist: docs/public-distribution.md and docs/zh-CN/public-distribution.md
-- Community guide: docs/community.md and docs/zh-CN/community.md
-- Generated Claude plugin package: plugins/realsee-skills/
-- Marketplace manifest: .claude-plugin/marketplace.json
-- Validation scripts: scripts/
-- Release metadata: release-channel.json
+Capability:
+- Input: 1–99 JPEG/PNG/WebP RGB8 equirectangular panoramas, exact width == 2 * height.
+- Input modes: repeat --image or pass one mutually exclusive --zip.
+- Packaging: safe validation plus deterministic normalized streaming ZIP.
+- Output: retained output.zip, EXR depth maps in meters, merged GLB, poses, optional intrinsics, output.json, and local result.json index.
+- Remote lifecycle: task_status queued | processing | succeeded | failed.
+- Algorithm result: result_status success | partial | error; partial exits 0 with warning and non-empty missing_ids.
+- No detached poller, old VGGT fallback, square input, legacy preview, or 1.x workspace migration.
 
-Common commands:
+Explicit CLI lifecycle:
+- Start images: node .agents/skills/argus/scripts/run-argus.mjs start --image /absolute/a.jpg --image /absolute/b.webp --workspace /absolute/workspace-root --yes --json
+- Start ZIP: node .agents/skills/argus/scripts/run-argus.mjs start --zip /absolute/input.zip --workspace /absolute/workspace-root --yes --json
+- Status once: node .agents/skills/argus/scripts/run-argus.mjs status --workspace /absolute/workspace-root/<run-dir> --json
+- Collect terminal result: node .agents/skills/argus/scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir> --json
+
+Credential contract:
+- Required: REALSEE_APP_KEY, REALSEE_APP_SECRET, REALSEE_REGION.
+- Regions: global -> app-gateway.realsee.ai; cn -> app-gateway.realsee.cn.
+- Existing precedence: inherited shell env, then agent-loaded ~/.realsee/credentials, then one-field-per-turn Q&A.
+- Never print values or pass them as recorded command arguments.
+- state.json/result.json never store credentials, upload tokens, presigned URLs, or raw provider errors.
+
+Gateway adapter:
+- POST /auth/access_token
+- GET /open/v1/argus/file/token
+- POST /open/v1/argus/task/submit (never automatically retried)
+- GET /open/v1/argus/task/info
+- Bases remain global and cn.
+
+Install commands:
 - npx skills add realsee-developer/skills --skill argus
 - npx skills add realsee-developer/skills --skill argus --agent claude-code
 - npx skills add realsee-developer/skills --skill argus --agent codex
 - npx skills add realsee-developer/skills --skill argus --agent '*'
 - npx skills add . --skill argus
 - npm run install:codex-skills
+
+Repository map:
+- User docs: README.md and README.zh-CN.md
+- Agent rules: AGENTS.md and AGENTS.zh-CN.md
+- Architecture: ARCHITECTURE.md and ARCHITECTURE.zh-CN.md
+- Support: SUPPORT.md and SUPPORT.zh-CN.md
+- Install overview: docs/install-guides.md and docs/zh-CN/install-guides.md
+- Claude Code: docs/claude-plugin.md and docs/zh-CN/claude-plugin.md
+- Codex: docs/codex.md and docs/zh-CN/codex.md
+- Usage: docs/usage.md and docs/zh-CN/usage.md
+- Public distribution: docs/public-distribution.md and docs/zh-CN/public-distribution.md
+- Generated Claude plugin: plugins/realsee-skills/
+- Generated CN-only Arkclaw copy: arkclaw/argus/
+- Marketplace: .claude-plugin/marketplace.json
+- Release metadata: release-channel.json
+
+Common maintenance commands:
 - npm run setup:local
 - npm run doctor
 - npm run smoke
-- node .agents/skills/argus/scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json
-- node .agents/skills/argus/scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json --async
-- node .agents/skills/argus/scripts/run-argus.mjs --resume --workspace ./workspace/<run-dir> --json
 - npm run validate:ai
 - npm run validate:docs
 - npm run validate:skills
 - npm run rebuild
+- npm run check:claude-sync
+- npm run check:arkclaw-sync
 - npm run test:skill
 - npm run ci
 
-Credential resolution (the agent orchestrates this per SKILL.md, no helper scripts):
-- Try shell env first: `printenv REALSEE_APP_KEY REALSEE_APP_SECRET REALSEE_REGION`.
-- Try file: `[ -f ~/.realsee/credentials ] && set -a && . ~/.realsee/credentials && set +a` (the file is shell-sourceable env).
-- Otherwise collect from user via one-question-per-turn Q&A (see SKILL.md "Step 1a").
-- Save (with explicit user consent) via a Bash heredoc: `cat > ~/.realsee/credentials <<EOF ... EOF && chmod 600 ~/.realsee/credentials`.
-
-Status, opening, dimension check — also agent-driven via Bash:
-- Status poll: `cat <workspace_dir>/result.json` every 5–10s.
-- Open GLB/preview: `open` (macOS) / `xdg-open` (Linux) / `start ""` (Windows).
-- JPEG aspect ratio precheck: `sips -g pixelWidth -g pixelHeight` (macOS) / `identify -format '%w %h'` (ImageMagick) / pure-node fallback. Enforces 2:1 (panorama) or 1:1 (pinhole) before upload.
-
 Safety:
-- Plugin does not declare userConfig — credentials are resolved at runtime by the skill, not at install time.
-- Credentials persistence is opt-in: the agent asks the user before writing ~/.realsee/credentials.
-- Argus usage is a remote upload of the selected local image.
-- Require user consent before every upload.
-- Do not commit secrets, generated credentials, account identifiers, private URLs, GLB files, .env files, or temporary workspaces.
-- Edit source skill files under .agents/skills/ and run npm run rebuild.
-- Keep generated Claude plugin files synchronized with source skill files.
-
-Do not add:
-- Internal evidence files
-- Live scorecards
-- Private source references
-- Internal process docs
-- Local absolute paths
+- Every real Argus run is a remote upload and requires user consent.
+- Do not commit secrets, generated credentials, account identifiers, private URLs, output.zip, extracted artifacts, .env files, or temporary workspaces.
+- Edit .agents/skills/argus/; generated Claude and Arkclaw copies are rebuilt from canonical source.
+- Do not add internal evidence, private source references, live scorecards, internal process docs, or local absolute paths.

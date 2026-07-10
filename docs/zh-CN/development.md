@@ -2,7 +2,7 @@
 
 [English](../development.md) | 简体中文
 
-本仓库是 Realsee agent skills 的 Node.js 工作区。Runtime skill 代码位于 `.agents/skills/argus/`。
+本仓库是 Realsee agent skills 的 Node.js 工作区。Argus 2.0 runtime 代码与 canonical contracts 位于 `.agents/skills/argus/`。
 
 ## 要求
 
@@ -39,13 +39,13 @@ npm run test:skill
 | `npm run validate:docs` | 修改双语仓库文档后。 |
 | `npm run validate:skills` | 修改 skill metadata、README 或 references 后。 |
 | `npm run test:skill` | 修改 `argus` 代码后。 |
-| `npm run rebuild` | 修改会复制到 `plugins/realsee-skills/` 的 source skill 文件后。 |
+| `npm run rebuild` | 重新生成并字节校验 Claude plugin 与 CN-only Arkclaw copy。 |
 | `npm run doctor` | 通过 `doctor:local` 检查本地前置条件。 |
 | `npm run doctor:live` | 检查 live Argus 前置条件和环境。 |
 
 ## Skill 工作流
 
-skills 的源目录是 `.agents/skills/`。Claude plugin 包生成到 `plugins/realsee-skills/`。
+单一事实源是 `.agents/skills/argus/`。Claude plugin 生成到 `plugins/realsee-skills/`；Arkclaw 包生成到 `arkclaw/argus/`，只有一处确定性的 CN-only entrypoint overlay。
 
 修改 `argus` 时：
 
@@ -54,6 +54,8 @@ skills 的源目录是 `.agents/skills/`。Claude plugin 包生成到 `plugins/r
 3. 运行 `npm run rebuild`。
 4. 运行 `npm run ci`。
 
+不要直接编辑两个生成 copy。新增 runtime 行为应通过 `ArgusTaskPort` 与 `ObjectTransferPort` fake 测试，并覆盖输入、生命周期、输出合同与幂等。
+
 ## 配置
 
 公开文档只使用这些环境变量名：
@@ -61,7 +63,5 @@ skills 的源目录是 `.agents/skills/`。Claude plugin 包生成到 `plugins/r
 - `REALSEE_APP_KEY`
 - `REALSEE_APP_SECRET`
 - `REALSEE_REGION`
-- `REALSEE_POLL_INTERVAL_MS`
-- `REALSEE_POLL_MAX_ATTEMPTS`
 
-不要提交真实值、账号标识、内部 URL、生成凭证、下载的 GLB 文件或临时预览输出。
+继续支持现有 agent-driven `~/.realsee/credentials` 加载流程。不要提交真实值、账号标识、内部 URL、生成凭证、`output.zip`、解压产物或临时 workspace。

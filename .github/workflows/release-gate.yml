@@ -40,6 +40,12 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: .agents/skills/argus/package-lock.json
+
+      - name: Install skill dependencies
+        working-directory: .agents/skills/argus
+        run: npm ci
 
       - name: Run release gate
         env:

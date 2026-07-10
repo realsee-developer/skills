@@ -2,111 +2,104 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-This document maps the canonical skill source, the generated Claude plugin package, and the three distribution channels (Claude Code, Codex, `npx skills`).
+Argus Skill 2.0 has one canonical source, an explicit persisted lifecycle, and generated packages for each supported agent host.
 
-## Source-of-Truth Map
+## Source-of-truth map
 
-```
-.agents/skills/argus/                Canonical skill source. Shape: SKILL.md + one script.
-├── SKILL.md                         Frontmatter + the full agent-driven flow (credentials Q&A, dimension precheck, poll, open).
-├── README.md / README.zh-CN.md      End-user docs.
-├── package.json                     Skill-local Node manifest (dependency: @realsee/universal-uploader).
-├── package-lock.json                Pinned dep tree.
-├── scripts/run-argus.mjs            The ONLY script. Gateway pipeline (auth → upload → trigger → poll → download).
-├── src/                             Runtime modules backing run-argus.mjs (cli, config, gateway, downloader, state, …).
-├── test/                            Unit + injectable-fake tests (no live calls).
-└── references/                      Public OpenAPI contract + reference docs.
+```text
+.agents/skills/argus/                 Canonical Skill source
+├── SKILL.md                          Agent-facing lifecycle and safety rules
+├── README.md / README.zh-CN.md       User documentation
+├── package.json / package-lock.json  Node runtime and pinned dependencies
+├── scripts/run-argus.mjs             Public CLI entrypoint
+├── src/                              Runtime implementation
+├── test/                             Contract, input, lifecycle, artifact tests
+└── references/
+    ├── argus-gateway-openapi.json    Four-path public Gateway contract
+    ├── algorithm-io*.md              Bilingual algorithm I/O contract
+    ├── argus-output.schema.json      JSON Schema 2020-12 output union
+    └── migration-v2*.md              Bilingual 1.x migration guide
 
-plugins/realsee-skills/              Generated Claude plugin package — DO NOT edit by hand.
-├── .claude-plugin/plugin.json       Plugin manifest (no userConfig, no MCP server — credentials resolved at runtime).
-├── package.json                     Slimmed plugin-local manifest.
-├── skills/argus/                    Copy of source skill (kept in sync by scripts/sync-claude-plugin.mjs).
-└── scripts/{validate-plugin,doctor-local-env}.mjs
-
-.claude-plugin/marketplace.json      Marketplace manifest. Points at plugins/realsee-skills.
-
-release-channel.json                 Release state (channel, version, per-skill state, regions).
-llms.txt                             Machine-readable repository index.
+plugins/realsee-skills/               Generated Claude plugin copy
+arkclaw/argus/                        Generated Arkclaw copy with CN-only entrypoint overlay
+release-channel.json                  Release maturity and version metadata
+llms.txt                              Machine-readable repository index
 ```
 
-## Skill → Plugin → Distribution Flow
+## Deep runtime module
 
-```
-                .agents/skills/argus/                  (source of truth)
-                            │
-              ┌─────────────┼────────────────────┐
-              │             │                    │
-              ▼             ▼                    ▼
-      sync:claude-plugin   npx skills add     install-codex-skills
-              │             . --skill argus           │
-              ▼                                       ▼
-   plugins/realsee-skills/                  $CODEX_HOME/skills/argus
-              │                                       │
-              ▼                                       │
-   /plugin install                                    │
-   realsee-skills@                                    │
-   realsee-developer-skills                           │
-              │                                       │
-              └─────────┐                   ┌─────────┘
-                        ▼                   ▼
-                Claude Code runtime    Codex runtime
-                (no install-time configuration — both runtimes
-                 receive REALSEE_* via the skill's runtime
-                 credential prompt or pre-set shell env)
+The runtime exposes only three lifecycle operations:
+
+```text
+start   -> validate -> normalize ZIP -> upload -> submit -> persist task_code
+status  -> load state -> query once -> map task_status -> persist
+collect -> query once -> atomic download -> validate/extract -> write result index
 ```
 
-Both runtimes ultimately spawn the same `scripts/run-argus.mjs` against the same `src/cli.mjs`. Credential resolution happens **before** the script runs and is **performed entirely by the agent via Bash**, following SKILL.md "Step 1":
+The lifecycle module owns invariants, atomic workspace state, idempotence, and error classification. External details are behind two injected ports:
 
-1. Probe shell env (`printenv REALSEE_*`).
-2. Source the on-disk credentials file if present: `[ -f ~/.realsee/credentials ] && set -a && . ~/.realsee/credentials && set +a`. The file is a shell-sourceable `KEY=VALUE` fragment with mode 0600.
-3. Otherwise, the agent asks the user one field per turn (region → APP_KEY → APP_SECRET → save?).
-4. If the user consents to save, the agent writes the file with a Bash heredoc + `chmod 600`.
+- `ArgusTaskPort`: Gateway authentication, upload-token lease, task submission, and task-info query.
+- `ObjectTransferPort`: streaming object upload and atomic result download.
 
-Direct shell env always wins over the credentials file. No plugin `userConfig`, no MCP bridge, and no helper scripts (check-credentials / save-credentials) are involved — the agent's Bash tool replaces all of that.
+Production adapters implement Gateway plus AWS Node or Tencent COS Node. Tests use fakes at the port boundary; lifecycle tests do not require cloud SDKs or live services.
 
-## CLI Execution Modes
+## Input boundary
 
-The runtime entrypoint (`scripts/run-argus.mjs` → `src/cli.mjs`) supports three modes:
+Both `--image` and `--zip` converge on the same normalized-input pipeline. A supplied ZIP is never trusted or uploaded verbatim. The pipeline safely expands root entries, validates 1–99 JPEG/PNG/WebP RGB8 panoramas with exact 2:1 dimensions, normalizes names to UTF-8 NFC, rejects stem/case-fold collisions, sorts by NFC UTF-8 bytes, and writes one deterministic streaming ZIP.
 
-| Mode | Flag | Behavior |
-| --- | --- | --- |
-| Synchronous | _(default)_ | Auth → upload-token → upload → trigger → poll → download → write `result.json`. Blocks for the full duration (minutes). |
-| Asynchronous | `--async` | Auth → upload-token → upload → trigger → write `state.json` + spawn detached poller. Returns `{status: in_progress, background_poll_pid}` immediately. |
-| Resume | `--resume --workspace <dir>` | Reads `state.json` and continues poll → download → `result.json`. Used by the detached poller and for manual recovery. |
+Product capacity remains Gateway-controlled. Local controls are structural and resource-based: entry count, safe paths, actual expanded bytes, compression behavior, and disk free-space checks.
 
-The async pattern is what the Claude Code / Codex hosts should prefer when invoking the skill, so the chat thread is not blocked on Argus inference.
+## Persisted lifecycle
 
-## Build & Validation Pipeline
+Schema-v2 `state.json` is the durable source of truth for a run. It records region, phase, sanitized input summary, upload receipt, and `task_code`. It never records APP credentials, temporary upload credentials, access tokens, presigned URLs, or raw provider errors.
 
-`npm run ci` (also run by `.github/workflows/ci.yml`) chains:
+Task submission has no automatic retry. When a response may have been lost after the server accepted a request, the phase becomes `submission_unknown` so another process cannot blindly create a duplicate task.
 
-1. `scan:secrets` — pattern scan for tokens, signed URLs, AWS Authorization headers, Tencent COS tmpSecret keys.
-2. `validate:docs` — bilingual docs (English / 简体中文) coverage check.
-3. `validate:ai` — assert `llms.txt` includes every required entrypoint string.
-4. `validate:repo-boundary` — reject absolute home-directory paths (macOS / Linux), internal hostnames, and other private leakage. See the deny list in `scripts/validate-repo-boundary.mjs`.
-5. `validate:skills` — verify each skill under `.agents/skills/` has a coherent SKILL.md / README pair.
-6. `rebuild` — regenerate `plugins/realsee-skills/` and assert byte-equality with `.agents/skills/argus/` via `check:claude-sync`.
-7. `validate:channel-metadata` — assert `release-channel.json` shape and id consistency.
-8. `test:skill` — run all `.agents/skills/argus/test/*.test.mjs` with `node --test`.
+`status` performs one query. There is no detached child process and no hidden polling. Multiple processes may inspect the same run, while collection uses a lock/atomic transition so only one process downloads and finalizes.
 
-The release gate (`scripts/release-gate.mjs`) runs the same chain plus, for the `--channel stable` mode, also validates that `references/argus-gateway-openapi.json` is the public Realsee Argus/VGGT contract and free of internal evidence text.
+## Artifact boundary
 
-## Release Channels
+`collect` retains the original `output.zip` and extracts into a temporary directory before an atomic finalize. It checks HTTP transfer length, optional Gateway size/MD5, ZIP CRC, safe paths, extraction limits, [the output schema](.agents/skills/argus/references/argus-output.schema.json), referenced files, successful/missing ID sets, and GLB/EXR magic.
 
-`release-channel.json` carries machine-readable state:
+Local `result.json` deliberately separates:
 
-- `channel` — `development` while on a feature branch; `preview` / `stable` when a release tag is cut.
-- `state` — per-skill maturity. `argus` is `stable` once both global + cn e2e have been verified.
-- `stable_gate` — `passed` once `release:gate --channel stable` succeeds.
+- `task_status`: `queued`, `processing`, `succeeded`, or `failed`;
+- `result_status`: `success`, `partial`, or `error`.
 
-GitHub workflows wired in:
+A partial result is usable and exits 0, but always includes a warning and non-empty `missing_ids`. An error exits non-zero.
 
-- `.github/workflows/ci.yml` — runs `npm run ci` on every push to `main` and every PR.
-- `.github/workflows/release-gate.yml` — runs the release gate on `main`, `test/**`, `stable/**`, and manual dispatch.
-- `.github/workflows/release.yml` — on tag push `v*`, runs the stable gate and creates the GitHub release.
-- `.github/workflows/codeql.yml` — weekly + push/PR static security analysis.
+## Gateway boundary
 
-## What Not to Edit
+The Gateway base and credential/region contract are unchanged. Only the Argus interface changed:
 
-- `plugins/realsee-skills/**` — generated. Edit `.agents/skills/argus/` instead and run `npm run rebuild`.
-- `node_modules/**`, `workspace/**`, `*.glb`, `.env`, anything matching the `validate-repo-boundary` deny list.
+- `POST /auth/access_token`
+- `GET /open/v1/argus/file/token`
+- `POST /open/v1/argus/task/submit`
+- `GET /open/v1/argus/task/info`
+
+The file-token response is an in-memory upload lease. `bucket + region + prefix` is the lease locator. A credential refresh may continue an upload only while that locator is unchanged.
+
+## Distribution flow
+
+```text
+                         .agents/skills/argus
+                           canonical source
+                 ┌──────────────┼──────────────┐
+                 │              │              │
+                 ▼              ▼              ▼
+        Claude plugin copy   Codex / npx    Arkclaw copy
+        byte-identical       direct source  canonical bytes +
+                                           CN-only CLI overlay
+```
+
+`npm run rebuild` regenerates Claude and Arkclaw packages and checks them against canonical bytes. The Arkclaw overlay changes only the environment passed by `scripts/run-argus.mjs`, forcing `REALSEE_REGION=cn`; all remaining files must match canonical source byte-for-byte.
+
+## Validation and release
+
+`npm run ci` runs secret scanning, bilingual-doc checks, AI-index checks, repository-boundary checks, Skill validation, distribution regeneration and consistency checks, release metadata validation, and the full Skill test suite.
+
+Version `v1.0.2` remains the frozen legacy line. Version 2.0 follows this promotion order: publish uploader 0.1.0, cut `v2.0.0-rc.1`, complete real CN and global E2E (including partial/error collection), then mark `v2.0.0` stable. Until both regions pass, release metadata remains preview/development with a pending stable gate.
+
+## Generated files
+
+Do not edit `plugins/realsee-skills/**` or `arkclaw/argus/**` by hand. Edit `.agents/skills/argus/**` and the narrow Arkclaw overlay generator, then run `npm run rebuild`.

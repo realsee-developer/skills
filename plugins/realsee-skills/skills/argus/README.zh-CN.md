@@ -1,81 +1,100 @@
 # argus
 
 ![Skill argus](https://img.shields.io/badge/skill-realsee--argus-6f42c1?style=flat-square)
-![Live tested](https://img.shields.io/badge/live-tested-2ea44f?style=flat-square)
+![Version 2.0](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
 ![Upload consent](https://img.shields.io/badge/upload-consent%20required-brown?style=flat-square)
 
 [English](README.md) | 简体中文
 
-`argus` 是一个本地 Skill 包，用于从本地 JPEG 图片或全景图生成 Realsee Argus GLB 输出。
+`argus` 把 1–99 张本地 2:1 全景图规范化打包成一个 ZIP，提交 Realsee Argus 任务，并收集经过校验的 `output.zip`。产物包含 EXR 深度图、一个合并 GLB 点云、逐图位姿、可选内参和 `output.json`。
 
-## 安装和使用
+2.0 保持 Skill ID 为 `argus`，但不包含旧版单图 VGGT fallback。1:1 方图、旧版仅单 GLB 输出或旧 preview 行为请固定到 `v1.0.2`。详见[迁移指南](references/migration-v2.zh-CN.md)。
 
-当该包增加依赖时，请在包目录中安装依赖：
+## 安装依赖
+
+在本包目录运行：
 
 ```bash
 npm install
 ```
 
-同步调用（阻塞直到 GLB 下载完成；Argus 推理可能耗时数分钟）：
+需要 Node.js 22 或更高版本。
+
+## 显式生命周期
+
+从多张图片启动：
 
 ```bash
-node scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json
+node scripts/run-argus.mjs start \
+  --image /absolute/path/a.jpg \
+  --image /absolute/path/b.png \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-异步调用（立即返回 `status: in_progress`，detached 子进程在后台轮询并下载，结果写入 workspace 下的 `state.json` 和 `result.json`）：
+或从一个现成 ZIP 启动：
 
 ```bash
-node scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json --async
+node scripts/run-argus.mjs start \
+  --zip /absolute/path/input.zip \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-从 workspace 目录恢复 / 完成异步任务：
+记录返回的 `workspace_dir`，之后每次显式查询一次：
 
 ```bash
-node scripts/run-argus.mjs --resume --workspace ./workspace/<run-dir> --json
+node scripts/run-argus.mjs status --workspace /absolute/workspace-root/<run-dir> --json
 ```
 
-输入类型按 JPEG 尺寸自动判定并强制校验：
-
-- **2:1（±0.05）** → 全景图（如 4096×2048）。
-- **1:1（±0.05）** → 针孔图（如 1024×1024）。
-- 其他比例直接拒掉，错误信息 `Unsupported aspect ratio`，不发生任何上传。
-
-传 `--type panorama` / `--type image` 可强制覆盖自动判型，但仍会按上述比例校验文件。
-
-## 打开结果
-
-`cat ./workspace/<run-dir>/result.json` 显示 `"status": "success"` 之后，主动问用户要哪种预览方式，然后直接调系统 opener：
+远端任务成功后收集：
 
 ```bash
-case "$(uname -s)" in
-  Darwin)               open "<path-or-url>" ;;
-  Linux)                xdg-open "<path-or-url>" ;;
-  CYGWIN*|MINGW*|MSYS*) start "" "<path-or-url>" ;;
-esac
+node scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir> --json
 ```
 
-按用户选择打开 GLB（`<run-dir>/<task_id>.glb`）和/或 `result.json` 里的 `preview_url`。`status` 不是 `success` 之前不要打开任何东西。
+不再有 detached poller、`--async` 或 `--resume`。`start`、`status`、`collect` 通过 schema-v2 `state.json` 独立恢复；已经完成的 `collect` 可幂等重复调用。
 
-## 配置
+## 输入合同
 
-配置只从环境变量读取：
+- 1–99 张 JPEG、PNG 或 WebP。
+- RGB、8-bit，严格满足 `width == 2 * height`。
+- 建议至少 2048×1024；更小只产生警告。
+- `--image` 可重复，并与 `--zip` 互斥。
+- ZIP 根目录只能有图片；Skill 会安全校验并确定性重新打包。
+
+上传前会拒绝嵌套条目、路径穿越、控制字符、重复 stem，以及 Unicode/case-fold 后的文件名冲突。
+
+## 结果合同
+
+`task_status` 表示远端生命周期：`queued`、`processing`、`succeeded` 或 `failed`。`result_status` 独立表示算法产物：`success`、`partial` 或 `error`。
+
+本地 `result.json` 索引：
+
+- 保留的 `output.zip` 与解压目录；
+- `output.json`；
+- `pointcloud/merged.glb`；
+- EXR 深度图与 JSON 位姿；
+- 可选内参；
+- warnings 与 `missing_ids`。
+
+`partial` 退出码为 0，但一定带醒目警告和非空缺失 ID 列表；`error` 非零退出。
+
+## 配置与安全
+
+继续使用现有环境变量合同：
 
 - `REALSEE_APP_KEY`
 - `REALSEE_APP_SECRET`
-- `REALSEE_REGION`
-- `REALSEE_POLL_INTERVAL_MS`
-- `REALSEE_POLL_MAX_ATTEMPTS`
+- `REALSEE_REGION`（`global` 或 `cn`）
 
-不要提交真实 secrets、账号标识、内部 URL 或生成凭证。
+真实运行会把规范化输入 ZIP 上传到 Realsee 远程服务。上传前必须取得用户同意。凭证、上传 token、provider 原始错误和签名结果 URL 不得写入 workspace state 或公开日志。
 
-## 上传同意
+Arkclaw 构建仅支持 CN。Canonical、Claude plugin、Codex 与 `npx skills` 安装同时支持两个 Gateway region。
 
-真实 Argus 生成会把选中的本地图片文件上传到 Realsee 远程服务。运行任何真实上传命令之前，必须确认用户理解并同意该上传。
+## 合同
 
-## 输出处理
-
-工作流提供持久输出产物时，应将其保存在本地。不要把生成的远程链接视为永久记录。
-
-## Gateway 状态
-
-公开 Gateway 请求边界记录在 `references/argus-gateway-openapi.json`。稳定 live 使用仍要求目标账号或 app 已启用所需 Argus/VGGT 能力。
+- [Gateway OpenAPI](references/argus-gateway-openapi.json)
+- [算法输入输出](references/algorithm-io.zh-CN.md) / [English](references/algorithm-io.md)
+- [`output.json` JSON Schema](references/argus-output.schema.json)
+- [从 1.x 迁移](references/migration-v2.zh-CN.md) / [English](references/migration-v2.md)

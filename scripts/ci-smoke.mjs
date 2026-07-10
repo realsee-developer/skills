@@ -4,9 +4,8 @@
 //   3. Universal skill source  (.agents/skills/argus/SKILL.md is a valid skill frontmatter)
 //
 // This script never hits the network. The skill is intentionally shaped as
-// SKILL.md instructions + a single run-argus.mjs entrypoint — there are no
-// helper CLIs (check-credentials, save-credentials, task-status, open-result)
-// to spawn. SKILL.md drives the agent through Bash for those operations.
+// SKILL.md instructions + one run-argus.mjs entrypoint with explicit
+// start/status/collect commands.
 import { mkdtempSync, rmSync } from 'node:fs';
 import { lstat, readFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
@@ -66,10 +65,22 @@ async function checkSkillSurface() {
   }
   // The skill's package.json must NOT advertise removed helper scripts.
   const pkg = JSON.parse(await readFile(join(root, '.agents', 'skills', 'argus', 'package.json'), 'utf8'));
-  const allowed = new Set(['test', 'argus']);
+  const allowed = new Set(['test', 'argus', 'audit:prod']);
   for (const name of Object.keys(pkg.scripts ?? {})) {
     if (!allowed.has(name)) {
       throw new Error(`skill package.json has unexpected script "${name}" (allowed: ${[...allowed].join(', ')})`);
+    }
+  }
+  if (pkg.version !== '2.0.0') {
+    throw new Error(`argus package version must be 2.0.0 (got: ${pkg.version})`);
+  }
+  for (const dependency of [
+    '@realsee/universal-uploader',
+    '@aws-sdk/client-s3',
+    'yauzl'
+  ]) {
+    if (!pkg.dependencies?.[dependency]) {
+      throw new Error(`argus package is missing runtime dependency ${dependency}`);
     }
   }
 }
@@ -127,22 +138,17 @@ async function checkSkillMdDescribesFlow() {
   const skillMd = await readFile(join(root, '.agents', 'skills', 'argus', 'SKILL.md'), 'utf8');
   const requiredAnchors = [
     '~/.realsee/credentials',
-    'AskUserQuestion',
     'set -a',
-    'pinholeImage.jpg',
-    'panoImage.jpg',
-    'sips -g pixelWidth',
-    'cat "<workspace_dir>/result.json"',
-    'xdg-open',
-    'npm install --prefix',
-    // Anti-double-confirm: don't make the user say "yes" after they already
-    // picked the file.
-    'Do not ask a second confirmation',
-    // Anti-leak: credentials must NEVER appear on a Bash command line. The
-    // Bash tool records the full command in the Claude transcript and JSONL
-    // session file. Source the env-fragment file instead.
-    'Never put credentials on a Bash command line',
-    'Anti-pattern'
+    'run-argus.mjs start',
+    'run-argus.mjs status',
+    'run-argus.mjs collect',
+    '--image',
+    '--zip',
+    'output.zip',
+    'result.json',
+    'v1.0.2',
+    'Do not ask a redundant second confirmation',
+    'Never place credential values in a CLI argument'
   ];
 
   // Belt-and-suspenders: catch the specific anti-pattern of an env-prefix

@@ -4,223 +4,128 @@
 [![Release gate](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/release-gate.yml?branch=main&label=release%20gate&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/release-gate.yml)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/codeql.yml?branch=main&label=CodeQL&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/codeql.yml)
 [![Latest release](https://img.shields.io/github/v/release/realsee-developer/skills?display_name=tag&style=flat-square)](https://github.com/realsee-developer/skills/releases)
-![Agent skills](https://img.shields.io/badge/agent-skills-0b7285?style=flat-square)
-![Claude Code](https://img.shields.io/badge/Claude%20Code-supported-555?style=flat-square)
-![Codex](https://img.shields.io/badge/Codex-supported-555?style=flat-square)
 ![Node >=22](https://img.shields.io/badge/node-%3E%3D22-339933?style=flat-square)
 
 [English](README.md) | 简体中文
 
-Realsee Skills 提供可安装的 Realsee agent skills。用户和 agent runtimes 可以安装这些 skills，从本地输入生成 Realsee 输出。
+Realsee Skills 提供可安装的 Realsee agent skills。当前 Skill 是 `argus` 2.0：处理 1–99 张严格 2:1 全景图，产出 EXR 深度图、一个合并 GLB 点云、逐图相机位姿、可选内参和经过校验的本地结果索引。
 
-当前 skill 是 `argus`。它可以从本地 JPEG 图片或全景图生成 Realsee Argus GLB 输出。
+Skill ID 仍为 `argus`。2.0 不包含旧版单图 VGGT fallback；需要 1:1 方图、旧版仅单 GLB 结果或旧 H5 preview 行为时，请固定到 `v1.0.2`。
 
 ## 凭证
 
-三种安装方式都需要以下三个值：
+所有安装路径继续使用不变的运行时合同：
 
 | Key | 用途 | 敏感 |
 | --- | --- | --- |
-| `REALSEE_APP_KEY` | Realsee Open Platform APP_KEY | ✅ |
-| `REALSEE_APP_SECRET` | Realsee Open Platform APP_SECRET | ✅ |
-| `REALSEE_REGION` | `global`（app-gateway.realsee.ai）或 `cn`（app-gateway.realsee.cn） | — |
+| `REALSEE_APP_KEY` | Realsee Open Platform APP_KEY | 是 |
+| `REALSEE_APP_SECRET` | Realsee Open Platform APP_SECRET | 是 |
+| `REALSEE_REGION` | `global`（`app-gateway.realsee.ai`）或 `cn`（`app-gateway.realsee.cn`） | 否 |
 
-到 [my.realsee.ai](https://my.realsee.ai/?utm_source=github)（global）或 [my.realsee.cn](https://my.realsee.cn/?utm_source=github)（cn）注册账号，然后邮件 [developer@realsee.com](mailto:developer@realsee.com?subject=Argus%20VGGT%20API%20Capability%20Request) 申请 Argus VGGT API 能力，邮件附上账号 region、`如视ID`、`组织账号`。
+在 [my.realsee.ai](https://my.realsee.ai/?utm_source=github) 或 [my.realsee.cn](https://my.realsee.cn/?utm_source=github) 注册，然后按 [SUPPORT.zh-CN.md](SUPPORT.zh-CN.md) 的渠道申请 Argus Gateway 能力。
 
-## 安装与使用 — Claude Code
+## 安装
 
-**一键安装**（在 Claude Code 会话内）：
+Claude Code marketplace：
 
-```
+```text
 /plugin marketplace add realsee-developer/skills
 /plugin install realsee-skills@realsee-developer-skills
 ```
 
-Claude Code 会弹出 plugin 配置框让你填 `REALSEE_APP_KEY` / `REALSEE_APP_SECRET` / `REALSEE_REGION`。两个敏感字段进系统 keychain，不写入 `settings.json`。
-
-**使用** —— 用自然语言描述任务即可，Claude 会根据 `SKILL.md` 的 description 自动选 skill：
-
-```
-把 /path/to/photo.jpg 转成 Realsee Argus GLB（单图模式）。
-从 /path/to/pano.jpg 生成 Argus GLB（全景，2:1 宽高比）。
-```
-
-需要显式 handle 时使用 plugin 命名空间 `realsee-skills:argus`。
-
-从 clone 安装（开发模式）：
-
-```bash
-git clone https://github.com/realsee-developer/skills.git
-cd skills
-npm install && npm run rebuild
-claude --plugin-dir ./plugins/realsee-skills
-```
-
-## 安装与使用 — Codex
-
-**一键安装**（宿主机）：
+Codex：
 
 ```bash
 npx skills add realsee-developer/skills --skill argus --agent codex
 ```
 
-它会把 `.agents/skills/argus/` 拷到 `$CODEX_HOME/skills/argus`（默认 `$HOME/.codex/skills/argus`）。
-
-**使用** —— 先 export 凭证，然后在 Codex 提示词中引用 skill：
-
-```bash
-export REALSEE_APP_KEY=...
-export REALSEE_APP_SECRET=...
-export REALSEE_REGION=global   # 或 cn
-```
-
-```
-Use $argus on /path/to/photo.jpg (image mode) 并返回 GLB 路径。
-```
-
-从 clone 安装（可自定义 `CODEX_HOME` 位置）：
-
-```bash
-CODEX_HOME=$HOME/.codex npm run install:codex-skills
-```
-
-## 安装与使用 — `npx skills`（任意检测到的宿主）
-
-**一键安装**到当前激活的 agent：
+任意检测到的 agent host：
 
 ```bash
 npx skills add realsee-developer/skills --skill argus
-```
-
-一次性装到所有检测到的宿主：
-
-```bash
 npx skills add realsee-developer/skills --skill argus --agent '*'
-```
-
-或指定具体宿主：
-
-```bash
-npx skills add realsee-developer/skills --skill argus --agent claude-code
-npx skills add realsee-developer/skills --skill argus --agent codex
-```
-
-只列出 skills，不安装：
-
-```bash
-npx skills add realsee-developer/skills --list
 ```
 
 从本地 checkout 安装：
 
 ```bash
-npx skills add . --skill argus
+git clone https://github.com/realsee-developer/skills.git
+cd skills
+npm install
+npm install --prefix .agents/skills/argus
+npm run rebuild
 ```
 
-**使用** —— 装完后按对应宿主的方式调用（见上面的 Claude Code / Codex 节）。
+宿主细节见[安装总览](docs/zh-CN/install-guides.md)、[Claude Code](docs/zh-CN/claude-plugin.md) 与 [Codex](docs/zh-CN/codex.md)。
 
-## 直接使用 CLI（不依赖任何宿主）
+## 直接使用 CLI
 
-同步调用（阻塞直到 GLB 下载完成；Argus 推理可能耗时数分钟）：
+从多张图片启动：
 
 ```bash
-node .agents/skills/argus/scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json
+node .agents/skills/argus/scripts/run-argus.mjs start \
+  --image /absolute/path/a.jpg \
+  --image /absolute/path/b.webp \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-异步调用（立即返回 `status: in_progress`，detached 子进程在后台轮询并下载）：
+或从一个现成 ZIP 启动：
 
 ```bash
-node .agents/skills/argus/scripts/run-argus.mjs --image /absolute/path/input.jpg --workspace ./workspace --yes --json --async
+node .agents/skills/argus/scripts/run-argus.mjs start \
+  --zip /absolute/path/input.zip \
+  --workspace /absolute/workspace-root \
+  --yes --json
 ```
 
-从 workspace 目录恢复 / 完成异步任务：
+记录返回的 `workspace_dir`。每次状态调用只查询一次：
 
 ```bash
-node .agents/skills/argus/scripts/run-argus.mjs --resume --workspace ./workspace/<run-dir> --json
+node .agents/skills/argus/scripts/run-argus.mjs status \
+  --workspace /absolute/workspace-root/<run-dir> --json
 ```
 
-输入类型按 JPEG 尺寸自动判定并强制校验：2:1（±0.05）→ 全景图，1:1（±0.05）→ 针孔图，其他比例直接拒掉，不发生任何上传。传 `--type panorama` / `--type image` 可强制覆盖自动判型，但仍会按上述比例校验文件。
-
-Argus 生成会把选中的本地图片上传到 Realsee 远程服务。任何上传前都必须确认用户同意。
-
-## 打开结果
-
-Skill 不再附带 opener 脚本。直接读 workspace 下的 `result.json`：
+成功后收集：
 
 ```bash
-cat ./workspace/<run-dir>/result.json
+node .agents/skills/argus/scripts/run-argus.mjs collect \
+  --workspace /absolute/workspace-root/<run-dir> --json
 ```
 
-`result.json#status` 为 `success` 后，主动问用户**是要打开本地 GLB**、**用浏览器看 H5 在线预览**、还是**两个都打开**。然后用系统自带的 opener（详见 SKILL.md "Step 5"）：
+不再有 detached poller、`--async` 或 `--resume`。完成后的 collect 可幂等重复调用。
 
-```bash
-case "$(uname -s)" in
-  Darwin)               open "<path-or-url>" ;;
-  Linux)                xdg-open "<path-or-url>" ;;
-  CYGWIN*|MINGW*|MSYS*) start "" "<path-or-url>" ;;
-esac
-```
+## 输入与输出
 
-`result.json#status` 不是 `success` 之前不要打开任何东西。
+输入为 1–99 张 JPEG、PNG 或 WebP RGB8 全景图，严格满足 `width == 2 * height`。建议至少 2048×1024，更低分辨率只产生警告。`--image` 可重复，并与 `--zip` 互斥。ZIP 模式会先安全解压、校验、规范化为 Unicode NFC、排序并重新打包。
 
-## Agent Runtime 文件
+远端 `task_status`（`queued`、`processing`、`succeeded`、`failed`）与算法 `result_status`（`success`、`partial`、`error`）相互独立。partial 退出码为 0，但包含醒目警告和非空 `missing_ids`；error 非零退出。
 
-| 文件 | 用途 |
-| --- | --- |
-| [`llms.txt`](llms.txt) | 机器可读仓库地图。 |
-| [`AGENTS.zh-CN.md`](AGENTS.zh-CN.md) | 自动化安全操作规则。 |
-| [`SKILL.md`](.agents/skills/argus/SKILL.md) | Runtime 面向的 skill 定义。 |
-| [`README.zh-CN.md`](.agents/skills/argus/README.zh-CN.md) | Skill 用户文档。 |
-| [`argus-gateway-openapi.json`](.agents/skills/argus/references/argus-gateway-openapi.json) | Skill 使用的公开 Gateway 合同。 |
+收集器保留 `output.zip`，安全解压，并在本地 `result.json` 中索引 `output.json`、合并 GLB、EXR 深度图、位姿和可选内参。
 
-## Skill
+真实 Argus 运行会把规范化输入 ZIP 上传到 Realsee 远程服务。上传前必须取得用户同意。不得提交或记录凭证、上传 token、私有结果 URL 或生成产物。
 
-| Skill | 状态 | 说明 |
-| --- | --- | --- |
-| [`argus`](.agents/skills/argus/README.zh-CN.md) | Stable | 从本地 JPEG 图片或全景图生成 Realsee Argus GLB 输出。 |
+## 合同与迁移
 
-发布元数据位于 [`release-channel.json`](release-channel.json)。
+- [Skill README](.agents/skills/argus/README.zh-CN.md)
+- [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json)
+- [算法输入输出合同](.agents/skills/argus/references/algorithm-io.zh-CN.md)
+- [`output.json` JSON Schema](.agents/skills/argus/references/argus-output.schema.json)
+- [从 1.x 迁移](.agents/skills/argus/references/migration-v2.zh-CN.md)
+- [机器可读索引](llms.txt)
 
-## 本地检查
+## 开发
 
-检查本地前置条件：
+Canonical source 位于 `.agents/skills/argus/`。Claude plugin 与 CN-only Arkclaw 包都由它生成并做字节一致性检查（Arkclaw 仅有一处确定性的 region overlay）。
 
 ```bash
 npm run doctor
-```
-
-运行 skill tests：
-
-```bash
 npm run test:skill
-```
-
-## 贡献
-
-Source skill 文件位于 `.agents/skills/`。`plugins/realsee-skills/` 下的 Claude plugin 包由 source skill 文件生成。
-
-修改 source skill 文件后运行：
-
-```bash
 npm run rebuild
 npm run ci
 ```
 
-文档：
-
-- [Architecture](ARCHITECTURE.md) / [架构](ARCHITECTURE.zh-CN.md)
-- [Install guide overview](docs/install-guides.md) / [安装指南总览](docs/zh-CN/install-guides.md)
-- [Claude Code install](docs/claude-plugin.md) / [Claude Code 安装](docs/zh-CN/claude-plugin.md)
-- [Codex install](docs/codex.md) / [Codex 安装](docs/zh-CN/codex.md)
-- [Usage guide](docs/usage.md) / [使用指南](docs/zh-CN/usage.md)
-- [Maintainer guide](docs/development.md) / [维护者指南](docs/zh-CN/development.md)
-- [Release guide](docs/release.md) / [发布指南](docs/zh-CN/release.md)
-- [Public distribution checklist](docs/public-distribution.md) / [公开分发检查清单](docs/zh-CN/public-distribution.md)
-- [Support](SUPPORT.md) / [支持](SUPPORT.zh-CN.md)
-- [Community guide](docs/community.md) / [社区指南](docs/zh-CN/community.md)
-- [Contribution guide](CONTRIBUTING.md) / [贡献指南](CONTRIBUTING.zh-CN.md)
-- [Security policy](SECURITY.md) / [安全政策](SECURITY.zh-CN.md)
-- [License](LICENSE)
+详见[架构](ARCHITECTURE.zh-CN.md)、[维护](docs/zh-CN/development.md)、[发布](docs/zh-CN/release.md)和[公开分发](docs/zh-CN/public-distribution.md)。
 
 ## License
 
