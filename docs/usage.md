@@ -4,6 +4,8 @@
 
 This repository provides the installable `argus` Skill for Claude Code, Codex, and other hosts supported by `npx skills`.
 
+Official resources: [Argus](https://argus.realsee.ai/), [interactive demo](https://h5.realsee.ai/argus), [research](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). These sites may show broader photo and product workflows; the Skill documented here accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+
 ## Install
 
 ```bash
@@ -18,6 +20,12 @@ From a local checkout:
 ```bash
 npx skills add . --skill argus
 ```
+
+## Bundled official examples
+
+The installed Skill contains first-party samples at `<skillDir>/examples/cn/` (12 `panoNN.jpg` files at 16000×8000) and `<skillDir>/examples/global/` (14 `panoNN.jpg` files at 8000×4000). Use the set matching `REALSEE_REGION` by default. The images are available without another download and replace the former Wikimedia/third-party open-source examples.
+
+Pass any subset with repeated `--image` options, just like your own panoramas. Starting a sample run is not offline processing: obtain user consent before uploading the images to the corresponding regional Gateway.
 
 ## Start
 
@@ -66,6 +74,18 @@ Collection retains `output.zip`, safely extracts it, validates the manifest and 
 
 `task_status` and `result_status` are separate. `partial` exits 0 with a warning and non-empty `missing_ids`; `error` exits non-zero.
 
+## Collected artifacts
+
+| Artifact | Meaning |
+| --- | --- |
+| `output.zip` | Original terminal result archive, retained locally. |
+| `output.json` | Required, schema-validated algorithm manifest. |
+| `pointcloud/merged.glb` | One merged `right-handed, Y-up` point cloud. |
+| `depth/*_depth.exr` | Meter-scale floating-point depth for each successful image. |
+| `pose/*_pose.json` | Camera pose for each successful image. |
+| `intrinsics/*_intrinsics.json` | Optional camera intrinsics. |
+| `result.json` | Local index of statuses, artifact paths, warnings, and missing IDs. |
+
 ## Input rules
 
 - 1–99 root-level JPEG, PNG, or WebP images.
@@ -78,6 +98,8 @@ Collection retains `output.zip`, safely extracts it, validates the manifest and 
 
 - Runtime definition: [SKILL.md](../.agents/skills/argus/SKILL.md)
 - Skill README: [README.md](../.agents/skills/argus/README.md)
+- Brand assets: [manifest.json](../.agents/skills/argus/assets/brand/manifest.json)
+- Bundled examples: [`examples/cn/`](../.agents/skills/argus/examples/cn/) and [`examples/global/`](../.agents/skills/argus/examples/global/)
 - Gateway contract: [argus-gateway-openapi.json](../.agents/skills/argus/references/argus-gateway-openapi.json)
 - Algorithm contract: [algorithm-io.md](../.agents/skills/argus/references/algorithm-io.md)
 - Output schema: [argus-output.schema.json](../.agents/skills/argus/references/argus-output.schema.json)

@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://argus.realsee.ai/">
+    <img src=".agents/skills/argus/assets/brand/argus-logo-color.png" alt="Argus by Realsee" width="560">
+  </a>
+</p>
+
 # Realsee Skills
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
@@ -11,6 +17,10 @@ English | [简体中文](README.zh-CN.md)
 Realsee Skills provides installable agent skills for Realsee workflows. The current Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
 
 The Skill ID remains `argus`. Version 2.0 has no legacy single-image VGGT fallback. Pin `v1.0.2` when a workflow needs square 1:1 input, the old single-GLB-only result, or the old H5 preview behavior.
+
+[Argus](https://argus.realsee.ai/) · [Interactive demo](https://h5.realsee.ai/argus) · [Research](https://argus-paper.realsee.ai/) · [Developer Platform](https://developer.realsee.ai/)
+
+Those sites describe the wider product and research ecosystem. The installable Skill 2.0 contract remains intentionally specific: **1–99 local RGB8 panoramas with exact 2:1 dimensions**. Capabilities shown for arbitrary photos or other product surfaces are not exposed by this CLI.
 
 ## Credentials
 
@@ -58,6 +68,17 @@ npm run rebuild
 
 See [the install overview](docs/install-guides.md), [Claude Code](docs/claude-plugin.md), and [Codex](docs/codex.md) for host-specific details.
 
+## Bundled official examples
+
+Every Skill install includes two first-party Realsee panorama sets, so the images are available locally without a separate download:
+
+| Region | Path under the Skill directory | Images | Dimensions |
+| --- | --- | --- | --- |
+| CN | `examples/cn/pano01.jpg` … `pano12.jpg` | 12 | 16000×8000 |
+| Global | `examples/global/pano01.jpg` … `pano14.jpg` | 14 | 8000×4000 |
+
+Use the set matching `REALSEE_REGION` by default. These official assets replace the former Wikimedia/third-party open-source examples. The files are bundled for offline access, but running Argus still requires user consent and uploads the selected images to the corresponding regional Gateway.
+
 ## Direct CLI
 
 Start from repeated images:
@@ -101,13 +122,23 @@ Inputs are 1–99 JPEG, PNG, or WebP RGB8 panoramas with exact `width == 2 * hei
 
 Remote `task_status` (`queued`, `processing`, `succeeded`, `failed`) is separate from algorithm `result_status` (`success`, `partial`, `error`). A partial result exits 0 but includes a prominent warning and non-empty `missing_ids`; an error exits non-zero.
 
-The collector retains `output.zip`, safely extracts it, and indexes `output.json`, the merged GLB, EXR depth maps, poses, and optional intrinsics in local `result.json`.
+The collector retains `output.zip`, safely extracts it, and writes this validated local result matrix:
+
+| Artifact | Availability |
+| --- | --- |
+| `output.json` | Required algorithm manifest. |
+| `pointcloud/merged.glb` | One merged `right-handed, Y-up` point cloud for successfully reconstructed images. |
+| `depth/*_depth.exr` | One meter-scale floating-point depth map per successful image. |
+| `pose/*_pose.json` | One camera pose per successful image. |
+| `intrinsics/*_intrinsics.json` | Optional; absence is valid. |
+| `result.json` | Local index for statuses, paths, warnings, and `missing_ids`. |
 
 Real Argus runs upload the normalized input ZIP to Realsee remote services. Obtain user consent before upload. Never commit or log credentials, upload tokens, private result URLs, or generated artifacts.
 
 ## Contracts and migration
 
 - [Skill README](.agents/skills/argus/README.md)
+- [Official brand asset manifest](.agents/skills/argus/assets/brand/manifest.json)
 - [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json)
 - [Algorithm I/O contract](.agents/skills/argus/references/algorithm-io.md)
 - [`output.json` JSON Schema](.agents/skills/argus/references/argus-output.schema.json)

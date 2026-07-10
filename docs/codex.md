@@ -8,6 +8,8 @@ Install the canonical `argus` Skill into Codex:
 npx skills add realsee-developer/skills --skill argus --agent codex
 ```
 
+For product context, see [Argus](https://argus.realsee.ai/), its [interactive demo](https://h5.realsee.ai/argus), [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). Codex must follow the installed Skill contract rather than infer broader capabilities from those pages: Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+
 Pin the stable 2.0 release when available:
 
 ```bash
@@ -33,6 +35,8 @@ ls -la "${CODEX_HOME:-$HOME/.codex}/skills/argus"
 head "${CODEX_HOME:-$HOME/.codex}/skills/argus/SKILL.md"
 ```
 
+The install also includes official samples under `examples/cn/` (12 16000×8000 `panoNN.jpg` files) and `examples/global/` (14 8000×4000 `panoNN.jpg` files). They are locally available replacements for the former Wikimedia/third-party open-source examples. Codex should select the set matching `REALSEE_REGION`; an actual run still requires upload consent and uses the corresponding regional Gateway.
+
 ## Credentials
 
 The existing runtime contract is unchanged:
@@ -47,6 +51,7 @@ Do not print values or put them in recorded command arguments. To avoid prompts,
 
 ```text
 Use $argus to start a batch from /path/a.jpg and /path/b.webp. Report the run workspace.
+Use $argus to start the bundled CN example batch after asking for upload consent.
 Use $argus to check the status of /workspace/<run-dir> once.
 Use $argus to collect /workspace/<run-dir>, then report result_status, missing_ids, and local artifacts.
 ```

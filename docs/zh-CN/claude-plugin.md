@@ -11,6 +11,10 @@
 
 Plugin 暴露 `realsee-skills:argus`，没有安装期配置或 MCP server。Skill 在运行时解析凭证。
 
+官方背景资料见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Agent 不能据此推断更广的照片能力：本 Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
+
+Plugin 还会带上 Skill 目录内的官方示例：`examples/cn/` 下有 12 张 16000×8000 的 `panoNN.jpg`，`examples/global/` 下有 14 张 8000×4000 的 `panoNN.jpg`。这些本地可用素材替换了原先的 Wikimedia/第三方开源示例。默认选择与 `REALSEE_REGION` 匹配的一组；实际运行仍须取得上传同意，并使用对应区域的 Gateway。
+
 ## 开发安装
 
 ```bash
@@ -45,6 +49,7 @@ Agent 不得回显值，也不得把它们放进会被记录的命令参数。�
 
 ```text
 用 Argus 处理 /path/a.jpg 和 /path/b.webp，启动任务并报告 run workspace。
+取得上传同意后，用 Argus 处理内置 global 示例组。
 查询一次 /workspace/<run-dir> 的 Argus 状态。
 收集 /workspace/<run-dir>，列出 GLB、EXR 深度图、位姿、内参和缺失 ID。
 ```

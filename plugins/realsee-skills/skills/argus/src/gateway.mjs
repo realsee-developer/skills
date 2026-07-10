@@ -3,7 +3,9 @@ const FILE_TOKEN_PATH = '/open/v1/argus/file/token';
 const SUBMIT_TASK_PATH = '/open/v1/argus/task/submit';
 const TASK_INFO_PATH = '/open/v1/argus/task/info';
 const DEFAULT_TOKEN_TTL_MS = 10 * 60 * 1000;
+const TOKEN_EXPIRY_SKEW_MS = 30 * 1000;
 const DEFAULT_USER_AGENT = 'realsee-skill/argus-2.0.0';
+const GATEWAY_RESPONSE_METADATA = Symbol('argus.gatewayResponseMetadata');
 
 export const TASK_STATUS = Object.freeze({
   0: 'queued',
@@ -22,7 +24,14 @@ export class GatewayError extends Error {
     this.httpStatus = options.httpStatus ?? null;
     this.retryable = options.retryable ?? false;
     this.submissionUnknown = options.submissionUnknown ?? false;
+    this.traceId = safeDiagnosticId(options.traceId);
+    this.requestId = safeDiagnosticId(options.requestId);
   }
+}
+
+export function getGatewayResponseMetadata(value) {
+  if (!value || (typeof value !== 'object' && typeof value !== 'function')) return null;
+  return value[GATEWAY_RESPONSE_METADATA] ?? null;
 }
 
 export class GatewayClient {
@@ -33,6 +42,7 @@ export class GatewayClient {
     this.userAgent = options.userAgent ?? DEFAULT_USER_AGENT;
     this.fetchImpl = options.fetchImpl ?? globalThis.fetch;
     this.tokenTtlMs = options.tokenTtlMs ?? DEFAULT_TOKEN_TTL_MS;
+    this.now = options.now ?? Date.now;
     this.cachedToken = null;
     this.cachedTokenExpiresAt = 0;
 
@@ -42,7 +52,8 @@ export class GatewayClient {
   }
 
   async getAccessToken() {
-    if (this.cachedToken && Date.now() < this.cachedTokenExpiresAt) {
+    const now = currentTimeMs(this.now);
+    if (this.cachedToken && now < this.cachedTokenExpiresAt) {
       return this.cachedToken;
     }
     if (!this.appKey || !this.appSecret) {
@@ -61,15 +72,28 @@ export class GatewayClient {
       authenticated: false,
       allowAuthRefresh: false
     });
+    const metadata = getGatewayResponseMetadata(data);
     const token = typeof data?.access_token === 'string' ? data.access_token : '';
     if (!token) {
       throw new GatewayError('Gateway access token response did not include access_token', {
         code: 'GATEWAY_PROTOCOL_ERROR',
-        stage: 'access-token'
+        stage: 'access-token',
+        ...errorMetadata(metadata)
+      });
+    }
+    if (!Number.isSafeInteger(data.expire_at) || data.expire_at <= 0) {
+      throw new GatewayError('Gateway access token response did not include a valid expire_at', {
+        code: 'GATEWAY_PROTOCOL_ERROR',
+        stage: 'access-token',
+        ...errorMetadata(metadata)
       });
     }
     this.cachedToken = token;
-    this.cachedTokenExpiresAt = Date.now() + this.tokenTtlMs;
+    this.cachedTokenExpiresAt = accessTokenCacheExpiry({
+      now,
+      tokenTtlMs: this.tokenTtlMs,
+      remoteExpireAt: data?.expire_at
+    });
     return token;
   }
 
@@ -156,12 +180,15 @@ export class GatewayClient {
       });
     }
 
+    const metadata = responseMetadata(payload);
+
     if (!payload || !Object.hasOwn(payload, 'code')) {
       throw new GatewayError('Unexpected Gateway response envelope', {
         code: 'GATEWAY_PROTOCOL_ERROR',
         stage,
         httpStatus: response.status,
-        submissionUnknown: stage === 'submit'
+        submissionUnknown: stage === 'submit',
+        ...errorMetadata(metadata)
       });
     }
 
@@ -188,11 +215,22 @@ export class GatewayClient {
         stage,
         remoteCode: payload.code,
         httpStatus: response.status,
-        retryable: method === 'GET' && response.status >= 500
+        retryable: method === 'GET' && response.status >= 500,
+        ...errorMetadata(metadata)
       });
     }
 
-    return payload.data;
+    if (!payload.data || typeof payload.data !== 'object' || Array.isArray(payload.data)) {
+      throw new GatewayError('Gateway response data was not an object', {
+        code: 'GATEWAY_PROTOCOL_ERROR',
+        stage,
+        httpStatus: response.status,
+        submissionUnknown: stage === 'submit',
+        ...errorMetadata(metadata)
+      });
+    }
+
+    return attachResponseMetadata(payload.data, metadata);
   }
 }
 
@@ -211,4 +249,50 @@ export function mapTaskStatus(value) {
 function normalizeBaseUrl(baseUrl) {
   if (!baseUrl) throw new Error('baseUrl is required');
   return String(baseUrl).replace(/\/+$/, '');
+}
+
+function accessTokenCacheExpiry({ now, tokenTtlMs, remoteExpireAt }) {
+  const ttl = Number(tokenTtlMs);
+  const localExpiry = now + (Number.isFinite(ttl) && ttl > 0 ? ttl : 0);
+  const remoteExpiry = remoteExpireAt * 1000 - TOKEN_EXPIRY_SKEW_MS;
+  return Math.max(now, Math.min(localExpiry, remoteExpiry));
+}
+
+function currentTimeMs(now) {
+  const value = now();
+  const milliseconds = value instanceof Date ? value.getTime() : Number(value);
+  if (!Number.isFinite(milliseconds)) throw new TypeError('now must return a Date or milliseconds');
+  return milliseconds;
+}
+
+function responseMetadata(payload) {
+  if (!payload || typeof payload !== 'object') return null;
+  const traceId = safeDiagnosticId(payload.trace_id);
+  const requestId = safeDiagnosticId(payload.request_id);
+  if (!traceId && !requestId) return null;
+  return Object.freeze({ trace_id: traceId, request_id: requestId });
+}
+
+function attachResponseMetadata(data, metadata) {
+  if (!metadata || !data || (typeof data !== 'object' && typeof data !== 'function')) return data;
+  Object.defineProperty(data, GATEWAY_RESPONSE_METADATA, {
+    value: metadata,
+    enumerable: false,
+    configurable: false,
+    writable: false
+  });
+  return data;
+}
+
+function errorMetadata(metadata) {
+  return metadata
+    ? { traceId: metadata.trace_id, requestId: metadata.request_id }
+    : {};
+}
+
+function safeDiagnosticId(value) {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (!normalized || /[\u0000-\u001f\u007f]/u.test(normalized)) return null;
+  return normalized.slice(0, 256);
 }

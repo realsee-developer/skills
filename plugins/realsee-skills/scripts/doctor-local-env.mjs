@@ -5,6 +5,8 @@ const pluginRoot = resolve(import.meta.dirname, '..');
 const required = [
   '.claude-plugin/plugin.json',
   'skills/argus',
+  'skills/argus/LICENSE',
+  'skills/argus/assets/brand/manifest.json',
   'package.json'
 ];
 

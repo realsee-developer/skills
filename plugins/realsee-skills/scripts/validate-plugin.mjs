@@ -1,5 +1,5 @@
 import { lstat, readdir, readFile } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { basename, extname, join, relative, resolve } from 'node:path';
 
 const pluginRoot = resolve(import.meta.dirname, '..');
 const officialManifest = join(pluginRoot, '.claude-plugin', 'plugin.json');
@@ -7,6 +7,19 @@ const wrongManifest = join(pluginRoot, 'plugin.json');
 const packagePath = join(pluginRoot, 'package.json');
 const skillPath = join(pluginRoot, 'skills', 'argus');
 const skillFile = join(skillPath, 'SKILL.md');
+const skillLicense = join(skillPath, 'LICENSE');
+const brandManifest = join(skillPath, 'assets', 'brand', 'manifest.json');
+const binaryExtensions = new Set([
+  '.7z', '.avif', '.bin', '.exr', '.gif', '.glb', '.gz', '.heic', '.ico', '.jpeg',
+  '.jpg', '.mov', '.mp3', '.mp4', '.otf', '.pdf', '.png', '.tar', '.tgz', '.tif',
+  '.tiff', '.ttf', '.wasm', '.wav', '.webp', '.woff', '.woff2', '.zip'
+]);
+const binaryFilenames = new Set(['.DS_Store']);
+
+function isTextFile(file) {
+  const name = basename(file);
+  return !binaryFilenames.has(name) && !binaryExtensions.has(extname(name).toLowerCase());
+}
 
 async function exists(path) {
   try {
@@ -62,9 +75,16 @@ if (!(await exists(packagePath))) {
 if (!(await exists(skillPath))) {
   throw new Error('missing skill directory: skills/argus');
 }
+if (!(await exists(skillLicense))) {
+  throw new Error('missing skill license: skills/argus/LICENSE');
+}
+if (!(await exists(brandManifest))) {
+  throw new Error('missing Argus brand manifest');
+}
 
 const files = await walk(pluginRoot);
 for (const file of files) {
+  if (!isTextFile(file)) continue;
   const text = await readFile(file, 'utf8');
   if (text.includes(['', 'Users', ''].join('/'))) {
     throw new Error('forbidden local user path in ' + relative(pluginRoot, file));
