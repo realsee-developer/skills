@@ -11,6 +11,10 @@ Install the `realsee-skills` plugin from a Claude Code session:
 
 The plugin exposes `realsee-skills:argus` and has no install-time configuration or MCP server. The Skill resolves credentials at runtime.
 
+Official context is available at [Argus](https://argus.realsee.ai/), the [interactive demo](https://h5.realsee.ai/argus), the [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). The agent must not infer broader photo support from those pages: this Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+
+It also carries official samples under the installed Skill directory: `examples/cn/` has 12 16000×8000 `panoNN.jpg` files, and `examples/global/` has 14 8000×4000 `panoNN.jpg` files. These locally available assets replace the former Wikimedia/third-party open-source examples. Select the set matching `REALSEE_REGION`; running it still requires upload consent and uses the corresponding regional Gateway.
+
 ## Development install
 
 ```bash
@@ -45,6 +49,7 @@ Natural language is sufficient:
 
 ```text
 Process /path/a.jpg and /path/b.webp with Argus. Start the task and report the run workspace.
+After obtaining upload consent, process the bundled global example set with Argus.
 Check Argus status once for /workspace/<run-dir>.
 Collect /workspace/<run-dir> and list the GLB, EXR depth maps, poses, intrinsics, and missing IDs.
 ```

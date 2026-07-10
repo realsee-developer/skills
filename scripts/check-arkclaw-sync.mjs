@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 
-import { applyArkclawOverlay } from './arkclaw-overlay.mjs';
+import { ARKCLAW_ENTRYPOINT, applyArkclawOverlay } from './arkclaw-overlay.mjs';
 import { listDistributionFiles } from './distribution-files.mjs';
 
 const repoRoot = resolve(import.meta.dirname, '..');
@@ -23,7 +23,9 @@ for (const file of targetFiles) {
 for (const file of sourceFiles) {
   if (!targetSet.has(file)) continue;
   const source = await readFile(join(sourceRoot, file));
-  const expected = Buffer.from(applyArkclawOverlay(source.toString('utf8'), file));
+  const expected = file === ARKCLAW_ENTRYPOINT
+    ? Buffer.from(applyArkclawOverlay(source.toString('utf8'), file))
+    : source;
   const target = await readFile(join(targetRoot, file));
   if (!expected.equals(target)) failures.push(`differs: ${file}`);
 }

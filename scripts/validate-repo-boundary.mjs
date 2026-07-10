@@ -1,5 +1,5 @@
 import { readdir, lstat, readFile } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { basename, extname, join, relative, resolve } from 'node:path';
 
 const root = resolve(process.cwd());
 const deniedText = [
@@ -27,6 +27,17 @@ const deniedPaths = [
   ['realsee-skills-product-tech', 'spec'].join('-') + '.md',
   ['realsee-skills-implementation', 'plan'].join('-') + '.md'
 ];
+const binaryExtensions = new Set([
+  '.7z', '.avif', '.bin', '.exr', '.gif', '.glb', '.gz', '.heic', '.ico', '.jpeg',
+  '.jpg', '.mov', '.mp3', '.mp4', '.otf', '.pdf', '.png', '.tar', '.tgz', '.tif',
+  '.tiff', '.ttf', '.wasm', '.wav', '.webp', '.woff', '.woff2', '.zip'
+]);
+const binaryFilenames = new Set(['.DS_Store']);
+
+function isTextFile(file) {
+  const name = basename(file);
+  return !binaryFilenames.has(name) && !binaryExtensions.has(extname(name).toLowerCase());
+}
 
 async function walk(dir) {
   const out = [];
@@ -54,6 +65,7 @@ async function readText(file) {
 }
 
 for (const file of await walk(root)) {
+  if (!isTextFile(file)) continue;
   const text = await readText(file);
   for (const needle of deniedText) {
     if (text.includes(needle)) throw new Error(`forbidden text ${needle} in ${relative(root, file)}`);

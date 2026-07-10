@@ -1,15 +1,17 @@
 ---
 name: argus
 description: Process one to 99 local 2:1 panorama images with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Use for multi-panorama Argus reconstruction, Argus ZIP input, or explicit start/status/collect task lifecycle requests.
-compatibility: Requires Node.js 22+ and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
 metadata:
   version: "2.0.0"
   documentation: README.md
+  compatibility: Requires Node.js 22+ and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
 ---
 
 # argus
 
 Use this Skill to submit 1–99 exact 2:1 equirectangular panoramas to Realsee Argus and collect a validated `output.zip`. The public entrypoint is `scripts/run-argus.mjs`; `<skillDir>` below means the directory containing this file.
+
+Treat the official product, demo, research, and developer sites as background only. Do not infer arbitrary-photo input or other product workflows from them; follow the narrower Skill 2.0 contract in this file.
 
 Argus is a remote upload. Do not upload until the user has selected the input and consented. Never print, log, or persist credentials, upload tokens, presigned URLs, or raw provider errors. Do not open output files unless the user asks.
 
@@ -60,6 +62,13 @@ Two mutually exclusive modes are supported:
 The CLI performs authoritative validation and deterministic packaging. Inputs must be JPEG, PNG, or WebP, RGB, 8-bit, and exactly `width == 2 * height`. A resolution below 2048×1024 emits a warning. Square 1:1 images are rejected; users who require the old square/single-GLB workflow must pin `v1.0.2`.
 
 ZIP mode is not a validation bypass. The CLI safely extracts, validates, Unicode-normalizes, sorts, and repacks it before upload. Do not manually rename output IDs: consumers trust the algorithm's `name_mapping`.
+
+Two first-party example sets are bundled for offline input selection:
+
+- `<skillDir>/examples/cn/`: 12 JPEG panoramas at 16000×8000;
+- `<skillDir>/examples/global/`: 14 JPEG panoramas at 8000×4000.
+
+Prefer the set matching `REALSEE_REGION`. Use any subset or the entire set, but still obtain upload consent: bundling the files does not make an Argus run local. Do not substitute the former Wikimedia/third-party sample set. See the [example panorama guide](references/examples.md) and its [Chinese version](references/examples.zh-CN.md) for provenance, checksums, and a full-set command.
 
 ## 4. Start once
 
@@ -125,9 +134,14 @@ For `partial`, the CLI exits 0. Still show a prominent warning and the complete 
 
 ## References
 
+- [Argus](https://argus.realsee.ai/)
+- [Interactive demo](https://h5.realsee.ai/argus)
+- [Research](https://argus-paper.realsee.ai/)
+- [Realsee Developer Platform](https://developer.realsee.ai/)
 - [Gateway workflow](references/api-workflow.md)
 - [Gateway OpenAPI](references/argus-gateway-openapi.json)
 - [Algorithm I/O contract](references/algorithm-io.md) / [中文](references/algorithm-io.zh-CN.md)
+- [Official example panoramas](references/examples.md) / [中文](references/examples.zh-CN.md)
 - [`output.json` JSON Schema](references/argus-output.schema.json)
 - [2.0 migration guide](references/migration-v2.md) / [中文](references/migration-v2.zh-CN.md)
 - [Troubleshooting](references/troubleshooting.md)

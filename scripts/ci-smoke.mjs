@@ -7,7 +7,8 @@
 // Runtime dependencies install from the warmed npm cache; the pinned `skills`
 // CLI may be fetched by npx. The skill is intentionally shaped as SKILL.md
 // instructions + one run-argus.mjs entrypoint with explicit commands.
-import { mkdtempSync, rmSync } from 'node:fs';
+import { createReadStream, mkdtempSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { cp, lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -41,6 +42,12 @@ async function assertFile(label, path) {
   if (!(await exists(path))) {
     throw new Error(`${label} missing: ${path}`);
   }
+}
+
+async function sha256File(path) {
+  const hash = createHash('sha256');
+  for await (const chunk of createReadStream(path)) hash.update(chunk);
+  return hash.digest('hex');
 }
 
 function runChild(label, command, args, options = {}) {
@@ -81,8 +88,56 @@ async function assertTreeHasNoSymlinks(path, label) {
 async function assertInstalledSkillRuntime(skillDir, label) {
   const skillMd = join(skillDir, 'SKILL.md');
   await assertFile(`${label} SKILL.md`, skillMd);
+  await assertFile(`${label} LICENSE`, join(skillDir, 'LICENSE'));
   if (parseFrontmatterName(await readFile(skillMd, 'utf8')) !== 'argus') {
     throw new Error(`${label} SKILL.md frontmatter name must be argus`);
+  }
+  const examplesManifestPath = join(skillDir, 'examples', 'manifest.json');
+  await assertFile(`${label} examples manifest`, examplesManifestPath);
+  const examplesManifest = JSON.parse(await readFile(examplesManifestPath, 'utf8'));
+  for (const [region, count] of [['cn', 12], ['global', 14]]) {
+    const expectedFiles = examplesManifest.sets?.[region]?.files ?? [];
+    const expected = expectedFiles.map((file) => file.name).sort();
+    if (expectedFiles.length !== count) {
+      throw new Error(`${label} ${region} manifest must list ${count} examples`);
+    }
+    const actual = (await readdir(join(skillDir, 'examples', region), { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.jpg'))
+      .map((entry) => entry.name)
+      .sort();
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+      throw new Error(
+        `${label} ${region} examples must be ${expected.join(', ')}; got: ${actual.join(', ')}`
+      );
+    }
+    for (const file of expectedFiles) {
+      const digest = await sha256File(join(skillDir, 'examples', region, file.name));
+      if (digest !== file.sha256) {
+        throw new Error(`${label} ${region}/${file.name} SHA-256 does not match examples manifest`);
+      }
+    }
+  }
+  const brandManifestPath = join(skillDir, 'assets', 'brand', 'manifest.json');
+  await assertFile(`${label} brand manifest`, brandManifestPath);
+  const brandManifest = JSON.parse(await readFile(brandManifestPath, 'utf8'));
+  if (brandManifest.official_site !== 'https://argus.realsee.ai/') {
+    throw new Error(`${label} brand manifest must reference the official Argus site`);
+  }
+  const expectedBrandFiles = brandManifest.files.map((file) => file.name).sort();
+  const actualBrandFiles = (await readdir(join(skillDir, 'assets', 'brand'), { withFileTypes: true }))
+    .filter((entry) => entry.isFile() && entry.name !== 'manifest.json')
+    .map((entry) => entry.name)
+    .sort();
+  if (JSON.stringify(actualBrandFiles) !== JSON.stringify(expectedBrandFiles)) {
+    throw new Error(
+      `${label} brand assets must be ${expectedBrandFiles.join(', ')}; got: ${actualBrandFiles.join(', ')}`
+    );
+  }
+  for (const file of brandManifest.files) {
+    const digest = await sha256File(join(skillDir, 'assets', 'brand', file.name));
+    if (digest !== file.sha256) {
+      throw new Error(`${label} brand asset ${file.name} SHA-256 does not match manifest`);
+    }
   }
   for (const [dependency, path] of [
     ['universal uploader', join('node_modules', '@realsee', 'universal-uploader', 'package.json')],
@@ -174,6 +229,9 @@ async function checkClaudePluginLayout() {
   }
   if (manifest.userConfig) {
     throw new Error('plugin.json must not declare userConfig (credentials resolved at runtime by SKILL.md)');
+  }
+  if (manifest.homepage !== 'https://argus.realsee.ai/') {
+    throw new Error('plugin.json homepage must reference the official Argus site');
   }
   if (await exists(join(pluginDir, '.mcp.json'))) {
     throw new Error('plugin must not ship .mcp.json (skill runs via Bash, not MCP)');

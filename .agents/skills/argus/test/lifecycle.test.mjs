@@ -4,7 +4,9 @@ import { hostname, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { GatewayClient } from '../src/gateway.mjs';
 import { ArgusTaskLifecycle } from '../src/lifecycle.mjs';
+import { GatewayArgusTaskPort } from '../src/ports.mjs';
 import {
   getWorkspacePaths,
   readState,
@@ -23,12 +25,12 @@ test('start validates, streams one canonical ZIP upload, submits once, and retur
   const taskPort = {
     async allocateUpload() {
       calls.allocate += 1;
-      return fakeLease();
+      return { ...fakeLease(), trace_id: 'trace-file', request_id: 'request-file' };
     },
     async submit(request) {
       calls.submit += 1;
       assert.equal(request.privateCosKey, 'vrfile/release/open_task_original/test/input.zip');
-      return { task_code: 'task-start' };
+      return { task_code: 'task-start', trace_id: 'trace-submit', request_id: 'request-submit' };
     },
     async inspect() { calls.inspect += 1; throw new Error('start must not poll'); }
   };
@@ -57,6 +59,8 @@ test('start validates, streams one canonical ZIP upload, submits once, and retur
     assert.equal(state.schema_version, 2);
     assert.equal(state.phase, 'submitted');
     assert.equal(state.task_code, 'task-start');
+    assert.equal(state.trace_id, 'trace-submit');
+    assert.equal(state.request_id, 'request-submit');
     assert.equal(state.input.image_count, 1);
     assert.equal(state.input.images[0].name, 'room.jpg');
     const persisted = await readFile(join(state.workspace_dir, 'state.json'), 'utf8');
@@ -117,7 +121,9 @@ test('status performs one query and never persists the signed output URL', async
         return {
           status: 2,
           output_url: 'https://signed.invalid/output.zip?q=do-not-save',
-          expiration_timestamp: 4_102_444_800
+          expiration_timestamp: 4_102_444_800,
+          trace_id: 'trace-status',
+          request_id: 'request-status'
         };
       }
     },
@@ -128,9 +134,119 @@ test('status performs one query and never persists the signed output URL', async
     const status = await lifecycle.status({ workspaceDir: root });
     assert.equal(inspectCalls, 1);
     assert.equal(status.task_status, 'succeeded');
+    assert.equal(status.trace_id, 'trace-status');
+    assert.equal(status.request_id, 'request-status');
     const persisted = await readFile(join(root, 'state.json'), 'utf8');
     assert.equal(persisted.includes('signed.invalid'), false);
     assert.equal(persisted.includes('do-not-save'), false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('status errors retain Gateway diagnostics in the exception and workspace', async () => {
+  const root = await createSubmittedWorkspace();
+  const lifecycle = new ArgusTaskLifecycle({
+    taskPort: {
+      async inspect() {
+        const error = new Error('remote rejected the status request');
+        error.code = 'GATEWAY_REJECTED';
+        error.stage = 'task-info';
+        error.traceId = 'trace-status-error';
+        error.requestId = 'request-status-error';
+        throw error;
+      }
+    },
+    transferPort: {},
+    now: fixedNow
+  });
+
+  try {
+    await assert.rejects(
+      () => lifecycle.status({ workspaceDir: root }),
+      (error) =>
+        error.traceId === 'trace-status-error' &&
+        error.requestId === 'request-status-error'
+    );
+    const state = await readState(root);
+    assert.equal(state.trace_id, 'trace-status-error');
+    assert.equal(state.request_id, 'request-status-error');
+    assert.equal(state.last_error.trace_id, 'trace-status-error');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('a successful status clears a prior task-info error', async () => {
+  const root = await createSubmittedWorkspace();
+  let attempts = 0;
+  const lifecycle = new ArgusTaskLifecycle({
+    taskPort: {
+      async inspect() {
+        attempts += 1;
+        if (attempts === 1) {
+          const error = new Error('temporary status failure');
+          error.code = 'GATEWAY_REJECTED';
+          error.stage = 'task-info';
+          error.traceId = 'trace-failed-status';
+          throw error;
+        }
+        return { status: 1, trace_id: 'trace-recovered-status' };
+      }
+    },
+    transferPort: {},
+    now: fixedNow
+  });
+
+  try {
+    await assert.rejects(() => lifecycle.status({ workspaceDir: root }), /temporary status failure/);
+    const status = await lifecycle.status({ workspaceDir: root });
+    assert.equal(status.task_status, 'processing');
+    assert.equal(status.trace_id, 'trace-recovered-status');
+    assert.equal(status.error, null);
+    assert.equal((await readState(root)).last_error, null);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('status propagates non-enumerable Gateway envelope diagnostics', async () => {
+  const root = await createSubmittedWorkspace();
+  const gateway = new GatewayClient({
+    baseUrl: 'https://gateway.example',
+    appKey: 'ak',
+    appSecret: 'sk',
+    fetchImpl: async (url) => {
+      if (url.endsWith('/auth/access_token')) {
+        return gatewayEnvelope({
+          data: { access_token: 'token', expire_at: 4_102_444_800 },
+          traceId: 'trace-auth'
+        });
+      }
+      return gatewayEnvelope({
+        data: {
+          status: 1,
+          output_url: '',
+          expiration_timestamp: 0,
+          error_message: '',
+          create_timestamp: 1,
+          modify_timestamp: 2
+        },
+        traceId: 'trace-symbol-status',
+        requestId: 'request-symbol-status'
+      });
+    }
+  });
+  const lifecycle = new ArgusTaskLifecycle({
+    taskPort: new GatewayArgusTaskPort(gateway),
+    transferPort: {},
+    now: fixedNow
+  });
+
+  try {
+    const status = await lifecycle.status({ workspaceDir: root });
+    assert.equal(status.trace_id, 'trace-symbol-status');
+    assert.equal(status.request_id, 'request-symbol-status');
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -437,6 +553,8 @@ for (const scenario of [
       const result = await lifecycle.collect({ workspaceDir: root });
       assert.equal(result.task_status, 'succeeded');
       assert.equal(result.result_status, scenario.status);
+      assert.equal(result.trace_id, 'trace-collect');
+      assert.equal(result.request_id, 'request-collect');
       assert.deepEqual(result.missing_ids, scenario.missingIds);
       assert.equal(calls.inspect, 1);
       assert.equal(calls.download, 1);
@@ -686,14 +804,28 @@ test('expired result URL and interrupted download leave no final result', async 
   const interruptedRoot = await createSubmittedWorkspace();
   try {
     const expired = new ArgusTaskLifecycle({
-      taskPort: { async inspect() { return { status: 2, output_url: 'https://signed.invalid/x', expiration_timestamp: 1 }; } },
+      taskPort: { async inspect() {
+        return {
+          status: 2,
+          output_url: 'https://signed.invalid/x',
+          expiration_timestamp: 1,
+          trace_id: 'trace-expired',
+          request_id: 'request-expired'
+        };
+      } },
       transferPort: { async download() { throw new Error('must not download'); } },
       now: fixedNow
     });
     await assert.rejects(
       () => expired.collect({ workspaceDir: expiredRoot }),
-      (error) => error.code === 'RESULT_EXPIRED'
+      (error) =>
+        error.code === 'RESULT_EXPIRED' &&
+        error.traceId === 'trace-expired' &&
+        error.requestId === 'request-expired'
     );
+    const expiredState = await readState(expiredRoot);
+    assert.equal(expiredState.last_error.trace_id, 'trace-expired');
+    assert.equal(expiredState.last_error.request_id, 'request-expired');
 
     const interrupted = new ArgusTaskLifecycle({
       taskPort: { async inspect() { return { status: 2, output_url: 'https://signed.invalid/x', expiration_timestamp: 4_102_444_800 }; } },
@@ -719,7 +851,9 @@ function lifecycleForOutput(sourceZip, calls, { delayDownload = false } = {}) {
           output_url: 'https://signed.invalid/output.zip?q=temporary',
           expiration_timestamp: 4_102_444_800,
           size: file.size,
-          md5: await md5(sourceZip)
+          md5: await md5(sourceZip),
+          trace_id: 'trace-collect',
+          request_id: 'request-collect'
         };
       }
     },
@@ -733,6 +867,22 @@ function lifecycleForOutput(sourceZip, calls, { delayDownload = false } = {}) {
       }
     },
     now: fixedNow
+  });
+}
+
+function gatewayEnvelope({ data, traceId, requestId = 'request-test' }) {
+  return new Response(JSON.stringify({
+    request_id: requestId,
+    trace_id: traceId,
+    business_code: '',
+    osi_request_id: '',
+    code: 0,
+    status: 'success',
+    data,
+    cost: 1
+  }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' }
   });
 }
 

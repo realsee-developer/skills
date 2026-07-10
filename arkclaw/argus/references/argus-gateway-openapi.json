@@ -124,7 +124,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Gateway envelope containing task state. output_url is temporary and appears only after success.",
+            "description": "Gateway envelope containing task state. output_url is present but empty in non-terminal states and contains a temporary URL after success.",
             "content": {
               "application/json": {
                 "schema": {
@@ -150,10 +150,28 @@
       "GatewayEnvelopeBase": {
         "type": "object",
         "required": [
+          "request_id",
+          "trace_id",
+          "business_code",
+          "osi_request_id",
           "code",
-          "status"
+          "status",
+          "data",
+          "cost"
         ],
         "properties": {
+          "request_id": {
+            "type": "string"
+          },
+          "trace_id": {
+            "type": "string"
+          },
+          "business_code": {
+            "type": "string"
+          },
+          "osi_request_id": {
+            "type": "string"
+          },
           "code": {
             "type": "integer",
             "description": "Gateway success code is 0."
@@ -162,11 +180,12 @@
             "type": "string",
             "description": "Gateway status or error message."
           },
-          "request_id": {
-            "type": "string"
-          },
-          "trace_id": {
-            "type": "string"
+          "data": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Response payload. Gateway errors may return null."
           },
           "cost": {
             "type": "integer",
@@ -197,7 +216,8 @@
       "AccessTokenData": {
         "type": "object",
         "required": [
-          "access_token"
+          "access_token",
+          "expire_at"
         ],
         "properties": {
           "access_token": {
@@ -224,7 +244,14 @@
             ],
             "properties": {
               "data": {
-                "$ref": "#/components/schemas/AccessTokenData"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/AccessTokenData"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }
@@ -239,7 +266,8 @@
           "bucket",
           "region",
           "prefix",
-          "expire"
+          "expire",
+          "ttl"
         ],
         "properties": {
           "tmpSecretId": {
@@ -270,14 +298,7 @@
             "type": "number"
           },
           "ttl": {
-            "oneOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "type": "number"
           },
           "app_id": {
             "type": "string"
@@ -315,11 +336,15 @@
             "type": "string"
           },
           "backup": {
-            "type": [
-              "object",
-              "null"
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/UploadTokenData"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "additionalProperties": true
+            "description": "Optional backup upload lease with the same shape as the primary lease."
           }
         },
         "additionalProperties": true
@@ -336,7 +361,14 @@
             ],
             "properties": {
               "data": {
-                "$ref": "#/components/schemas/UploadTokenData"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/UploadTokenData"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }
@@ -390,7 +422,14 @@
             ],
             "properties": {
               "data": {
-                "$ref": "#/components/schemas/SubmitTaskData"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/SubmitTaskData"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }
@@ -409,6 +448,11 @@
       "TaskInfoData": {
         "type": "object",
         "required": [
+          "create_timestamp",
+          "error_message",
+          "expiration_timestamp",
+          "modify_timestamp",
+          "output_url",
           "status"
         ],
         "properties": {
@@ -417,8 +461,7 @@
           },
           "output_url": {
             "type": "string",
-            "format": "uri",
-            "description": "Temporary output.zip URL. Clients must not persist it."
+            "description": "Temporary output.zip URL after success. Non-terminal states return an empty string. Clients must not persist it."
           },
           "expiration_timestamp": {
             "type": "integer",
@@ -448,7 +491,14 @@
             ],
             "properties": {
               "data": {
-                "$ref": "#/components/schemas/TaskInfoData"
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/TaskInfoData"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }

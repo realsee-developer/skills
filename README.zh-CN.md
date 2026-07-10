@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://argus.realsee.ai/">
+    <img src=".agents/skills/argus/assets/brand/argus-logo-color.png" alt="Realsee Argus" width="560">
+  </a>
+</p>
+
 # Realsee Skills
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
@@ -11,6 +17,10 @@
 Realsee Skills 提供可安装的 Realsee agent skills。当前 Skill 是 `argus` 2.0：处理 1–99 张严格 2:1 全景图，产出 EXR 深度图、一个合并 GLB 点云、逐图相机位姿、可选内参和经过校验的本地结果索引。
 
 Skill ID 仍为 `argus`。2.0 不包含旧版单图 VGGT fallback；需要 1:1 方图、旧版仅单 GLB 结果或旧 H5 preview 行为时，请固定到 `v1.0.2`。
+
+[Argus 官网](https://argus.realsee.ai/) · [交互 Demo](https://h5.realsee.ai/argus) · [研究主页](https://argus-paper.realsee.ai/) · [开发者平台](https://developer.realsee.ai/)
+
+这些站点介绍的是更完整的产品和研究生态。可安装的 Skill 2.0 仍保持明确边界：**1–99 张本地 RGB8 且严格 2:1 的全景图**。官网展示的普通照片或其他产品能力不属于本 CLI 的公开接口。
 
 ## 凭证
 
@@ -58,6 +68,17 @@ npm run rebuild
 
 宿主细节见[安装总览](docs/zh-CN/install-guides.md)、[Claude Code](docs/zh-CN/claude-plugin.md) 与 [Codex](docs/zh-CN/codex.md)。
 
+## 内置官方示例
+
+每种 Skill 安装方式都会包含两组 Realsee 官方全景图，无需另外下载即可在本地取用：
+
+| 区域 | Skill 目录内路径 | 图片数 | 分辨率 |
+| --- | --- | --- | --- |
+| CN | `examples/cn/pano01.jpg` … `pano12.jpg` | 12 | 16000×8000 |
+| Global | `examples/global/pano01.jpg` … `pano14.jpg` | 14 | 8000×4000 |
+
+默认使用与 `REALSEE_REGION` 匹配的示例组。这两组官方素材替换了原先的 Wikimedia/第三方开源示例。图片随 Skill 离线提供，但实际运行 Argus 仍须先取得用户同意，并把所选图片上传到对应区域的 Gateway。
+
 ## 直接使用 CLI
 
 从多张图片启动：
@@ -101,13 +122,23 @@ node .agents/skills/argus/scripts/run-argus.mjs collect \
 
 远端 `task_status`（`queued`、`processing`、`succeeded`、`failed`）与算法 `result_status`（`success`、`partial`、`error`）相互独立。partial 退出码为 0，但包含醒目警告和非空 `missing_ids`；error 非零退出。
 
-收集器保留 `output.zip`，安全解压，并在本地 `result.json` 中索引 `output.json`、合并 GLB、EXR 深度图、位姿和可选内参。
+收集器保留 `output.zip`，安全解压，并写入以下经过校验的本地产物矩阵：
+
+| 产物 | 可用性 |
+| --- | --- |
+| `output.json` | 必需的算法 manifest。 |
+| `pointcloud/merged.glb` | 成功重建图片对应的一个合并点云，坐标系为 `right-handed, Y-up`。 |
+| `depth/*_depth.exr` | 每张成功图片一份米制浮点深度图。 |
+| `pose/*_pose.json` | 每张成功图片一份相机位姿。 |
+| `intrinsics/*_intrinsics.json` | 可选；不存在是合法结果。 |
+| `result.json` | 状态、路径、警告和 `missing_ids` 的本地索引。 |
 
 真实 Argus 运行会把规范化输入 ZIP 上传到 Realsee 远程服务。上传前必须取得用户同意。不得提交或记录凭证、上传 token、私有结果 URL 或生成产物。
 
 ## 合同与迁移
 
 - [Skill README](.agents/skills/argus/README.zh-CN.md)
+- [官方品牌素材 manifest](.agents/skills/argus/assets/brand/manifest.json)
 - [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json)
 - [算法输入输出合同](.agents/skills/argus/references/algorithm-io.zh-CN.md)
 - [`output.json` JSON Schema](.agents/skills/argus/references/argus-output.schema.json)

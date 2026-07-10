@@ -13,8 +13,10 @@ try {
 } catch (error) {
   const code = error?.code ? `[${error.code}] ` : '';
   const workspace = error?.workspaceDir ? `\nWorkspace: ${error.workspaceDir}` : '';
+  const trace = error?.traceId ? `\nTrace ID: ${redactText(error.traceId)}` : '';
+  const request = error?.requestId ? `\nRequest ID: ${redactText(error.requestId)}` : '';
   const message = redactText(error?.message ?? String(error))
     .replace(/https?:\/\/[^\s]+/gu, (url) => redactUrlForLog(url));
-  process.stderr.write(`${code}${message}${workspace}\n`);
+  process.stderr.write(`${code}${message}${workspace}${trace}${request}\n`);
   process.exitCode = 1;
 }

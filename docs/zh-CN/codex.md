@@ -8,6 +8,8 @@
 npx skills add realsee-developer/skills --skill argus --agent codex
 ```
 
+产品背景见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Codex 必须遵循已安装 Skill 的合同，不能从这些页面推断额外能力：Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
+
 Stable 2.0 发布后可固定版本：
 
 ```bash
@@ -33,6 +35,8 @@ ls -la "${CODEX_HOME:-$HOME/.codex}/skills/argus"
 head "${CODEX_HOME:-$HOME/.codex}/skills/argus/SKILL.md"
 ```
 
+安装目录还包含官方示例：`examples/cn/` 下有 12 张 16000×8000 的 `panoNN.jpg`，`examples/global/` 下有 14 张 8000×4000 的 `panoNN.jpg`。它们随 Skill 离线提供，用于替换原先的 Wikimedia/第三方开源示例。Codex 应选择与 `REALSEE_REGION` 匹配的一组；真实运行仍须取得上传同意，并使用对应区域的 Gateway。
+
 ## 凭证
 
 继续使用原有运行时合同：
@@ -47,6 +51,7 @@ head "${CODEX_HOME:-$HOME/.codex}/skills/argus/SKILL.md"
 
 ```text
 Use $argus 从 /path/a.jpg 和 /path/b.webp 启动批次，并报告 run workspace。
+Use $argus 在取得上传同意后启动内置 CN 示例批次。
 Use $argus 查询一次 /workspace/<run-dir> 状态。
 Use $argus 收集 /workspace/<run-dir>，报告 result_status、missing_ids 和本地产物。
 ```
