@@ -26,7 +26,7 @@ Gateway 基础地址保持不变：
 1. `POST /auth/access_token`
 2. `GET /open/v1/argus/file/token`
 3. 将一个规范化 ZIP 流式上传到对象存储
-4. 使用 `private_cos_key` 和 `title` 调用 `POST /open/v1/argus/task/submit`
+4. 使用仅包含一个已上传对象路径的 `private_cos_keys` 数组和 `title` 调用 `POST /open/v1/argus/task/submit`
 
 上传 lease locator 为 `bucket + region + prefix`。上传凭证可以仅在内存中刷新，但绝不能写入状态文件。`start` 会原子持久化返回的 `task_code`，然后立即结束。
 

@@ -39,7 +39,7 @@ export interface ArgusFileTokenData {
 }
 
 export interface ArgusTaskSubmitRequest {
-  private_cos_key: string;
+  private_cos_keys: string[];
   title: string;
 }
 
