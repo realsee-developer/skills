@@ -47,7 +47,7 @@ export function outputEntries({ manifest = validManifest(), overrides = {} } = {
     { name: 'pointcloud/merged.glb', data: overrides.glb ?? glbHeader() },
     { name: 'pose/000000_pose.json', data: JSON.stringify(overrides.pose ?? validPose()) }
   );
-  if (manifest.intrinsics) {
+  if (manifest.intrinsics?.length) {
     entries.push({
       name: 'intrinsics/000000_intrinsics.json',
       data: JSON.stringify(overrides.intrinsics ?? {

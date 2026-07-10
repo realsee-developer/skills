@@ -22,7 +22,7 @@ npx skills add realsee-developer/skills@v2.0.0 --skill argus --agent codex
 git clone https://github.com/realsee-developer/skills.git
 cd skills
 npm install
-npm install --prefix .agents/skills/argus
+(cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 CODEX_HOME=$HOME/.codex npm run install:codex-skills
 ```
 

@@ -1,5 +1,7 @@
-import { mkdir, readdir, readFile, rm, stat, lstat, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, stat, writeFile, copyFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
+
+import { listDistributionFiles } from './distribution-files.mjs';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const sourceSkill = join(repoRoot, '.agents', 'skills', 'argus');
@@ -155,35 +157,6 @@ async function writeText(path, text) {
   await writeFile(path, text);
 }
 
-async function copyTree(source, target, entries) {
-  const sourceStat = await lstat(source);
-  const rel = relative(sourceSkill, source);
-  const targetPath = rel ? join(targetSkill, rel) : target;
-
-  if (sourceStat.isSymbolicLink()) {
-    throw new Error('source symlink is forbidden: ' + relative(repoRoot, source));
-  }
-  if (sourceStat.isDirectory()) {
-    await mkdir(targetPath, { recursive: true });
-    const children = await readdir(source);
-    children.sort();
-    for (const child of children) {
-      if (child === 'node_modules') continue;
-      await copyTree(join(source, child), target, entries);
-    }
-    return;
-  }
-  if (!sourceStat.isFile()) return;
-
-  await mkdir(dirname(targetPath), { recursive: true });
-  await copyFile(source, targetPath);
-  entries.push({
-    source: relative(repoRoot, source),
-    target: relative(repoRoot, targetPath),
-    size: sourceStat.size
-  });
-}
-
 await stat(sourceSkill);
 if (pluginRoot !== expectedPluginRoot) {
   throw new Error('refusing to remove unexpected plugin root: ' + pluginRoot);
@@ -196,7 +169,19 @@ await writeText(join(pluginRoot, 'scripts', 'validate-plugin.mjs'), validatePlug
 await writeText(join(pluginRoot, 'scripts', 'doctor-local-env.mjs'), doctorScript);
 
 const copied = [];
-await copyTree(sourceSkill, targetSkill, copied);
+const distributionFiles = await listDistributionFiles({ repoRoot, sourceRoot: sourceSkill });
+for (const rel of distributionFiles) {
+  const source = join(sourceSkill, rel);
+  const target = join(targetSkill, rel);
+  const sourceStat = await stat(source);
+  await mkdir(dirname(target), { recursive: true });
+  await copyFile(source, target);
+  copied.push({
+    source: relative(repoRoot, source),
+    target: relative(repoRoot, target),
+    size: sourceStat.size
+  });
+}
 await writeJson(manifestPath, {
   source: relative(repoRoot, sourceSkill),
   target: relative(repoRoot, targetSkill),

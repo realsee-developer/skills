@@ -1,19 +1,24 @@
-// Smoke test for the three skill-distribution paths:
-//   1. Claude Code plugin layout (plugins/realsee-skills/.claude-plugin/plugin.json valid + skill present)
-//   2. Codex install layout    (`install-codex-skills.mjs` produces $CODEX_HOME/skills/argus)
-//   3. Universal skill source  (.agents/skills/argus/SKILL.md is a valid skill frontmatter)
+// Fresh-install smoke for every supported skill distribution:
+//   1. Claude Code plugin copy
+//   2. Codex installer
+//   3. `npx skills ... --copy` filesystem contract
+//   4. CN-only Arkclaw ZIP
 //
-// This script never hits the network. The skill is intentionally shaped as
-// SKILL.md instructions + one run-argus.mjs entrypoint with explicit
-// start/status/collect commands.
+// Runtime dependencies install from the warmed npm cache; the pinned `skills`
+// CLI may be fetched by npx. The skill is intentionally shaped as SKILL.md
+// instructions + one run-argus.mjs entrypoint with explicit commands.
 import { mkdtempSync, rmSync } from 'node:fs';
-import { lstat, readFile } from 'node:fs/promises';
+import { cp, lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { buildArkclawZip } from './build-arkclaw-zip.mjs';
+import { syncArkclaw } from './sync-arkclaw.mjs';
+
 const root = resolve(import.meta.dirname, '..');
+const SKILLS_CLI_VERSION = '1.5.15';
 
 async function exists(path) {
   try {
@@ -36,6 +41,78 @@ async function assertFile(label, path) {
   if (!(await exists(path))) {
     throw new Error(`${label} missing: ${path}`);
   }
+}
+
+function runChild(label, command, args, options = {}) {
+  const child = spawnSync(command, args, {
+    cwd: options.cwd ?? root,
+    env: options.env ?? process.env,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+    timeout: options.timeout
+  });
+  if (child.error) {
+    throw new Error(`${label} failed: ${child.error.message}`, { cause: child.error });
+  }
+  if (child.status !== 0) {
+    throw new Error(
+      `${label} failed (exit ${child.status ?? 'unknown'}):\n${(child.stderr || child.stdout).trim()}`
+    );
+  }
+  return child.stdout;
+}
+
+async function copyFresh(source, target) {
+  await cp(source, target, {
+    recursive: true,
+    filter: (path) => !path.split(/[\\/]/u).includes('node_modules')
+  });
+}
+
+async function assertTreeHasNoSymlinks(path, label) {
+  const stat = await lstat(path);
+  if (stat.isSymbolicLink()) throw new Error(`${label} must be a copy, not a symlink: ${path}`);
+  if (!stat.isDirectory()) return;
+  for (const entry of await readdir(path)) {
+    await assertTreeHasNoSymlinks(join(path, entry), label);
+  }
+}
+
+async function assertInstalledSkillRuntime(skillDir, label) {
+  const skillMd = join(skillDir, 'SKILL.md');
+  await assertFile(`${label} SKILL.md`, skillMd);
+  if (parseFrontmatterName(await readFile(skillMd, 'utf8')) !== 'argus') {
+    throw new Error(`${label} SKILL.md frontmatter name must be argus`);
+  }
+  for (const [dependency, path] of [
+    ['universal uploader', join('node_modules', '@realsee', 'universal-uploader', 'package.json')],
+    ['AWS Node', join('node_modules', '@aws-sdk', 'client-s3', 'package.json')],
+    ['ZIP', join('node_modules', 'yauzl', 'package.json')],
+    ['JSON Schema', join('node_modules', 'ajv', 'package.json')]
+  ]) {
+    await assertFile(`${label} ${dependency} dependency`, join(skillDir, path));
+  }
+
+  const cliUrl = pathToFileURL(join(skillDir, 'src', 'cli.mjs')).href;
+  const probe = [
+    `const { parseArgs } = await import(${JSON.stringify(cliUrl)});`,
+    "const value = parseArgs(['status', '--workspace', '.', '--json']);",
+    "if (value.command !== 'status' || value.json !== true) process.exit(9);"
+  ].join('\n');
+  runChild(`${label} runtime import`, process.execPath, ['--input-type=module', '--eval', probe], {
+    cwd: skillDir
+  });
+}
+
+async function installSkillDependencies(skillDir, label) {
+  const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  runChild(
+    `${label} dependency install`,
+    npm,
+    ['ci', '--offline', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'],
+    { cwd: skillDir }
+  );
+  await assertInstalledSkillRuntime(skillDir, label);
 }
 
 async function checkCanonicalSkill() {
@@ -77,6 +154,7 @@ async function checkSkillSurface() {
   for (const dependency of [
     '@realsee/universal-uploader',
     '@aws-sdk/client-s3',
+    'ajv',
     'yauzl'
   ]) {
     if (!pkg.dependencies?.[dependency]) {
@@ -114,6 +192,152 @@ async function checkClaudePluginLayout() {
   }
 }
 
+async function checkClaudePluginInstall() {
+  const tmpRoot = mkdtempSync(join(tmpdir(), 'argus-claude-plugin-smoke-'));
+  const installRoot = join(tmpRoot, 'realsee-skills');
+  try {
+    await copyFresh(join(root, 'plugins', 'realsee-skills'), installRoot);
+    runChild(
+      'fresh Claude plugin validation',
+      process.execPath,
+      [join(installRoot, 'scripts', 'validate-plugin.mjs')],
+      { cwd: installRoot }
+    );
+    await installSkillDependencies(join(installRoot, 'skills', 'argus'), 'fresh Claude plugin');
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
+}
+
+async function checkNpxSkillsCopyInstall() {
+  const tmpRoot = mkdtempSync(join(tmpdir(), 'argus-npx-skills-smoke-'));
+  const sourceRoot = join(tmpRoot, 'fresh-source');
+  const consumerRoot = join(tmpRoot, 'consumer');
+  const installRoot = join(consumerRoot, '.agents', 'skills', 'argus');
+  try {
+    await mkdir(join(sourceRoot, '.agents', 'skills'), { recursive: true });
+    await mkdir(consumerRoot, { recursive: true });
+    await copyFresh(
+      join(root, '.agents', 'skills', 'argus'),
+      join(sourceRoot, '.agents', 'skills', 'argus')
+    );
+    runChild('npx skills consumer git init', 'git', ['init', '-q'], { cwd: consumerRoot });
+    const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+    runChild(
+      'pinned npx skills copy install',
+      npx,
+      [
+        '--yes', `skills@${SKILLS_CLI_VERSION}`, 'add', sourceRoot,
+        '--skill', 'argus', '--agent', 'codex', '--copy', '--yes'
+      ],
+      {
+        cwd: consumerRoot,
+        env: { ...process.env, NO_COLOR: '1' },
+        timeout: 180_000
+      }
+    );
+    await assertTreeHasNoSymlinks(installRoot, `skills@${SKILLS_CLI_VERSION} --copy install`);
+    rmSync(sourceRoot, { recursive: true, force: true });
+    await installSkillDependencies(installRoot, `fresh npx skills@${SKILLS_CLI_VERSION} copy`);
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
+}
+
+async function checkArkclawInstall() {
+  const zipPath = await buildArkclawZip();
+  const tmpRoot = mkdtempSync(join(tmpdir(), 'argus-arkclaw-smoke-'));
+  try {
+    runChild('Arkclaw ZIP extraction', 'unzip', ['-q', zipPath, '-d', tmpRoot], { cwd: root });
+    const installRoot = join(tmpRoot, 'argus');
+    const entrypoint = await readFile(join(installRoot, 'scripts', 'run-argus.mjs'), 'utf8');
+    if (!entrypoint.includes("env: { ...process.env, REALSEE_REGION: 'cn' },")) {
+      throw new Error('fresh Arkclaw install is missing the forced CN-only region overlay');
+    }
+    await installSkillDependencies(installRoot, 'fresh CN-only Arkclaw ZIP');
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
+}
+
+async function checkArkclawIgnoredFixture() {
+  const tmpRoot = mkdtempSync(join(tmpdir(), 'argus-arkclaw-ignore-smoke-'));
+  const fixtureRoot = join(tmpRoot, 'repo');
+  const sourceRoot = join(fixtureRoot, '.agents', 'skills', 'argus');
+  const targetRoot = join(fixtureRoot, 'arkclaw', 'argus');
+  const fixtureZip = join(fixtureRoot, 'dist', 'arkclaw', 'argus.zip');
+  try {
+    await mkdir(join(sourceRoot, 'scripts'), { recursive: true });
+    await writeFile(join(fixtureRoot, '.gitignore'), await readFile(join(root, '.gitignore')));
+    runChild('fixture git init', 'git', ['init', '-q'], { cwd: fixtureRoot });
+    await writeFile(
+      join(sourceRoot, 'SKILL.md'),
+      '---\nname: argus\ndescription: Arkclaw ignore fixture\nmetadata:\n  version: 2.0.0\n---\n'
+    );
+    await writeFile(join(sourceRoot, 'package.json'), '{"name":"argus","version":"2.0.0"}\n');
+    await writeFile(
+      join(sourceRoot, 'scripts', 'run-argus.mjs'),
+      'const options = { env: process.env, };\n'
+    );
+    await writeFile(join(sourceRoot, 'safe.txt'), 'safe\n');
+    await writeFile(join(sourceRoot, '.env.example'), 'SAFE_PLACEHOLDER=1\n');
+
+    const ignoredFiles = [
+      ['.env', 'SECRET=source\n'],
+      ['.env.production', 'SECRET=source-production\n'],
+      ['workspace/task.json', '{"secret":true}\n'],
+      ['output/result.json', '{"artifact":true}\n'],
+      ['payload.zip', 'not-a-zip\n'],
+      ['model.glb', 'not-a-glb\n'],
+      ['depth.exr', 'not-an-exr\n'],
+      ['trace.log', 'sensitive trace\n'],
+      ['node_modules/local-only/package.json', '{"local":true}\n']
+    ];
+    for (const [rel, contents] of ignoredFiles) {
+      await mkdir(join(sourceRoot, rel, '..'), { recursive: true });
+      await writeFile(join(sourceRoot, rel), contents);
+    }
+
+    await syncArkclaw({
+      repoRoot: fixtureRoot,
+      sourceRoot,
+      targetRoot,
+      expectedTarget: targetRoot
+    });
+    await assertFile('Arkclaw safe fixture', join(targetRoot, 'safe.txt'));
+    await assertFile('Arkclaw negated .env.example fixture', join(targetRoot, '.env.example'));
+    for (const [rel] of ignoredFiles) {
+      if (await exists(join(targetRoot, rel))) {
+        throw new Error(`Arkclaw sync leaked ignored fixture: ${rel}`);
+      }
+    }
+
+    // Inject ignored files after sync as well: the ZIP builder must apply the
+    // same policy independently and must not trust its generated input tree.
+    await mkdir(join(targetRoot, 'workspace'), { recursive: true });
+    await writeFile(join(targetRoot, 'workspace', 'late-secret.json'), '{}\n');
+    await writeFile(join(targetRoot, '.env'), 'SECRET=late\n');
+    await writeFile(join(targetRoot, 'late.glb'), 'late\n');
+    await buildArkclawZip({
+      repoRoot: fixtureRoot,
+      skillSource: targetRoot,
+      distDir: join(fixtureRoot, 'dist', 'arkclaw'),
+      zipPath: fixtureZip
+    });
+    const entries = runChild('Arkclaw fixture ZIP listing', 'unzip', ['-Z1', fixtureZip], {
+      cwd: fixtureRoot
+    }).trim().split('\n');
+    for (const forbidden of ['argus/.env', 'argus/late.glb', 'argus/workspace/late-secret.json']) {
+      if (entries.includes(forbidden)) throw new Error(`Arkclaw ZIP leaked ignored fixture: ${forbidden}`);
+    }
+    if (!entries.includes('argus/.env.example') || !entries.includes('argus/safe.txt')) {
+      throw new Error('Arkclaw ZIP omitted safe fixture files');
+    }
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
+}
+
 function checkMarketplaceManifest() {
   const marketplacePath = join(root, '.claude-plugin', 'marketplace.json');
   return readFile(marketplacePath, 'utf8').then((text) => {
@@ -147,6 +371,7 @@ async function checkSkillMdDescribesFlow() {
     'output.zip',
     'result.json',
     'v1.0.2',
+    '(cd "<skillDir>" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)',
     'Do not ask a redundant second confirmation',
     'Never place credential values in a CLI argument'
   ];
@@ -180,26 +405,35 @@ async function checkSkillMdDescribesFlow() {
 }
 
 async function checkCodexInstall() {
-  const tmpHome = mkdtempSync(join(tmpdir(), 'argus-codex-smoke-'));
+  const tmpRoot = mkdtempSync(join(tmpdir(), 'argus-codex-smoke-'));
+  const tmpHome = join(tmpRoot, 'codex-home');
+  const tmpRepo = join(tmpRoot, 'fresh-source');
   try {
-    const child = spawnSync(process.execPath, [join(root, 'scripts', 'install-codex-skills.mjs')], {
-      cwd: root,
-      env: { ...process.env, CODEX_HOME: tmpHome },
+    await mkdir(join(tmpRepo, 'scripts'), { recursive: true });
+    await cp(
+      join(root, 'scripts', 'install-codex-skills.mjs'),
+      join(tmpRepo, 'scripts', 'install-codex-skills.mjs')
+    );
+    await copyFresh(join(root, '.agents', 'skills', 'argus'), join(tmpRepo, '.agents', 'skills', 'argus'));
+
+    const child = spawnSync(process.execPath, [join(tmpRepo, 'scripts', 'install-codex-skills.mjs')], {
+      cwd: tmpRepo,
+      env: { ...process.env, CODEX_HOME: tmpHome, NPM_CONFIG_OFFLINE: 'true' },
       stdio: ['ignore', 'pipe', 'pipe']
     });
     if (child.status !== 0) {
       const stderr = child.stderr?.toString?.() ?? '';
       throw new Error(`install-codex-skills.mjs failed: ${stderr.trim() || child.status}`);
     }
-    const skillTarget = join(tmpHome, 'skills', 'argus');
-    const skillMd = join(skillTarget, 'SKILL.md');
-    await assertFile('codex skill target', skillTarget);
-    await assertFile('codex SKILL.md', skillMd);
-    if (parseFrontmatterName(await readFile(skillMd, 'utf8')) !== 'argus') {
-      throw new Error('codex-installed SKILL.md frontmatter name must be argus');
+    const stdout = child.stdout?.toString?.() ?? '';
+    if (!stdout.includes('installed Argus runtime dependencies')) {
+      throw new Error('Codex installer did not report a completed runtime dependency install');
     }
+    const skillTarget = join(tmpHome, 'skills', 'argus');
+    await assertFile('codex skill target', skillTarget);
+    await assertInstalledSkillRuntime(skillTarget, 'fresh Codex install');
   } finally {
-    rmSync(tmpHome, { recursive: true, force: true });
+    rmSync(tmpRoot, { recursive: true, force: true });
   }
 }
 
@@ -209,8 +443,12 @@ async function main() {
     ['skill surface = SKILL.md + run-argus.mjs only', checkSkillSurface],
     ['marketplace manifest', checkMarketplaceManifest],
     ['claude plugin layout', checkClaudePluginLayout],
+    ['claude plugin fresh install', checkClaudePluginInstall],
     ['SKILL.md describes the full agent flow', checkSkillMdDescribesFlow],
-    ['codex install (sandboxed)', checkCodexInstall]
+    ['codex fresh install (sandboxed)', checkCodexInstall],
+    [`npx skills@${SKILLS_CLI_VERSION} copy fresh install`, checkNpxSkillsCopyInstall],
+    ['Arkclaw ignored-file fixture', checkArkclawIgnoredFixture],
+    ['CN-only Arkclaw ZIP fresh install', checkArkclawInstall]
   ];
   for (const [label, run] of checks) {
     process.stdout.write(`smoke: ${label} ... `);

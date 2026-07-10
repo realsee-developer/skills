@@ -110,6 +110,37 @@ test('rejects duplicate stems and NFC/case-fold filename collisions', async () =
   }
 });
 
+test('uses Unicode full case folding for filename stem collisions', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-full-case-fold-'));
+  try {
+    const collisionPairs = [
+      ['Straße.jpg', buildJpegFrame(2048, 1024), 'STRASSE.png', buildPngHeader(2048, 1024)],
+      ['STRAẞE.webp', buildWebpVp8x(2048, 1024), 'strasse.png', buildPngHeader(2048, 1024)],
+      ['ΟΣ.jpg', buildJpegFrame(2048, 1024), 'οσ.png', buildPngHeader(2048, 1024)],
+      ['ﬃ.jpg', buildJpegFrame(2048, 1024), 'FFI.png', buildPngHeader(2048, 1024)],
+      ['Ꭰ.jpg', buildJpegFrame(2048, 1024), 'ꭰ.png', buildPngHeader(2048, 1024)]
+    ];
+    for (const [leftName, leftBytes, rightName, rightBytes] of collisionPairs) {
+      const left = join(root, leftName);
+      const right = join(root, rightName);
+      await writeFile(left, leftBytes);
+      await writeFile(right, rightBytes);
+      await assert.rejects(
+        () => validateImageFiles([left, right]),
+        /Case-folding filename collision/
+      );
+    }
+
+    const dotless = join(root, 'ı.webp');
+    const dotted = join(root, 'i.jpg');
+    await writeFile(dotless, buildWebpVp8x(2048, 1024));
+    await writeFile(dotted, buildJpegFrame(2048, 1024));
+    assert.equal((await validateImageFiles([dotless, dotted])).images.length, 2);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('ZIP mode rejects nested, traversal, encrypted, duplicate, corrupt CRC, and damaged archives', async () => {
   const root = await mkdtemp(join(tmpdir(), 'argus-zip-invalid-'));
   const image = buildJpegFrame(2048, 1024);
@@ -123,6 +154,7 @@ test('ZIP mode rejects nested, traversal, encrypted, duplicate, corrupt CRC, and
       flags: 0x0801
     }], /encrypted/i],
     ['duplicate.zip', [{ name: 'one.jpg', data: image }, { name: 'ONE.jpg', data: image }], /collision|duplicate/i],
+    ['full-fold.zip', [{ name: 'Straße.jpg', data: image }, { name: 'STRASSE.jpg', data: image }], /collision|duplicate/i],
     ['crc.zip', [{ name: 'one.jpg', data: image, crc32: 1 }], /CRC/i]
   ];
   try {

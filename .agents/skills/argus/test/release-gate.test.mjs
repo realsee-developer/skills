@@ -1,12 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 
+import { classifyReleaseTag } from '../../../../scripts/classify-release-tag.mjs';
 import {
   getReleaseGateCommands,
   parseReleaseGateArgs,
   validatePublicGatewayOpenApi,
   validateStableReleaseMetadata
 } from '../../../../scripts/release-gate.mjs';
+
+const repoRoot = resolve(import.meta.dirname, '../../../..');
 
 test('stable release gate runs the same CI command set as preview before public contract checks', () => {
   const previewCommands = getReleaseGateCommands('preview');
@@ -15,10 +20,61 @@ test('stable release gate runs the same CI command set as preview before public 
   assert.deepEqual(stableCommands, previewCommands);
   assert.ok(stableCommands.some(([command, args]) => command === 'npm' && args.join(' ') === 'run validate:ai'));
   assert.ok(stableCommands.some(([command, args]) => command === 'npm' && args.join(' ') === 'run rebuild'));
+  const rebuildIndex = stableCommands.findIndex(
+    ([command, args]) => command === 'npm' && args.join(' ') === 'run rebuild'
+  );
+  const cleanIndex = stableCommands.findIndex(
+    ([command, args]) => command === 'node' && args.join(' ') === 'scripts/check-generated-clean.mjs'
+  );
+  const smokeIndex = stableCommands.findIndex(
+    ([command, args]) => command === 'npm' && args.join(' ') === 'run smoke'
+  );
+  const worktreeCleanIndex = stableCommands.findIndex(
+    ([command, args]) => command === 'node' && args.join(' ') === 'scripts/check-worktree-clean.mjs'
+  );
+  assert.ok(cleanIndex > rebuildIndex, 'generated drift check must run after rebuild');
+  assert.ok(smokeIndex > cleanIndex, 'fresh-install smoke must run after generated drift check');
+  assert.ok(worktreeCleanIndex > smokeIndex, 'the entire worktree must be clean after external smoke tools run');
   assert.ok(stableCommands.some(([command, args]) => command === 'npm' && args.join(' ') === 'run test:skill'));
   assert.ok(stableCommands.some(([command, args]) =>
     command === 'npm' && args.join(' ') === '--prefix .agents/skills/argus run audit:prod'
   ));
+});
+
+test('release tags classify prereleases separately from stable releases', () => {
+  assert.deepEqual(classifyReleaseTag('v2.0.0-rc.1'), {
+    channel: 'preview',
+    prerelease: true,
+    releaseFlag: '--prerelease'
+  });
+  assert.deepEqual(classifyReleaseTag('v2.0.0'), {
+    channel: 'stable',
+    prerelease: false,
+    releaseFlag: '--latest'
+  });
+  assert.throws(() => classifyReleaseTag('release-2.0.0'), /release tag must be/);
+});
+
+test('release workflow isolates the read-only gate from fresh privileged publication', async () => {
+  const workflow = await readFile(join(repoRoot, '.github', 'workflows', 'release.yml'), 'utf8');
+  const gateStart = workflow.indexOf('  gate:\n');
+  const releaseStart = workflow.indexOf('  release:\n');
+  assert.ok(gateStart >= 0 && releaseStart > gateStart);
+
+  const gate = workflow.slice(gateStart, releaseStart);
+  const release = workflow.slice(releaseStart);
+  assert.match(gate, /permissions:\n\s+contents: read/);
+  assert.match(gate, /persist-credentials: false/);
+  assert.match(gate, /classify-release-tag\.mjs/);
+  assert.doesNotMatch(gate, /build:arkclaw/);
+
+  assert.match(release, /permissions:\n\s+contents: write/);
+  assert.match(release, /Build from fresh checkout and publish/);
+  assert.match(release, /actions\/checkout@v6/);
+  assert.match(release, /persist-credentials: false/);
+  assert.match(release, /npm run build:arkclaw/);
+  assert.match(release, /needs\.gate\.outputs\.release_flag/);
+  assert.doesNotMatch(release, /npm run release:gate/);
 });
 
 test('stable metadata stays blocked until both-region E2E is explicitly verified', () => {

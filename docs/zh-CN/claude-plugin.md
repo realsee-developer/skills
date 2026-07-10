@@ -17,7 +17,7 @@ Plugin 暴露 `realsee-skills:argus`，没有安装期配置或 MCP server。Ski
 git clone https://github.com/realsee-developer/skills.git
 cd skills
 npm install
-npm install --prefix .agents/skills/argus
+(cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 npm run rebuild
 claude --plugin-dir ./plugins/realsee-skills
 ```

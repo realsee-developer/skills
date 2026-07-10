@@ -1,5 +1,7 @@
-import { lstat, readdir, readFile } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { lstat, readFile } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+
+import { listDistributionFiles } from './distribution-files.mjs';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(repoRoot, '.agents', 'skills', 'argus');
@@ -15,32 +17,11 @@ async function exists(path) {
   }
 }
 
-async function listFiles(root) {
-  const files = [];
-
-  async function walk(dir) {
-    const entries = await readdir(dir, { withFileTypes: true });
-    entries.sort((a, b) => a.name.localeCompare(b.name));
-    for (const entry of entries) {
-      if (entry.name === 'node_modules') continue;
-      const path = join(dir, entry.name);
-      const stat = await lstat(path);
-      const rel = relative(root, path);
-      if (stat.isSymbolicLink()) throw new Error('symlink is forbidden: ' + rel);
-      if (stat.isDirectory()) await walk(path);
-      if (stat.isFile()) files.push(rel);
-    }
-  }
-
-  await walk(root);
-  return files;
-}
-
 if (!(await exists(sourceRoot))) throw new Error('missing canonical source skill');
 if (!(await exists(targetRoot))) throw new Error('missing generated skill copy; run npm run sync:claude-plugin');
 
-const sourceFiles = await listFiles(sourceRoot);
-const targetFiles = await listFiles(targetRoot);
+const sourceFiles = await listDistributionFiles({ repoRoot, sourceRoot });
+const targetFiles = await listDistributionFiles({ repoRoot, sourceRoot: targetRoot });
 const sourceSet = new Set(sourceFiles);
 const targetSet = new Set(targetFiles);
 const failures = [];

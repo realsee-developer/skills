@@ -1,43 +1,41 @@
-import { copyFile, lstat, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { dirname, join, relative, resolve } from 'node:path';
+import { readFile, rm, writeFile } from 'node:fs/promises';
+import { join, relative, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { applyArkclawOverlay, ARKCLAW_ENTRYPOINT } from './arkclaw-overlay.mjs';
+import { copyDistributionFiles } from './distribution-files.mjs';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(repoRoot, '.agents', 'skills', 'argus');
 const targetRoot = join(repoRoot, 'arkclaw', 'argus');
 const expectedTarget = join(repoRoot, 'arkclaw', 'argus');
 
-async function copyTree(source, target) {
-  const stat = await lstat(source);
-  if (stat.isSymbolicLink()) {
-    throw new Error(`source symlink is forbidden: ${relative(repoRoot, source)}`);
+export async function syncArkclaw(options = {}) {
+  const activeRepoRoot = options.repoRoot ?? repoRoot;
+  const activeSourceRoot = options.sourceRoot ?? sourceRoot;
+  const activeTargetRoot = options.targetRoot ?? targetRoot;
+  const activeExpectedTarget = options.expectedTarget ?? expectedTarget;
+
+  if (activeTargetRoot !== activeExpectedTarget) {
+    throw new Error(`refusing to replace unexpected Arkclaw target: ${activeTargetRoot}`);
   }
-  if (stat.isDirectory()) {
-    await mkdir(target, { recursive: true });
-    const entries = await readdir(source, { withFileTypes: true });
-    entries.sort((a, b) => a.name.localeCompare(b.name));
-    for (const entry of entries) {
-      if (entry.name === 'node_modules') continue;
-      await copyTree(join(source, entry.name), join(target, entry.name));
-    }
-    return;
-  }
-  if (!stat.isFile()) return;
-  await mkdir(dirname(target), { recursive: true });
-  await copyFile(source, target);
+
+  await rm(activeTargetRoot, { recursive: true, force: true });
+  await copyDistributionFiles({
+    repoRoot: activeRepoRoot,
+    sourceRoot: activeSourceRoot,
+    targetRoot: activeTargetRoot
+  });
+
+  const entrypoint = join(activeTargetRoot, ARKCLAW_ENTRYPOINT);
+  const original = await readFile(entrypoint, 'utf8');
+  await writeFile(entrypoint, applyArkclawOverlay(original, ARKCLAW_ENTRYPOINT));
+
+  console.log(
+    `synced canonical argus skill to ${relative(activeRepoRoot, activeTargetRoot)} with CN-only entrypoint overlay`
+  );
 }
 
-if (targetRoot !== expectedTarget) {
-  throw new Error(`refusing to replace unexpected Arkclaw target: ${targetRoot}`);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await syncArkclaw();
 }
-
-await rm(targetRoot, { recursive: true, force: true });
-await copyTree(sourceRoot, targetRoot);
-
-const entrypoint = join(targetRoot, ARKCLAW_ENTRYPOINT);
-const original = await readFile(entrypoint, 'utf8');
-await writeFile(entrypoint, applyArkclawOverlay(original, ARKCLAW_ENTRYPOINT));
-
-console.log(`synced canonical argus skill to ${relative(repoRoot, targetRoot)} with CN-only entrypoint overlay`);
-

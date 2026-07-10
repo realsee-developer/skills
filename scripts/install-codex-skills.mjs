@@ -4,6 +4,7 @@
 // automatically), fall back to a recursive copy when symlink isn't viable
 // (e.g. permission denied, cross-filesystem with no link support).
 import { copyFile, lstat, mkdir, readdir, rm, symlink } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
 import { dirname, join, relative, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -68,10 +69,23 @@ try {
 
 console.log(`installed argus to ${targetSkill} (${installMode})`);
 
-const lockfile = join(targetSkill, 'package-lock.json');
+// npm treats a symlink passed via --prefix as a linked package and expects an
+// unrelated `argus@<version>` lock entry. Install at the real source path when
+// the Codex target is a symlink; copied installs use the target directly.
+const dependencyRoot = installMode === 'symlink' ? sourceSkill : targetSkill;
+const lockfile = join(dependencyRoot, 'package-lock.json');
 if (!(await exists(lockfile))) {
-  console.log('Skipping dependency install: package-lock.json is absent.');
-  console.log(`When a lockfile exists, run: npm ci --prefix ${targetSkill}`);
-} else {
-  console.log(`Dependencies can be installed with: npm ci --prefix ${targetSkill}`);
+  throw new Error(`cannot install Argus runtime dependencies: missing ${lockfile}`);
 }
+
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const install = spawnSync(
+  npmCommand,
+  ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'],
+  { cwd: dependencyRoot, stdio: 'inherit', env: process.env }
+);
+if (install.error) throw install.error;
+if (install.status !== 0) {
+  throw new Error(`failed to install Argus runtime dependencies (npm exit ${install.status ?? 'unknown'})`);
+}
+console.log(`installed Argus runtime dependencies in ${targetSkill}`);

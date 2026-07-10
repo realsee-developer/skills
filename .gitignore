@@ -4,7 +4,9 @@ node_modules/
 !.env.example
 tmp/
 workspace/
+output/
 *.log
 *.zip
 *.glb
+*.exr
 dist/

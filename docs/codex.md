@@ -22,7 +22,7 @@ Use `@v1.0.2` instead only for legacy square 1:1 or single-GLB behavior.
 git clone https://github.com/realsee-developer/skills.git
 cd skills
 npm install
-npm install --prefix .agents/skills/argus
+(cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 CODEX_HOME=$HOME/.codex npm run install:codex-skills
 ```
 
