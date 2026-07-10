@@ -20,7 +20,8 @@ test('argus gateway openapi document includes public gateway paths and schemas',
   );
   assert.ok(openapi.components.schemas.UploadTokenData.properties.backup);
   assert.deepEqual(openapi.components.schemas.ArgusTaskStatus.enum, [0, 1, 2, 3]);
-  assert.ok(openapi.components.schemas.SubmitTaskRequest.properties.private_cos_key);
+  assert.equal(openapi.components.schemas.SubmitTaskRequest.properties.private_cos_keys.type, 'array');
+  assert.equal(openapi.components.schemas.SubmitTaskRequest.properties.private_cos_keys.minItems, 1);
   assert.ok(openapi.components.schemas.TaskInfoData.properties.output_url);
   assert.deepEqual(
     new Set((openapi.servers ?? []).map((server) => server.url)),

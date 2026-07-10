@@ -33,7 +33,7 @@ test('gateway adapter uses the four Argus 2.0 paths and envelopes', async () => 
 
   assert.equal(calls[2].url, 'https://gateway.example/open/v1/argus/task/submit');
   assert.equal(calls[2].init.method, 'POST');
-  assert.equal(calls[2].init.body, JSON.stringify({ private_cos_key: 'p/input.zip', title: 'job' }));
+  assert.equal(calls[2].init.body, JSON.stringify({ private_cos_keys: ['p/input.zip'], title: 'job' }));
 
   assert.equal(calls[3].url, 'https://gateway.example/open/v1/argus/task/info?task_code=task-1');
   assert.equal(calls[3].init.method, 'GET');

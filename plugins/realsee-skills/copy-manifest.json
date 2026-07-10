@@ -35,17 +35,17 @@
     {
       "source": ".agents/skills/argus/references/api-workflow.md",
       "target": "plugins/realsee-skills/skills/argus/references/api-workflow.md",
-      "size": 2885
+      "size": 2914
     },
     {
       "source": ".agents/skills/argus/references/api-workflow.zh-CN.md",
       "target": "plugins/realsee-skills/skills/argus/references/api-workflow.zh-CN.md",
-      "size": 2772
+      "size": 2818
     },
     {
       "source": ".agents/skills/argus/references/argus-gateway-openapi.json",
       "target": "plugins/realsee-skills/skills/argus/references/argus-gateway-openapi.json",
-      "size": 11443
+      "size": 11548
     },
     {
       "source": ".agents/skills/argus/references/argus-output.schema.json",
@@ -110,12 +110,12 @@
     {
       "source": ".agents/skills/argus/src/gateway-openapi-types.d.ts",
       "target": "plugins/realsee-skills/skills/argus/src/gateway-openapi-types.d.ts",
-      "size": 1353
+      "size": 1356
     },
     {
       "source": ".agents/skills/argus/src/gateway.mjs",
       "target": "plugins/realsee-skills/skills/argus/src/gateway.mjs",
-      "size": 6547
+      "size": 6550
     },
     {
       "source": ".agents/skills/argus/src/input.mjs",
@@ -195,7 +195,7 @@
     {
       "source": ".agents/skills/argus/test/gateway.test.mjs",
       "target": "plugins/realsee-skills/skills/argus/test/gateway.test.mjs",
-      "size": 4747
+      "size": 4750
     },
     {
       "source": ".agents/skills/argus/test/helpers/artifacts.mjs",
@@ -230,7 +230,7 @@
     {
       "source": ".agents/skills/argus/test/openapi-doc.test.mjs",
       "target": "plugins/realsee-skills/skills/argus/test/openapi-doc.test.mjs",
-      "size": 2228
+      "size": 2348
     },
     {
       "source": ".agents/skills/argus/test/output.test.mjs",

@@ -93,7 +93,7 @@ export class GatewayClient {
       stage: 'submit',
       method: 'POST',
       path: SUBMIT_TASK_PATH,
-      body: JSON.stringify({ private_cos_key: privateCosKey, title }),
+      body: JSON.stringify({ private_cos_keys: [privateCosKey], title }),
       authenticated: true,
       allowAuthRefresh: false
     });

@@ -26,7 +26,7 @@ The Gateway bases remain:
 1. `POST /auth/access_token`
 2. `GET /open/v1/argus/file/token`
 3. stream one normalized ZIP to object storage
-4. `POST /open/v1/argus/task/submit` with `private_cos_key` and `title`
+4. `POST /open/v1/argus/task/submit` with one uploaded object path in `private_cos_keys` and `title`
 
 The upload lease locator is `bucket + region + prefix`. Upload credentials may refresh in memory but must never be written to state. `start` persists the returned `task_code` atomically, then returns immediately.
 
