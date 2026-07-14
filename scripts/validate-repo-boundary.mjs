@@ -1,5 +1,10 @@
-import { readdir, lstat, readFile } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { resolve } from 'node:path';
+
+import {
+  createLiteralMatcher,
+  scanFile,
+  walkRepositoryFiles
+} from './repository-content-scan.mjs';
 
 const root = resolve(process.cwd());
 const deniedText = [
@@ -28,35 +33,28 @@ const deniedPaths = [
   ['realsee-skills-implementation', 'plan'].join('-') + '.md'
 ];
 
-async function walk(dir) {
-  const out = [];
-  for (const entry of await readdir(dir, { withFileTypes: true })) {
-    if (['.git', 'node_modules'].includes(entry.name)) continue;
-    const path = join(dir, entry.name);
-    const rel = relative(root, path);
+const files = walkRepositoryFiles(root, {
+  onEntry({ relativePath, stats }) {
     for (const needle of deniedPaths) {
-      if (rel.includes(needle)) throw new Error(`forbidden path ${needle} in ${rel}`);
+      if (relativePath.includes(needle)) throw new Error(`forbidden path ${needle} in ${relativePath}`);
     }
-    const stat = await lstat(path);
-    if (stat.isSymbolicLink()) throw new Error(`symlink is forbidden: ${rel}`);
-    if (stat.isDirectory()) out.push(...await walk(path));
-    if (stat.isFile()) out.push(path);
+    if (stats.isSymbolicLink()) throw new Error(`symlink is forbidden: ${relativePath}`);
   }
-  return out;
-}
+});
 
-async function readText(file) {
+for await (const { path, relativePath } of files) {
+  let matches;
   try {
-    return await readFile(file, 'utf8');
+    matches = await scanFile(
+      path,
+      () => [createLiteralMatcher(deniedText)],
+      { stopAfterFirst: true }
+    );
   } catch (error) {
-    throw new Error(`failed to read ${relative(root, file)}: ${error.message}`);
+    throw new Error(`failed to read ${relativePath}: ${error.message}`);
   }
-}
-
-for (const file of await walk(root)) {
-  const text = await readText(file);
-  for (const needle of deniedText) {
-    if (text.includes(needle)) throw new Error(`forbidden text ${needle} in ${relative(root, file)}`);
+  if (matches.length > 0) {
+    throw new Error(`forbidden text ${matches[0]} in ${relativePath}`);
   }
 }
 

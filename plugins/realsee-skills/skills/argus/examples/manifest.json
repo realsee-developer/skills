@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": 1,
+  "name": "Realsee Argus official example panoramas",
+  "provenance": {
+    "owner": "Realsee",
+    "kind": "first_party_official_samples",
+    "third_party_open_source": false,
+    "license": "SEE LICENSE IN LICENSE"
+  },
+  "sets": {
+    "cn": {
+      "region": "cn",
+      "count": 12,
+      "format": "jpeg",
+      "color_space": "sRGB",
+      "bit_depth": 8,
+      "channels": 3,
+      "width": 16000,
+      "height": 8000,
+      "total_bytes": 52930848,
+      "files": [
+        {
+          "name": "pano01.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano1.4303005d.jpg",
+          "bytes": 3583948,
+          "sha256": "e1f1225e8db93251e2146c277f6b7788d43590513beec400bf7ae3dd3f8ee093"
+        },
+        {
+          "name": "pano02.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano2.014ea8ce.jpg",
+          "bytes": 4166333,
+          "sha256": "01c34211c1343e8bc10ffcaf1dd8e434168de1ee675061b0ed6fd25139ec53a0"
+        },
+        {
+          "name": "pano03.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano3.1191a7a4.jpg",
+          "bytes": 5204732,
+          "sha256": "6ef5000102f00cda7303622c96aa34819d4504367671e9c5a21110b3b7a08f5a"
+        },
+        {
+          "name": "pano04.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano4.e3f60a0d.jpg",
+          "bytes": 4157530,
+          "sha256": "ce8c7acb993aae5e5c1048ec87d5fde629d2329ad4a742484f7bc3054e7076a9"
+        },
+        {
+          "name": "pano05.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano5.1b74a6db.jpg",
+          "bytes": 4724311,
+          "sha256": "30cebc42f6155091a8c7d09c6825b975d651795b0b699d5e21d2c2258278b7d7"
+        },
+        {
+          "name": "pano06.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano6.53b16194.jpg",
+          "bytes": 4174559,
+          "sha256": "5defb88c4d8cd3277ca5193cfbaf076574dc1f3cbd4b4b0c5c7b8b66b0ca7e76"
+        },
+        {
+          "name": "pano07.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano7.ee86666e.jpg",
+          "bytes": 4052998,
+          "sha256": "76169d98a0a3c6fe484cd4c689faee75ada897a3054090eb893756b3e8edb0c8"
+        },
+        {
+          "name": "pano08.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano8.2471843f.jpg",
+          "bytes": 4031009,
+          "sha256": "9486c26c71b28490ba1d629b4a97bfcb370d1ea35f12e0e681daba108639024e"
+        },
+        {
+          "name": "pano09.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano9.2d8657ea.jpg",
+          "bytes": 4064092,
+          "sha256": "19cf62b8f421bc6c75add6470ea36038cb131497221695c1f6eb812f8ccf7f22"
+        },
+        {
+          "name": "pano10.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano10.4e5f46bd.jpg",
+          "bytes": 4889855,
+          "sha256": "0d31d0392d64ad338315458bc42ff1b4a9c4c4c0b1ab38dd7598cf56ef827d3b"
+        },
+        {
+          "name": "pano11.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano11.0f4acc36.jpg",
+          "bytes": 4882718,
+          "sha256": "ae5e2b9260403a01c822a6a5b00f4a9a72f41bea0407c403b087b938ebe819e2"
+        },
+        {
+          "name": "pano12.jpg",
+          "source_url": "https://vr-public.realsee-cdn.cn/release/web/pano12.cdf8cb71.jpg",
+          "bytes": 4998763,
+          "sha256": "0c0ad67e74eba16c1377abc727006d26f370283832f3e1fd055cb4a00d93f852"
+        }
+      ]
+    },
+    "global": {
+      "region": "global",
+      "count": 14,
+      "format": "jpeg",
+      "color_space": "sRGB",
+      "bit_depth": 8,
+      "channels": 3,
+      "width": 8000,
+      "height": 4000,
+      "total_bytes": 85757861,
+      "files": [
+        {
+          "name": "pano01.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/1.c372f983.jpg",
+          "bytes": 5246921,
+          "sha256": "63b0ba7c9130bcc0fddc23cd5dac5b5b98be59efbfcb3e6ef3f4825bdd68570f"
+        },
+        {
+          "name": "pano02.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/2.c9085ad7.jpg",
+          "bytes": 5282139,
+          "sha256": "e0e65b49225ccfd3fabfb13e1bc24ae619bde51500bb0e946142c135007780b4"
+        },
+        {
+          "name": "pano03.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/3.aee5e262.jpg",
+          "bytes": 5157595,
+          "sha256": "8f5976114125af48d58a959c4eb4a56b4d623ff5ae9bb25e3d78f08f9b3fb2b8"
+        },
+        {
+          "name": "pano04.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/4.68cbe737.jpg",
+          "bytes": 5649973,
+          "sha256": "ba5bd8c2c2b97df439c63b575600a82a7cddf457bd767776ae3f5cece9133887"
+        },
+        {
+          "name": "pano05.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/5.14b18b73.jpg",
+          "bytes": 6131337,
+          "sha256": "f8ec5fcf6dbec2048f34839b692e16d572939026987903cee8aae97b438758c4"
+        },
+        {
+          "name": "pano06.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/6.b6eb6f7f.jpg",
+          "bytes": 5761653,
+          "sha256": "2c8c239d4915dd956d083be0c5d8d8f28b50f47321e176b168565716a65500d1"
+        },
+        {
+          "name": "pano07.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/7.a9dc769d.jpg",
+          "bytes": 6743842,
+          "sha256": "68b22e89565aed2066bdc81f378a7688a89aaf3faab4f82014ad79b64d891a88"
+        },
+        {
+          "name": "pano08.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/8.0ebd34ed.jpg",
+          "bytes": 6770933,
+          "sha256": "820a218bef2dd354cde35f0fb04413ffdf78dbc6b4e1b3f2f365120c93e6b730"
+        },
+        {
+          "name": "pano09.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/9.c445f709.jpg",
+          "bytes": 6945800,
+          "sha256": "ea345cea0be2f1a05c633e93e9922c4536804ac6c64265a8f87bc30866c31591"
+        },
+        {
+          "name": "pano10.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/10.aae8bab6.jpg",
+          "bytes": 6822383,
+          "sha256": "4fd40bd7c047ef67abbed258fd30a9be2192c395f252ff456464fed0125f6e9d"
+        },
+        {
+          "name": "pano11.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/11.464fc64b.jpg",
+          "bytes": 6312260,
+          "sha256": "979ea41e917c4036e32f10685ffc056f9603dc37774179de009f094712b3cc85"
+        },
+        {
+          "name": "pano12.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/12.c6385047.jpg",
+          "bytes": 6790270,
+          "sha256": "53cd4d7975d8b1a10a4ecfb37acd789252c602d6b4191e3c22f46342ff6d8a37"
+        },
+        {
+          "name": "pano13.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/13.109ab418.jpg",
+          "bytes": 6753779,
+          "sha256": "a4c1134f24f638b77d45b2ac29d72b15586771b296f6e33031fa2783cb7be1c3"
+        },
+        {
+          "name": "pano14.jpg",
+          "source_url": "https://global-public.realsee-cdn.com/release/web/king-bed-studio-suite_panorama_20260421/14.d73d0021.jpg",
+          "bytes": 5388976,
+          "sha256": "322eb64916c068d90e816cb77f796e50bcc0f59ce4f7180e46263a8e969d1108"
+        }
+      ]
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import { createReadStream } from 'node:fs';
 import { lstat, readdir, readFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 
@@ -5,8 +6,12 @@ const pluginRoot = resolve(import.meta.dirname, '..');
 const officialManifest = join(pluginRoot, '.claude-plugin', 'plugin.json');
 const wrongManifest = join(pluginRoot, 'plugin.json');
 const packagePath = join(pluginRoot, 'package.json');
+const pluginLicense = join(pluginRoot, 'LICENSE');
 const skillPath = join(pluginRoot, 'skills', 'argus');
 const skillFile = join(skillPath, 'SKILL.md');
+const skillLicense = join(skillPath, 'LICENSE');
+const brandManifest = join(skillPath, 'assets', 'brand', 'manifest.json');
+const forbiddenLocalPath = ['', 'Users', ''].join('/');
 
 async function exists(path) {
   try {
@@ -50,6 +55,16 @@ function parseFrontmatterName(text) {
   return nameLine ? nameLine.slice('name:'.length).trim() : null;
 }
 
+async function containsForbiddenLocalPath(file) {
+  let tail = '';
+  for await (const chunk of createReadStream(file, { highWaterMark: 64 * 1024 })) {
+    const text = tail + chunk.toString('latin1');
+    if (text.includes(forbiddenLocalPath)) return true;
+    tail = text.slice(-(forbiddenLocalPath.length - 1));
+  }
+  return false;
+}
+
 if (!(await exists(officialManifest))) {
   throw new Error('missing official plugin manifest: .claude-plugin/plugin.json');
 }
@@ -59,19 +74,31 @@ if (await exists(wrongManifest)) {
 if (!(await exists(packagePath))) {
   throw new Error('missing package.json');
 }
+if (!(await exists(pluginLicense))) {
+  throw new Error('missing plugin license: LICENSE');
+}
 if (!(await exists(skillPath))) {
   throw new Error('missing skill directory: skills/argus');
+}
+if (!(await exists(skillLicense))) {
+  throw new Error('missing skill license: skills/argus/LICENSE');
+}
+if (!(await exists(brandManifest))) {
+  throw new Error('missing Argus brand manifest');
 }
 
 const files = await walk(pluginRoot);
 for (const file of files) {
-  const text = await readFile(file, 'utf8');
-  if (text.includes(['', 'Users', ''].join('/'))) {
+  if (await containsForbiddenLocalPath(file)) {
     throw new Error('forbidden local user path in ' + relative(pluginRoot, file));
   }
 }
 
 assertNoWorkspaceOrLinkDeps(JSON.parse(await readFile(packagePath, 'utf8')), 'plugin package');
+const pluginManifest = JSON.parse(await readFile(officialManifest, 'utf8'));
+if (pluginManifest.license !== 'LicenseRef-Realsee-SDK') {
+  throw new Error('plugin manifest license must be LicenseRef-Realsee-SDK');
+}
 const skillPackagePath = join(skillPath, 'package.json');
 if (await exists(skillPackagePath)) {
   assertNoWorkspaceOrLinkDeps(JSON.parse(await readFile(skillPackagePath, 'utf8')), 'skill package');

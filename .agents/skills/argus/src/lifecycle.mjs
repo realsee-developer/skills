@@ -8,13 +8,14 @@ import {
   normalizeInputZip
 } from './archive.mjs';
 import { assertUploadConsent } from './consent.mjs';
-import { mapTaskStatus } from './gateway.mjs';
+import { getGatewayResponseMetadata, mapTaskStatus } from './gateway.mjs';
 import { validateImageFiles } from './input.mjs';
 import { buildPrivateCosKey } from './ports.mjs';
 import { validateArgusOutput } from './result-validator.mjs';
 import { redactText, redactUrlForLog } from './sanitizer.mjs';
 import {
   getWorkspacePaths,
+  getStateRevision,
   readResult,
   readState,
   updateState,
@@ -34,6 +35,9 @@ export class ArgusLifecycleError extends Error {
     this.stage = options.stage ?? null;
     this.retryable = options.retryable ?? false;
     this.workspaceDir = options.workspaceDir ?? null;
+    const diagnostics = diagnosticIdentifiers(options);
+    this.traceId = diagnostics.trace_id ?? null;
+    this.requestId = diagnostics.request_id ?? null;
   }
 }
 
@@ -58,6 +62,7 @@ export class ArgusTaskLifecycle {
       created_at: this.now().toISOString()
     });
 
+    let latestDiagnostics = {};
     try {
       const prepared = images?.length
         ? await prepareImages(images, paths.inputZipPath)
@@ -94,16 +99,22 @@ export class ArgusTaskLifecycle {
       });
 
       const initialLease = await this.taskPort.allocateUpload();
+      latestDiagnostics = diagnosticIdentifiers(initialLease);
       const uploadReceipt = await this.transferPort.upload({
         filePath: paths.inputZipPath,
         objectName: INPUT_OBJECT_NAME,
         lease: initialLease,
-        refreshLease: () => this.taskPort.allocateUpload(),
+        refreshLease: async () => {
+          const lease = await this.taskPort.allocateUpload();
+          latestDiagnostics = diagnosticIdentifiers(lease);
+          return lease;
+        },
         signal
       });
       const privateCosKey = buildPrivateCosKey(uploadReceipt, initialLease, INPUT_OBJECT_NAME);
       await writeState(workspaceDir, {
         phase: 'uploaded',
+        ...diagnosticStateFields(latestDiagnostics),
         upload: {
           provider: uploadReceipt.provider ?? uploadReceipt.providerName ?? null,
           object_path: privateCosKey,
@@ -121,16 +132,20 @@ export class ArgusTaskLifecycle {
           privateCosKey,
           title: normalizeTitle(title ?? defaultTitle({ images, zip }))
         });
+        latestDiagnostics = diagnosticIdentifiers(submitted);
       } catch (error) {
         if (error?.submissionUnknown) {
+          const diagnostics = diagnosticIdentifiers(error);
           const safe = {
             code: 'SUBMISSION_UNKNOWN',
             stage: 'submit',
             retryable: false,
-            message: 'Submission response was lost; do not submit this workspace again'
+            message: 'Submission response was lost; do not submit this workspace again',
+            ...diagnostics
           };
           await writeState(workspaceDir, {
             phase: 'submission_unknown',
+            ...diagnosticStateFields(diagnostics),
             last_error: safe
           });
           throw new ArgusLifecycleError(safe.message, {
@@ -138,7 +153,8 @@ export class ArgusTaskLifecycle {
             code: 'SUBMISSION_UNKNOWN',
             stage: 'submit',
             retryable: false,
-            workspaceDir
+            workspaceDir,
+            ...lifecycleDiagnosticOptions(diagnostics)
           });
         }
         throw error;
@@ -148,26 +164,33 @@ export class ArgusTaskLifecycle {
         throw new ArgusLifecycleError('Gateway submit response did not include task_code', {
           code: 'GATEWAY_PROTOCOL_ERROR',
           stage: 'submit',
-          workspaceDir
+          workspaceDir,
+          ...lifecycleDiagnosticOptions(latestDiagnostics)
         });
       }
       return writeState(workspaceDir, {
         phase: 'submitted',
         task_code: taskCode,
         task_status: 'queued',
-        submitted_at: this.now().toISOString()
+        submitted_at: this.now().toISOString(),
+        ...diagnosticStateFields(latestDiagnostics)
       });
     } catch (error) {
       if (error instanceof ArgusLifecycleError && error.code === 'SUBMISSION_UNKNOWN') throw error;
       const safe = safeError(error);
-      await writeState(workspaceDir, { phase: 'failed', last_error: safe }).catch(() => {});
+      await writeState(workspaceDir, {
+        phase: 'failed',
+        ...diagnosticStateFields(safe),
+        last_error: safe
+      }).catch(() => {});
       if (error instanceof ArgusLifecycleError) throw error;
       throw new ArgusLifecycleError(safe.message, {
         cause: error,
         code: error?.code ?? 'START_FAILED',
         stage: error?.stage ?? 'start',
         retryable: Boolean(error?.retryable),
-        workspaceDir
+        workspaceDir,
+        ...lifecycleDiagnosticOptions(safe)
       });
     } finally {
       await rm(paths.inputStagingDir, { recursive: true, force: true }).catch(() => {});
@@ -184,8 +207,19 @@ export class ArgusTaskLifecycle {
       return publicStatus(await reconcileResultState(absoluteWorkspace, existing, this.now()));
     }
 
-    const snapshot = normalizeRemoteSnapshot(await this.taskPort.inspect(state.task_code));
-    const next = await persistSnapshot(absoluteWorkspace, snapshot, this.now());
+    const observedStateRevision = getStateRevision(state);
+    const snapshot = await inspectRemote(
+      this.taskPort,
+      absoluteWorkspace,
+      state.task_code,
+      observedStateRevision
+    );
+    const { state: next } = await persistSnapshot(
+      absoluteWorkspace,
+      snapshot,
+      this.now(),
+      observedStateRevision
+    );
     return publicStatus(next);
   }
 
@@ -208,9 +242,21 @@ export class ArgusTaskLifecycle {
       }
       if (!state.task_code) throw new Error('state.json does not contain task_code');
 
-      const snapshot = normalizeRemoteSnapshot(await this.taskPort.inspect(state.task_code));
-      state = await persistSnapshot(absoluteWorkspace, snapshot, this.now());
-      if (state.task_status !== snapshot.taskStatus) {
+      const observedStateRevision = getStateRevision(state);
+      const snapshot = await inspectRemote(
+        this.taskPort,
+        absoluteWorkspace,
+        state.task_code,
+        observedStateRevision
+      );
+      const persisted = await persistSnapshot(
+        absoluteWorkspace,
+        snapshot,
+        this.now(),
+        observedStateRevision
+      );
+      state = persisted.state;
+      if (!persisted.applied || state.task_status !== snapshot.taskStatus) {
         return publicStatus(state);
       }
       if (snapshot.taskStatus === 'queued' || snapshot.taskStatus === 'processing') {
@@ -223,6 +269,8 @@ export class ArgusTaskLifecycle {
           task_code: state.task_code,
           task_status: 'failed',
           result_status: 'error',
+          trace_id: state.trace_id ?? null,
+          request_id: state.request_id ?? null,
           error: {
             code: 'ALGORITHM_FAILED',
             message: snapshot.errorMessage || 'Argus processing failed'
@@ -234,10 +282,10 @@ export class ArgusTaskLifecycle {
         return result;
       }
 
-      assertResultLease(snapshot, this.now());
       const paths = getWorkspacePaths(absoluteWorkspace);
       await writeState(absoluteWorkspace, { phase: 'finalizing' });
       try {
+        assertResultLease(snapshot, this.now());
         const reusable = await canReuseDownload(paths.outputZipPath, state.download, snapshot);
         let download = state.download;
         if (!reusable) {
@@ -281,7 +329,7 @@ export class ArgusTaskLifecycle {
         });
         return result;
       } catch (error) {
-        const safe = safeError(error);
+        const safe = safeError(error, undefined, diagnosticIdentifiers(state));
         await writeState(absoluteWorkspace, {
           phase: 'finalizing',
           last_error: safe
@@ -291,7 +339,8 @@ export class ArgusTaskLifecycle {
           code: error?.code ?? 'COLLECT_FAILED',
           stage: error?.stage ?? 'collect',
           retryable: true,
-          workspaceDir: absoluteWorkspace
+          workspaceDir: absoluteWorkspace,
+          ...lifecycleDiagnosticOptions(safe)
         });
       }
     });
@@ -309,6 +358,7 @@ async function prepareImages(images, outputPath) {
 function normalizeRemoteSnapshot(info) {
   if (!info || typeof info !== 'object') throw new Error('task/info returned no data');
   const result = info.result && typeof info.result === 'object' ? info.result : {};
+  const diagnostics = diagnosticIdentifiers(info);
   return {
     taskStatus: mapTaskStatus(info.status),
     outputUrl: info.output_url ?? info.presigned_url ?? result.output_url ?? result.presigned_url ?? null,
@@ -319,26 +369,46 @@ function normalizeRemoteSnapshot(info) {
     md5: optionalString(info.md5 ?? result.md5),
     size: optionalInteger(info.size ?? result.size, 'size'),
     path: optionalString(info.path ?? result.path),
-    errorMessage: optionalString(info.error_message) ? safeMessage(info.error_message) : null
+    errorMessage: optionalString(info.error_message) ? safeMessage(info.error_message) : null,
+    ...diagnostics
   };
 }
 
-async function persistSnapshot(workspaceDir, snapshot, now) {
+async function persistSnapshot(workspaceDir, snapshot, now, observedStateRevision) {
   const phase = {
     queued: 'submitted',
     processing: 'processing',
     succeeded: 'succeeded',
     failed: 'failed'
   }[snapshot.taskStatus];
-  return updateState(workspaceDir, (current) => {
+  let applied = false;
+  const state = await updateState(workspaceDir, (current) => {
+    const revisionMatches = getStateRevision(current) === observedStateRevision;
+    const advancesToTerminal =
+      ['succeeded', 'failed'].includes(snapshot.taskStatus) &&
+      !['succeeded', 'failed'].includes(current.task_status) &&
+      (PHASE_RANK[current.phase] ?? -1) < (PHASE_RANK[phase] ?? -1);
+    if (!revisionMatches && !advancesToTerminal) return current;
+    applied = true;
+    const diagnostics = diagnosticStateFields(snapshot);
     if (
       ['succeeded', 'failed'].includes(current.task_status) &&
       current.task_status !== snapshot.taskStatus
     ) {
-      return { ...current, checked_at: now.toISOString() };
+      return {
+        ...current,
+        ...diagnostics,
+        last_error: clearTransientStatusError(current),
+        checked_at: now.toISOString()
+      };
     }
     if ((PHASE_RANK[current.phase] ?? -1) > (PHASE_RANK[phase] ?? -1)) {
-      return { ...current, checked_at: now.toISOString() };
+      return {
+        ...current,
+        ...diagnostics,
+        last_error: clearTransientStatusError(current),
+        checked_at: now.toISOString()
+      };
     }
     const resultMetadata = snapshot.taskStatus === 'succeeded'
       ? {
@@ -354,9 +424,16 @@ async function persistSnapshot(workspaceDir, snapshot, now) {
       task_status: snapshot.taskStatus,
       result_metadata: resultMetadata,
       remote_error: snapshot.taskStatus === 'failed' ? snapshot.errorMessage : null,
-      checked_at: now.toISOString()
+      last_error: clearTransientStatusError(current),
+      checked_at: now.toISOString(),
+      ...diagnostics
     };
   });
+  return { state, applied };
+}
+
+function clearTransientStatusError(state) {
+  return state.last_error?.stage === 'task-info' ? null : state.last_error;
 }
 
 const PHASE_RANK = Object.freeze({
@@ -388,7 +465,8 @@ async function reconcileResultState(workspaceDir, result, now) {
         ? current.completed_at ?? now.toISOString()
         : current.completed_at,
       last_error: result.task_status === 'succeeded' ? null : current.last_error,
-      remote_error: result.task_status === 'succeeded' ? null : current.remote_error
+      remote_error: result.task_status === 'succeeded' ? null : current.remote_error,
+      ...diagnosticIdentifiers(result, current)
     };
   });
 }
@@ -403,6 +481,8 @@ function publicStatus(state) {
     task_code: state.task_code ?? null,
     task_status: state.task_status ?? null,
     result_status: state.result_status ?? null,
+    trace_id: state.trace_id ?? null,
+    request_id: state.request_id ?? null,
     input: state.input ?? null,
     warning: state.phase === 'submission_unknown'
       ? 'Submission response was lost. Do not retry start for this workspace.'
@@ -429,6 +509,8 @@ function buildLocalResult({ state, paths, validated, download }) {
     task_code: state.task_code,
     task_status: 'succeeded',
     result_status: resultStatus,
+    trace_id: state.trace_id ?? null,
+    request_id: state.request_id ?? null,
     output_zip_path: paths.outputZipPath,
     output_dir: paths.outputDir,
     manifest_path: validated.manifest_path ?? validated.manifestPath ?? `${paths.outputDir}/output.json`,
@@ -555,13 +637,81 @@ function optionalInteger(value, name) {
   return number;
 }
 
-function safeError(error, fallback) {
+function safeError(error, fallback, diagnosticsFallback) {
   return {
     code: error?.code ?? 'ARGUS_ERROR',
     stage: error?.stage ?? null,
     retryable: Boolean(error?.retryable),
-    message: safeMessage(error?.message || fallback || 'Argus operation failed')
+    message: safeMessage(error?.message || fallback || 'Argus operation failed'),
+    ...diagnosticIdentifiers(error, diagnosticsFallback)
   };
+}
+
+async function inspectRemote(taskPort, workspaceDir, taskCode, observedStateRevision) {
+  let info;
+  try {
+    info = await taskPort.inspect(taskCode);
+    return normalizeRemoteSnapshot(info);
+  } catch (error) {
+    const diagnostics = diagnosticIdentifiers(error, diagnosticIdentifiers(info));
+    const safe = {
+      ...safeError(error, undefined, diagnostics),
+      stage: error?.stage ?? 'task-info'
+    };
+    await updateState(workspaceDir, (current) => {
+      if (getStateRevision(current) !== observedStateRevision) return current;
+      return {
+        ...current,
+        ...diagnosticStateFields(diagnostics),
+        last_error: safe
+      };
+    }).catch(() => {});
+    throw new ArgusLifecycleError(safe.message, {
+      cause: error,
+      code: error?.code ?? 'STATUS_FAILED',
+      stage: error?.stage ?? 'task-info',
+      retryable: Boolean(error?.retryable),
+      workspaceDir,
+      ...lifecycleDiagnosticOptions(diagnostics)
+    });
+  }
+}
+
+function diagnosticIdentifiers(value, fallback = {}) {
+  const metadata = getGatewayResponseMetadata(value);
+  const traceId = safeDiagnosticId(
+    value?.traceId ?? value?.trace_id ?? metadata?.trace_id ?? fallback?.trace_id
+  );
+  const requestId = safeDiagnosticId(
+    value?.requestId ?? value?.request_id ?? metadata?.request_id ?? fallback?.request_id
+  );
+  return {
+    ...(traceId ? { trace_id: traceId } : {}),
+    ...(requestId ? { request_id: requestId } : {})
+  };
+}
+
+function lifecycleDiagnosticOptions(value) {
+  const diagnostics = diagnosticIdentifiers(value);
+  return {
+    traceId: diagnostics.trace_id ?? null,
+    requestId: diagnostics.request_id ?? null
+  };
+}
+
+function diagnosticStateFields(value) {
+  const diagnostics = diagnosticIdentifiers(value);
+  return {
+    trace_id: diagnostics.trace_id ?? null,
+    request_id: diagnostics.request_id ?? null
+  };
+}
+
+function safeDiagnosticId(value) {
+  if (typeof value !== 'string') return null;
+  const safe = safeMessage(value).trim();
+  if (!safe || /[\u0000-\u001f\u007f]/u.test(safe)) return null;
+  return safe.slice(0, 256);
 }
 
 function safeMessage(value) {

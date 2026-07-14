@@ -30,7 +30,17 @@ export async function readState(workspaceDir) {
       `Unsupported Argus state schema ${String(state.schema_version)}; v2 does not migrate v1 workspaces`
     );
   }
+  getStateRevision(state);
   return state;
+}
+
+export function getStateRevision(state) {
+  const revision = state?.state_revision;
+  if (revision === undefined) return 0;
+  if (!Number.isSafeInteger(revision) || revision < 0) {
+    throw new Error(`Invalid Argus state revision ${String(revision)}`);
+  }
+  return revision;
 }
 
 export async function writeState(workspaceDir, partial) {
@@ -47,13 +57,16 @@ export async function updateState(workspaceDir, updater) {
       if (current.schema_version !== undefined && current.schema_version !== STATE_SCHEMA_VERSION) {
         throw new Error(`Cannot overwrite state schema ${String(current.schema_version)}`);
       }
+      const currentRevision = getStateRevision(current);
       const updated = await updater(current);
       if (!updated || typeof updated !== 'object' || Array.isArray(updated)) {
         throw new TypeError('state updater must return an object');
       }
+      if (updated === current) return current;
       const next = {
         ...updated,
         schema_version: STATE_SCHEMA_VERSION,
+        state_revision: currentRevision + 1,
         skill: 'argus',
         updated_at: new Date().toISOString()
       };

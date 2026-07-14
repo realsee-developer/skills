@@ -8,7 +8,9 @@ Install the canonical `argus` Skill into Codex:
 npx skills add realsee-developer/skills --skill argus --agent codex
 ```
 
-Pin the stable 2.0 release when available:
+For product context, see [Argus](https://argus.realsee.ai/), its [interactive demo](https://h5.realsee.ai/argus), [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). Codex must follow the installed Skill contract rather than infer broader capabilities from those pages: Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+
+Pin the stable 2.0 release:
 
 ```bash
 npx skills add realsee-developer/skills@v2.0.0 --skill argus --agent codex
@@ -33,6 +35,8 @@ ls -la "${CODEX_HOME:-$HOME/.codex}/skills/argus"
 head "${CODEX_HOME:-$HOME/.codex}/skills/argus/SKILL.md"
 ```
 
+The install includes `examples/manifest.json`, but no panorama JPEGs. To use official samples, Codex should ask for the region and a new absolute output directory outside the installed Skill, then run `node <skillDir>/scripts/download-examples.mjs --region <cn|global> --output <absolute-dir>`. The command verifies every manifest byte length and SHA-256 before publishing the directory. A later Argus run still requires separate upload consent and uses the corresponding regional Gateway.
+
 ## Credentials
 
 The existing runtime contract is unchanged:
@@ -47,6 +51,7 @@ Do not print values or put them in recorded command arguments. To avoid prompts,
 
 ```text
 Use $argus to start a batch from /path/a.jpg and /path/b.webp. Report the run workspace.
+Use $argus to download and verify the CN examples to /absolute/examples, then ask for upload consent before starting them.
 Use $argus to check the status of /workspace/<run-dir> once.
 Use $argus to collect /workspace/<run-dir>, then report result_status, missing_ids, and local artifacts.
 ```
@@ -54,6 +59,9 @@ Use $argus to collect /workspace/<run-dir>, then report result_status, missing_i
 Codex should invoke the explicit lifecycle:
 
 ```bash
+node "${CODEX_HOME:-$HOME/.codex}/skills/argus/scripts/download-examples.mjs" \
+  --region cn --output /absolute/examples
+
 node "${CODEX_HOME:-$HOME/.codex}/skills/argus/scripts/run-argus.mjs" start \
   --image /absolute/a.jpg --image /absolute/b.webp \
   --workspace /absolute/workspace --yes --json
@@ -69,4 +77,4 @@ There is no detached poller or resume flag. A completed collect is idempotent. C
 
 ## Release policy
 
-`main` is the integration branch. Stable installs use a Git tag. Version 2.0 is promoted only after uploader 0.1.0 and real global/CN E2E have passed.
+`main` is the integration branch. Stable installs use a Git tag. Version 2.0 is promoted only after uploader 0.1.1 and real global/CN E2E have passed.

@@ -10,3 +10,5 @@ output/
 *.glb
 *.exr
 dist/
+**/examples/**/*.[jJ][pP][gG]
+**/examples/**/*.[jJ][pP][eE][gG]

@@ -29,6 +29,7 @@ async function exists(path) {
 }
 
 async function copyTree(source, target) {
+  if (/(?:^|[\\/])examples[\\/].*\.jpe?g$/iu.test(source)) return;
   const stat = await lstat(source);
   if (stat.isSymbolicLink()) {
     throw new Error(`source symlink is forbidden: ${relative(root, source)}`);

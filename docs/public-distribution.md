@@ -16,7 +16,7 @@ Run this checklist before promoting Argus Skill 2.0.
 
 - [ ] `npm run rebuild` regenerates both `plugins/realsee-skills/` and `arkclaw/argus/`.
 - [ ] Claude plugin files are byte-identical to `.agents/skills/argus/`.
-- [ ] Arkclaw files are canonical bytes except the deterministic CLI environment overlay that forces `REALSEE_REGION=cn`.
+- [ ] Arkclaw files are canonical bytes except deterministic CN-only overlays for the runtime region, example downloader, and matching generated guidance.
 - [ ] Codex install and `npx skills add . --skill argus` both resolve the same canonical Skill.
 - [ ] Plugin manifest has no `userConfig` and no MCP server.
 
@@ -38,15 +38,15 @@ Run this checklist before promoting Argus Skill 2.0.
 
 ## Uploader gate
 
-- [ ] `@realsee/universal-uploader@0.1.0` is published and installable.
+- [ ] `@realsee/universal-uploader@0.1.1` is published and installable.
 - [ ] Unit tests, typecheck, build, `npm pack` smoke, and GitLab CI pass.
 - [ ] Production dependency audit has no high or critical finding.
 - [ ] Argus installs only AWS Node and Tencent COS Node adapter dependencies; no browser COS, OSS, or uploader CLI dependency is pulled in for the Skill.
 
 ## Real E2E and promotion
 
-- [ ] `v2.0.0-rc.1` completes a real multi-image run in global/AWS.
-- [ ] `v2.0.0-rc.1` completes a real multi-image run in CN/Tencent COS.
+- [ ] `v2.0.0-rc.3` completes a real multi-image run in global/AWS.
+- [ ] `v2.0.0-rc.3` completes a real multi-image run in CN/Tencent COS.
 - [ ] Both regions verify download plus success, partial, and error handling.
 - [ ] Only after those checks, set `state: stable`, `stable_gate: passed`, and publish `v2.0.0`.
 - [ ] Test fresh installs through Claude plugin, Codex, `npx skills`, and CN-only Arkclaw.

@@ -7,14 +7,15 @@
 // Runtime dependencies install from the warmed npm cache; the pinned `skills`
 // CLI may be fetched by npx. The skill is intentionally shaped as SKILL.md
 // instructions + one run-argus.mjs entrypoint with explicit commands.
-import { mkdtempSync, rmSync } from 'node:fs';
+import { createReadStream, mkdtempSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { cp, lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { buildArkclawZip } from './build-arkclaw-zip.mjs';
+import { ARKCLAW_MAX_ZIP_BYTES, buildArkclawZip } from './build-arkclaw-zip.mjs';
 import { syncArkclaw } from './sync-arkclaw.mjs';
 
 const root = resolve(import.meta.dirname, '..');
@@ -41,6 +42,12 @@ async function assertFile(label, path) {
   if (!(await exists(path))) {
     throw new Error(`${label} missing: ${path}`);
   }
+}
+
+async function sha256File(path) {
+  const hash = createHash('sha256');
+  for await (const chunk of createReadStream(path)) hash.update(chunk);
+  return hash.digest('hex');
 }
 
 function runChild(label, command, args, options = {}) {
@@ -81,8 +88,59 @@ async function assertTreeHasNoSymlinks(path, label) {
 async function assertInstalledSkillRuntime(skillDir, label) {
   const skillMd = join(skillDir, 'SKILL.md');
   await assertFile(`${label} SKILL.md`, skillMd);
+  await assertFile(`${label} LICENSE`, join(skillDir, 'LICENSE'));
   if (parseFrontmatterName(await readFile(skillMd, 'utf8')) !== 'argus') {
     throw new Error(`${label} SKILL.md frontmatter name must be argus`);
+  }
+  const examplesManifestPath = join(skillDir, 'examples', 'manifest.json');
+  await assertFile(`${label} examples manifest`, examplesManifestPath);
+  const examplesManifest = JSON.parse(await readFile(examplesManifestPath, 'utf8'));
+  const sampleDigests = new Set();
+  for (const [region, count] of [['cn', 12], ['global', 14]]) {
+    const expectedFiles = examplesManifest.sets?.[region]?.files ?? [];
+    if (expectedFiles.length !== count) {
+      throw new Error(`${label} ${region} manifest must list ${count} examples`);
+    }
+    for (const file of expectedFiles) {
+      if (!/^pano\d{2}\.jpg$/u.test(file.name)) {
+        throw new Error(`${label} ${region} manifest contains invalid example name ${file.name}`);
+      }
+      const source = new URL(file.source_url);
+      if (source.protocol !== 'https:' || !Number.isSafeInteger(file.bytes) || file.bytes <= 0) {
+        throw new Error(`${label} ${region}/${file.name} has invalid CDN metadata`);
+      }
+      if (!/^[a-f0-9]{64}$/u.test(file.sha256) || sampleDigests.has(file.sha256)) {
+        throw new Error(`${label} ${region}/${file.name} has invalid or duplicate SHA-256`);
+      }
+      sampleDigests.add(file.sha256);
+    }
+  }
+  const panoramaJpegs = await findPanoramaJpegs(join(skillDir, 'examples'));
+  if (panoramaJpegs.length) {
+    throw new Error(`${label} must not distribute panorama example JPEGs: ${panoramaJpegs.join(', ')}`);
+  }
+  await assertFile(`${label} example downloader`, join(skillDir, 'scripts', 'download-examples.mjs'));
+  const brandManifestPath = join(skillDir, 'assets', 'brand', 'manifest.json');
+  await assertFile(`${label} brand manifest`, brandManifestPath);
+  const brandManifest = JSON.parse(await readFile(brandManifestPath, 'utf8'));
+  if (brandManifest.official_site !== 'https://argus.realsee.ai/') {
+    throw new Error(`${label} brand manifest must reference the official Argus site`);
+  }
+  const expectedBrandFiles = brandManifest.files.map((file) => file.name).sort();
+  const actualBrandFiles = (await readdir(join(skillDir, 'assets', 'brand'), { withFileTypes: true }))
+    .filter((entry) => entry.isFile() && entry.name !== 'manifest.json')
+    .map((entry) => entry.name)
+    .sort();
+  if (JSON.stringify(actualBrandFiles) !== JSON.stringify(expectedBrandFiles)) {
+    throw new Error(
+      `${label} brand assets must be ${expectedBrandFiles.join(', ')}; got: ${actualBrandFiles.join(', ')}`
+    );
+  }
+  for (const file of brandManifest.files) {
+    const digest = await sha256File(join(skillDir, 'assets', 'brand', file.name));
+    if (digest !== file.sha256) {
+      throw new Error(`${label} brand asset ${file.name} SHA-256 does not match manifest`);
+    }
   }
   for (const [dependency, path] of [
     ['universal uploader', join('node_modules', '@realsee', 'universal-uploader', 'package.json')],
@@ -102,6 +160,19 @@ async function assertInstalledSkillRuntime(skillDir, label) {
   runChild(`${label} runtime import`, process.execPath, ['--input-type=module', '--eval', probe], {
     cwd: skillDir
   });
+}
+
+async function findPanoramaJpegs(rootDir, prefix = '') {
+  const matches = [];
+  for (const entry of await readdir(rootDir, { withFileTypes: true })) {
+    const relativePath = prefix ? join(prefix, entry.name) : entry.name;
+    if (entry.isDirectory()) {
+      matches.push(...await findPanoramaJpegs(join(rootDir, entry.name), relativePath));
+    } else if (entry.isFile() && /\.jpe?g$/iu.test(entry.name)) {
+      matches.push(relativePath);
+    }
+  }
+  return matches;
 }
 
 async function installSkillDependencies(skillDir, label) {
@@ -127,22 +198,24 @@ async function checkCanonicalSkill() {
 }
 
 async function checkSkillSurface() {
-  // The skill is exactly one script + the runtime modules behind it. Any
+  // The skill has one Argus lifecycle entrypoint and one explicit example
+  // downloader. Any
   // additional scripts under .agents/skills/argus/scripts/ are a regression
   // toward the bad pattern of building CLIs the agent should drive via Bash.
   const scriptsDir = join(root, '.agents', 'skills', 'argus', 'scripts');
   const { readdir } = await import('node:fs/promises');
   const entries = await readdir(scriptsDir);
-  if (entries.length !== 1 || entries[0] !== 'run-argus.mjs') {
+  const expectedScripts = ['download-examples.mjs', 'run-argus.mjs'];
+  if (JSON.stringify(entries.sort()) !== JSON.stringify(expectedScripts)) {
     throw new Error(
-      `skill scripts/ should contain only run-argus.mjs; got: ${entries.join(', ')}. ` +
+      `skill scripts/ should contain only ${expectedScripts.join(', ')}; got: ${entries.join(', ')}. ` +
         'Helper scripts (check-credentials, save-credentials, task-status, open-result) ' +
         'were intentionally removed — SKILL.md drives the agent through Bash instead.'
     );
   }
   // The skill's package.json must NOT advertise removed helper scripts.
   const pkg = JSON.parse(await readFile(join(root, '.agents', 'skills', 'argus', 'package.json'), 'utf8'));
-  const allowed = new Set(['test', 'argus', 'audit:prod']);
+  const allowed = new Set(['test', 'argus', 'examples:download', 'audit:prod']);
   for (const name of Object.keys(pkg.scripts ?? {})) {
     if (!allowed.has(name)) {
       throw new Error(`skill package.json has unexpected script "${name}" (allowed: ${[...allowed].join(', ')})`);
@@ -167,6 +240,7 @@ async function checkClaudePluginLayout() {
   const pluginDir = join(root, 'plugins', 'realsee-skills');
   const manifestPath = join(pluginDir, '.claude-plugin', 'plugin.json');
   await assertFile('claude plugin dir', pluginDir);
+  await assertFile('claude plugin root license', join(pluginDir, 'LICENSE'));
   await assertFile('claude plugin manifest', manifestPath);
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
   if (manifest.name !== 'realsee-skills') {
@@ -174,6 +248,12 @@ async function checkClaudePluginLayout() {
   }
   if (manifest.userConfig) {
     throw new Error('plugin.json must not declare userConfig (credentials resolved at runtime by SKILL.md)');
+  }
+  if (manifest.homepage !== 'https://argus.realsee.ai/') {
+    throw new Error('plugin.json homepage must reference the official Argus site');
+  }
+  if (manifest.license !== 'LicenseRef-Realsee-SDK') {
+    throw new Error('plugin.json license must be LicenseRef-Realsee-SDK');
   }
   if (await exists(join(pluginDir, '.mcp.json'))) {
     throw new Error('plugin must not ship .mcp.json (skill runs via Bash, not MCP)');
@@ -186,9 +266,10 @@ async function checkClaudePluginLayout() {
   await assertFile('claude plugin run-argus.mjs', join(pluginDir, 'skills', 'argus', 'scripts', 'run-argus.mjs'));
   // Spot-check the plugin copy didn't smuggle a removed helper back in.
   const { readdir } = await import('node:fs/promises');
-  const syncedScripts = await readdir(join(pluginDir, 'skills', 'argus', 'scripts'));
-  if (syncedScripts.length !== 1 || syncedScripts[0] !== 'run-argus.mjs') {
-    throw new Error(`plugin skill scripts/ should contain only run-argus.mjs; got: ${syncedScripts.join(', ')}`);
+  const syncedScripts = (await readdir(join(pluginDir, 'skills', 'argus', 'scripts'))).sort();
+  const expectedScripts = ['download-examples.mjs', 'run-argus.mjs'];
+  if (JSON.stringify(syncedScripts) !== JSON.stringify(expectedScripts)) {
+    throw new Error(`plugin skill scripts/ should contain only ${expectedScripts.join(', ')}; got: ${syncedScripts.join(', ')}`);
   }
 }
 
@@ -246,6 +327,10 @@ async function checkNpxSkillsCopyInstall() {
 
 async function checkArkclawInstall() {
   const zipPath = await buildArkclawZip();
+  const zipStat = await lstat(zipPath);
+  if (zipStat.size > ARKCLAW_MAX_ZIP_BYTES) {
+    throw new Error(`Arkclaw ZIP exceeds ${ARKCLAW_MAX_ZIP_BYTES} bytes`);
+  }
   const tmpRoot = mkdtempSync(join(tmpdir(), 'argus-arkclaw-smoke-'));
   try {
     runChild('Arkclaw ZIP extraction', 'unzip', ['-q', zipPath, '-d', tmpRoot], { cwd: root });
@@ -253,6 +338,10 @@ async function checkArkclawInstall() {
     const entrypoint = await readFile(join(installRoot, 'scripts', 'run-argus.mjs'), 'utf8');
     if (!entrypoint.includes("env: { ...process.env, REALSEE_REGION: 'cn' },")) {
       throw new Error('fresh Arkclaw install is missing the forced CN-only region overlay');
+    }
+    const exampleDownloader = await readFile(join(installRoot, 'scripts', 'download-examples.mjs'), 'utf8');
+    if (!exampleDownloader.includes("const allowedRegions = ['cn'];")) {
+      throw new Error('fresh Arkclaw install allows a non-CN example region');
     }
     await installSkillDependencies(installRoot, 'fresh CN-only Arkclaw ZIP');
   } finally {
@@ -270,14 +359,25 @@ async function checkArkclawIgnoredFixture() {
     await mkdir(join(sourceRoot, 'scripts'), { recursive: true });
     await writeFile(join(fixtureRoot, '.gitignore'), await readFile(join(root, '.gitignore')));
     runChild('fixture git init', 'git', ['init', '-q'], { cwd: fixtureRoot });
-    await writeFile(
-      join(sourceRoot, 'SKILL.md'),
-      '---\nname: argus\ndescription: Arkclaw ignore fixture\nmetadata:\n  version: 2.0.0\n---\n'
-    );
+    for (const relativePath of [
+      'SKILL.md',
+      'README.md',
+      'README.zh-CN.md',
+      'references/examples.md',
+      'references/examples.zh-CN.md'
+    ]) {
+      const target = join(sourceRoot, relativePath);
+      await mkdir(dirname(target), { recursive: true });
+      await cp(join(root, '.agents', 'skills', 'argus', relativePath), target);
+    }
     await writeFile(join(sourceRoot, 'package.json'), '{"name":"argus","version":"2.0.0"}\n');
     await writeFile(
       join(sourceRoot, 'scripts', 'run-argus.mjs'),
       'const options = { env: process.env, };\n'
+    );
+    await writeFile(
+      join(sourceRoot, 'scripts', 'download-examples.mjs'),
+      "const allowedRegions = ['cn', 'global'];\n"
     );
     await writeFile(join(sourceRoot, 'safe.txt'), 'safe\n');
     await writeFile(join(sourceRoot, '.env.example'), 'SAFE_PLACEHOLDER=1\n');
@@ -291,6 +391,8 @@ async function checkArkclawIgnoredFixture() {
       ['model.glb', 'not-a-glb\n'],
       ['depth.exr', 'not-an-exr\n'],
       ['trace.log', 'sensitive trace\n'],
+      ['examples/cn/pano01.jpg', 'downloaded example\n'],
+      ['examples/global/pano01.JPEG', 'downloaded example\n'],
       ['node_modules/local-only/package.json', '{"local":true}\n']
     ];
     for (const [rel, contents] of ignoredFiles) {
@@ -315,9 +417,11 @@ async function checkArkclawIgnoredFixture() {
     // Inject ignored files after sync as well: the ZIP builder must apply the
     // same policy independently and must not trust its generated input tree.
     await mkdir(join(targetRoot, 'workspace'), { recursive: true });
+    await mkdir(join(targetRoot, 'examples', 'cn'), { recursive: true });
     await writeFile(join(targetRoot, 'workspace', 'late-secret.json'), '{}\n');
     await writeFile(join(targetRoot, '.env'), 'SECRET=late\n');
     await writeFile(join(targetRoot, 'late.glb'), 'late\n');
+    await writeFile(join(targetRoot, 'examples', 'cn', 'late.JPG'), 'late example\n');
     await buildArkclawZip({
       repoRoot: fixtureRoot,
       skillSource: targetRoot,
@@ -329,6 +433,9 @@ async function checkArkclawIgnoredFixture() {
     }).trim().split('\n');
     for (const forbidden of ['argus/.env', 'argus/late.glb', 'argus/workspace/late-secret.json']) {
       if (entries.includes(forbidden)) throw new Error(`Arkclaw ZIP leaked ignored fixture: ${forbidden}`);
+    }
+    if (entries.some((entry) => /(?:^|\/)examples\/.*\.jpe?g$/iu.test(entry))) {
+      throw new Error('Arkclaw ZIP leaked a panorama example JPEG');
     }
     if (!entries.includes('argus/.env.example') || !entries.includes('argus/safe.txt')) {
       throw new Error('Arkclaw ZIP omitted safe fixture files');
@@ -352,6 +459,9 @@ function checkMarketplaceManifest() {
     if (plugin.source !== './plugins/realsee-skills') {
       throw new Error(`marketplace.json plugin source must be ./plugins/realsee-skills (got: ${plugin.source})`);
     }
+    if (plugin.license !== 'LicenseRef-Realsee-SDK') {
+      throw new Error('marketplace.json plugin license must be LicenseRef-Realsee-SDK');
+    }
   });
 }
 
@@ -373,7 +483,9 @@ async function checkSkillMdDescribesFlow() {
     'v1.0.2',
     '(cd "<skillDir>" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)',
     'Do not ask a redundant second confirmation',
-    'Never place credential values in a CLI argument'
+    'Never place credential values in a CLI argument',
+    'download-examples.mjs',
+    '--output'
   ];
 
   // Belt-and-suspenders: catch the specific anti-pattern of an env-prefix
@@ -440,7 +552,7 @@ async function checkCodexInstall() {
 async function main() {
   const checks = [
     ['canonical skill source', checkCanonicalSkill],
-    ['skill surface = SKILL.md + run-argus.mjs only', checkSkillSurface],
+    ['skill surface = lifecycle plus example downloader', checkSkillSurface],
     ['marketplace manifest', checkMarketplaceManifest],
     ['claude plugin layout', checkClaudePluginLayout],
     ['claude plugin fresh install', checkClaudePluginInstall],

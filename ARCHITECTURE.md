@@ -21,7 +21,7 @@ Argus Skill 2.0 has one canonical source, an explicit persisted lifecycle, and g
     └── migration-v2*.md              Bilingual 1.x migration guide
 
 plugins/realsee-skills/               Generated Claude plugin copy
-arkclaw/argus/                        Generated Arkclaw copy with CN-only entrypoint overlay
+arkclaw/argus/                        Generated Arkclaw copy with deterministic CN-only overlays
 release-channel.json                  Release maturity and version metadata
 llms.txt                              Machine-readable repository index
 ```
@@ -89,16 +89,16 @@ The file-token response is an in-memory upload lease. `bucket + region + prefix`
                  ▼              ▼              ▼
         Claude plugin copy   Codex / npx    Arkclaw copy
         byte-identical       direct source  canonical bytes +
-                                           CN-only CLI overlay
+                                           CN-only overlays
 ```
 
-`npm run rebuild` regenerates Claude and Arkclaw packages and checks them against canonical bytes. The Arkclaw overlay changes only the environment passed by `scripts/run-argus.mjs`, forcing `REALSEE_REGION=cn`; all remaining files must match canonical source byte-for-byte.
+`npm run rebuild` regenerates Claude and Arkclaw packages and checks them against canonical bytes. Deterministic Arkclaw overlays force `REALSEE_REGION=cn` in `scripts/run-argus.mjs`, restrict `scripts/download-examples.mjs` to CN, and make the generated Skill, README, and example guides state the same limitation. All remaining files must match canonical source byte-for-byte.
 
 ## Validation and release
 
 `npm run ci` runs secret scanning, bilingual-doc checks, AI-index checks, repository-boundary checks, Skill validation, distribution regeneration and consistency checks, release metadata validation, and the full Skill test suite.
 
-Version `v1.0.2` remains the frozen legacy line. Version 2.0 follows this promotion order: publish uploader 0.1.0, cut `v2.0.0-rc.1`, complete real CN and global E2E (including partial/error collection), then mark `v2.0.0` stable. Until both regions pass, release metadata remains preview/development with a pending stable gate.
+Version `v1.0.2` remains the frozen legacy line. Version 2.0 follows this promotion order: publish uploader 0.1.1, cut `v2.0.0-rc.3`, complete real CN and global E2E (including partial/error collection), then mark `v2.0.0` stable. Until both regions pass, release metadata remains preview/development with a pending stable gate.
 
 ## Generated files
 

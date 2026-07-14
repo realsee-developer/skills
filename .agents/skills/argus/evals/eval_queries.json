@@ -1,0 +1,82 @@
+[
+  {
+    "query": "Run Realsee Argus on the exact 2:1 panoramas under /data/site-a and give me the validated depth maps, merged GLB, and camera poses.",
+    "should_trigger": true
+  },
+  {
+    "query": "I have twelve 8000x4000 equirectangular JPGs in ~/Downloads/lobby-scan; turn them into per-view metric depth, one merged point cloud GLB, and poses.",
+    "should_trigger": true
+  },
+  {
+    "query": "请把 /data/showroom 里的 16 张 2:1 全景图提交到 Argus，输出深度图、合并 GLB 点云和相机位姿。",
+    "should_trigger": true
+  },
+  {
+    "query": "Use this Argus ZIP at ~/Downloads/factory-panos.zip, submit it once, and keep a local workspace so I can collect the result later.",
+    "should_trigger": true
+  },
+  {
+    "query": "Check the current Argus status for workspace /data/argus-runs/2026-07-14-task-01; do one status request only.",
+    "should_trigger": true
+  },
+  {
+    "query": "The Argus task in /data/argus-runs/storefront says succeeded. Collect and validate its output.zip without resubmitting it.",
+    "should_trigger": true
+  },
+  {
+    "query": "Start an Argus reconstruction from three exact 2:1 WebP panoramas, return immediately after submission, and tell me the workspace handle.",
+    "should_trigger": true
+  },
+  {
+    "query": "Read the official example manifest, download and verify the CN set to /data/argus-cn-examples, then ask for upload consent before running it through Argus in the cn region.",
+    "should_trigger": true
+  },
+  {
+    "query": "Download the Global official example set from the manifest CDN URLs to /data/argus-global-examples, verify bytes and SHA-256, then use it for one Argus 2.0 run in the global region.",
+    "should_trigger": true
+  },
+  {
+    "query": "My multi-panorama Argus result may be partial; collect it and report every missing ID separately from the remote task status.",
+    "should_trigger": true
+  },
+  {
+    "query": "Stitch these overlapping panorama frames into a seamless 360 photo and fix the exposure differences between the seams.",
+    "should_trigger": false
+  },
+  {
+    "query": "Retouch this equirectangular panorama, remove the tripod, replace the sky, and export a web-ready JPEG.",
+    "should_trigger": false
+  },
+  {
+    "query": "Open this existing GLB point cloud, inspect its mesh statistics, and convert it to OBJ without running reconstruction.",
+    "should_trigger": false
+  },
+  {
+    "query": "Build a 3D model from a folder of ordinary phone photos using a local photogrammetry pipeline; none of them are panoramas.",
+    "should_trigger": false
+  },
+  {
+    "query": "Summarize the Argus research paper and compare its depth metrics with three recent academic methods; do not process any files.",
+    "should_trigger": false
+  },
+  {
+    "query": "Make a browser-based point cloud viewer for an existing GLB with orbit controls, measurement tools, and annotations.",
+    "should_trigger": false
+  },
+  {
+    "query": "Colorize these existing EXR depth maps and package them as PNG previews; there is no panorama reconstruction step.",
+    "should_trigger": false
+  },
+  {
+    "query": "Convert one square 1:1 panorama into six cube-map faces locally and keep the original image metadata unchanged.",
+    "should_trigger": false
+  },
+  {
+    "query": "Estimate camera poses for a set of perspective photos with COLMAP and export the sparse 3D points as PLY.",
+    "should_trigger": false
+  },
+  {
+    "query": "Open the public Argus interactive demo in a browser and explain the controls; I only want a product walkthrough.",
+    "should_trigger": false
+  }
+]
