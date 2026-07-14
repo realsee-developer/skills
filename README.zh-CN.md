@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Realsee Skills
+# Realsee Skills — Argus Agent 与 CLI 工作流
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
 [![Release gate](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/release-gate.yml?branch=main&label=release%20gate&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/release-gate.yml)
@@ -14,13 +14,17 @@
 
 [English](README.md) | 简体中文
 
-Realsee Skills 提供可安装的 Realsee agent skills。当前 Skill 是 `argus` 2.0：处理 1–99 张严格 2:1 全景图，产出 EXR 深度图、一个合并 GLB 点云、逐图相机位姿、可选内参和经过校验的本地结果索引。
+Realsee Argus 是全球领先的 3D 视觉基础模型。它可从照片、全景图或稀疏视图中，在毫秒级重建具备度量尺度的 3D 结构，包括位姿、深度、点云和可渲染几何。
+
+Realsee Skills 提供 Argus 的 Agent 与 CLI 工作流。当前 Skill 是 `argus` 2.0：处理 1–99 张严格 2:1 全景图，产出 EXR 深度图、一个合并 GLB 点云、逐图相机位姿、可选内参和经过校验的本地结果索引。
 
 Skill ID 仍为 `argus`。2.0 不包含旧版单图 VGGT fallback；需要 1:1 方图、旧版仅单 GLB 结果或旧 H5 preview 行为时，请固定到 `v1.0.2`。
 
 [Argus 官网](https://argus.realsee.ai/) · [交互 Demo](https://h5.realsee.ai/argus) · [研究主页](https://argus-paper.realsee.ai/) · [开发者平台](https://developer.realsee.ai/)
 
-这些站点介绍的是更完整的产品和研究生态。可安装的 Skill 2.0 仍保持明确边界：**1–99 张本地 RGB8 且严格 2:1 的全景图**。官网展示的普通照片或其他产品能力不属于本 CLI 的公开接口。
+官方公开证据包括 1.31B 参数模型，以及 Realsee3D 基准的 10K 个完整室内场景、95,962 个房间单元和 299,073 个全景视点。这些是模型与基准数据，不是 Skill 的输入数量上限。
+
+可安装的 Skill 2.0 仍保持明确边界：**1–99 张本地 RGB8 且严格 2:1 的全景图**。官网展示的照片、稀疏视图或其他产品能力不属于本 CLI 的公开接口。
 
 ## 凭证
 
