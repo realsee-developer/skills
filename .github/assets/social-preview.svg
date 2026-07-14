@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title description">
   <title id="title">Realsee Skills — Argus</title>
-  <desc id="description">A world-leading 3D vision foundation model, presented with official Argus and Realsee3D research figures.</desc>
+  <desc id="description">A world-leading 3D vision foundation model packaged as an agent-ready Argus Skill workflow.</desc>
 
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
@@ -22,7 +22,7 @@
     <clipPath id="researchClip">
       <rect x="704" y="104" width="500" height="175" rx="16"/>
     </clipPath>
-    <clipPath id="datasetClip">
+    <clipPath id="workflowClip">
       <rect x="704" y="320" width="500" height="134" rx="16"/>
     </clipPath>
   </defs>
@@ -56,9 +56,24 @@
     <rect x="704.5" y="104.5" width="499" height="174" rx="15.5" fill="none" stroke="#c6def4"/>
 
     <circle cx="704" cy="302" r="6" fill="#2bc7f3"/>
-    <text x="720" y="309" fill="#173453" font-family="Inter, SF Pro Text, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="740" letter-spacing="0.35">REALSEE3D · REAL + SYNTHETIC SCENES</text>
-    <g clip-path="url(#datasetClip)">
-      <image href="../../.agents/skills/argus/assets/brand/realsee3d-overview.png" x="704" y="320" width="500" height="134" preserveAspectRatio="xMidYMid slice"/>
+    <text x="720" y="309" fill="#173453" font-family="Inter, SF Pro Text, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="740" letter-spacing="0.35">AGENT-READY SKILL WORKFLOW</text>
+    <g clip-path="url(#workflowClip)">
+      <rect x="704" y="320" width="500" height="134" fill="#f5faff"/>
+      <path d="M744 387H1158" fill="none" stroke="#b8d7f3" stroke-width="4" stroke-linecap="round"/>
+      <g font-family="Inter, SF Pro Text, Helvetica Neue, Arial, sans-serif" font-weight="740">
+        <circle cx="760" cy="387" r="20" fill="#176bff"/>
+        <text x="760" y="392" text-anchor="middle" fill="#ffffff" font-size="14">IN</text>
+        <text x="724" y="434" fill="#173453" font-size="13" letter-spacing="0.5">PANORAMAS</text>
+        <circle cx="894" cy="387" r="20" fill="#11bdf4"/>
+        <text x="894" y="392" text-anchor="middle" fill="#ffffff" font-size="14">ZIP</text>
+        <text x="865" y="434" fill="#173453" font-size="13" letter-spacing="0.5">PACKAGE</text>
+        <circle cx="1028" cy="387" r="20" fill="#176bff"/>
+        <text x="1028" y="392" text-anchor="middle" fill="#ffffff" font-size="14">AI</text>
+        <text x="1004" y="434" fill="#173453" font-size="13" letter-spacing="0.5">ARGUS</text>
+        <circle cx="1162" cy="387" r="20" fill="#2258e8"/>
+        <text x="1162" y="392" text-anchor="middle" fill="#ffffff" font-size="14">3D</text>
+        <text x="1132" y="434" fill="#173453" font-size="13" letter-spacing="0.5">OUTPUTS</text>
+      </g>
     </g>
     <rect x="704.5" y="320.5" width="499" height="133" rx="15.5" fill="none" stroke="#c6def4"/>
     <rect x="680.5" y="48.5" width="547" height="421" rx="27.5" fill="none" stroke="#ffffff" stroke-opacity="0.92"/>
@@ -67,27 +82,27 @@
   <g font-family="Inter, SF Pro Display, Helvetica Neue, Arial, sans-serif">
     <g transform="translate(64 494)">
       <rect width="276" height="110" rx="18" fill="#ffffff" stroke="#cfe2f5"/>
-      <text x="22" y="49" fill="#176bff" font-size="34" font-weight="780" letter-spacing="-0.8">1.31B</text>
-      <text x="22" y="75" fill="#173453" font-size="14" font-weight="750" letter-spacing="1.1">PARAMETERS</text>
-      <text x="22" y="96" fill="#70879d" font-size="12" font-weight="600">ARGUS MODEL</text>
+      <text x="22" y="48" fill="#176bff" font-size="24" font-weight="780" letter-spacing="-0.3">LOCAL PANORAMAS</text>
+      <text x="22" y="76" fill="#173453" font-size="14" font-weight="750" letter-spacing="1.1">INPUT PACKAGE</text>
+      <text x="22" y="96" fill="#70879d" font-size="12" font-weight="600">VERIFIED BEFORE UPLOAD</text>
     </g>
     <g transform="translate(356 494)">
       <rect width="276" height="110" rx="18" fill="#ffffff" stroke="#cfe2f5"/>
-      <text x="22" y="49" fill="#176bff" font-size="34" font-weight="780" letter-spacing="-0.8">10K</text>
-      <text x="22" y="75" fill="#173453" font-size="14" font-weight="750" letter-spacing="1.0">COMPLETE INDOOR SCENES</text>
-      <text x="22" y="96" fill="#70879d" font-size="12" font-weight="600">REALSEE3D BENCHMARK</text>
+      <text x="22" y="48" fill="#176bff" font-size="24" font-weight="780" letter-spacing="-0.3">DEPTH MAPS</text>
+      <text x="22" y="76" fill="#173453" font-size="14" font-weight="750" letter-spacing="1.0">EXR OUTPUTS</text>
+      <text x="22" y="96" fill="#70879d" font-size="12" font-weight="600">VALIDATED RESULT INDEX</text>
     </g>
     <g transform="translate(648 494)">
       <rect width="276" height="110" rx="18" fill="#ffffff" stroke="#cfe2f5"/>
-      <text x="22" y="49" fill="#176bff" font-size="34" font-weight="780" letter-spacing="-0.8">95,962</text>
-      <text x="22" y="75" fill="#173453" font-size="14" font-weight="750" letter-spacing="1.1">ROOM UNITS</text>
-      <text x="22" y="96" fill="#70879d" font-size="12" font-weight="600">REALSEE3D BENCHMARK</text>
+      <text x="22" y="48" fill="#176bff" font-size="24" font-weight="780" letter-spacing="-0.3">CAMERA POSES</text>
+      <text x="22" y="76" fill="#173453" font-size="14" font-weight="750" letter-spacing="1.1">PER IMAGE</text>
+      <text x="22" y="96" fill="#70879d" font-size="12" font-weight="600">OPTIONAL INTRINSICS</text>
     </g>
     <g transform="translate(940 494)">
       <rect width="276" height="110" rx="18" fill="#ffffff" stroke="#cfe2f5"/>
-      <text x="22" y="49" fill="#176bff" font-size="34" font-weight="780" letter-spacing="-0.8">299,073</text>
-      <text x="22" y="75" fill="#173453" font-size="14" font-weight="750" letter-spacing="1.0">PANORAMIC VIEWPOINTS</text>
-      <text x="22" y="96" fill="#70879d" font-size="12" font-weight="600">REALSEE3D BENCHMARK</text>
+      <text x="22" y="48" fill="#176bff" font-size="24" font-weight="780" letter-spacing="-0.3">MERGED GLB</text>
+      <text x="22" y="76" fill="#173453" font-size="14" font-weight="750" letter-spacing="1.0">POINT CLOUD</text>
+      <text x="22" y="96" fill="#70879d" font-size="12" font-weight="600">READY FOR INSPECTION</text>
     </g>
   </g>
 
