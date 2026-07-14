@@ -32,7 +32,7 @@
     "should_trigger": true
   },
   {
-    "query": "Download the Global official example set from the manifest CDN URLs to /data/argus-global-examples, verify bytes and SHA-256, then use it for one Argus 2.0 pre-release run in the global region.",
+    "query": "Download the Global official example set from the manifest CDN URLs to /data/argus-global-examples, verify bytes and SHA-256, then use it for one Argus 2.0 run in the global region.",
     "should_trigger": true
   },
   {

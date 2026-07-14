@@ -45,7 +45,7 @@
     {
       "source": ".agents/skills/argus/evals/eval_queries.json",
       "target": "plugins/realsee-skills/skills/argus/evals/eval_queries.json",
-      "size": 3605
+      "size": 3593
     },
     {
       "source": ".agents/skills/argus/examples/manifest.json",
@@ -335,7 +335,7 @@
     {
       "source": ".agents/skills/argus/test/release-gate.test.mjs",
       "target": "plugins/realsee-skills/skills/argus/test/release-gate.test.mjs",
-      "size": 7469
+      "size": 7756
     },
     {
       "source": ".agents/skills/argus/test/sanitizer.test.mjs",
