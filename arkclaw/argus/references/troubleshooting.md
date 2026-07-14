@@ -16,6 +16,12 @@ Nested paths, path traversal, control characters, duplicate stems, and Unicode/c
 
 The submit response was lost after the request may have reached Gateway. Do not rerun `start` against the same input: submission is not automatically retried because that could create a duplicate remote task. Preserve the run directory for investigation.
 
+## Gateway diagnostic IDs
+
+JSON output may include `trace_id` and `request_id`; a failed command may print the same values as `Trace ID` and `Request ID`. They identify the current Gateway stage for support correlation. When that stage returns no diagnostic IDs, the fields are null or omitted: the CLI does not reuse IDs from an earlier file-token or upload stage. This is especially important for `submission_unknown`, where an earlier successful request must not be mistaken for the lost submit response.
+
+When contacting Realsee support, retain the workspace path and any displayed diagnostic IDs. Do not attach credentials, upload tokens, signed URLs, or downloaded result archives.
+
 ## Task still queued or processing
 
 The CLI does not launch a detached poller. Run `status --workspace <run-dir> --json` again later. `status` makes one remote query per invocation.

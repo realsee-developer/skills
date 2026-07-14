@@ -21,12 +21,22 @@ const requiredEntries = [
   '.agents/skills/argus/SKILL.md',
   '.agents/skills/argus/README.md',
   '.agents/skills/argus/README.zh-CN.md',
+  '.agents/skills/argus/LICENSE',
   '.agents/skills/argus/references/argus-gateway-openapi.json',
   '.agents/skills/argus/references/algorithm-io.md',
   '.agents/skills/argus/references/algorithm-io.zh-CN.md',
   '.agents/skills/argus/references/argus-output.schema.json',
   '.agents/skills/argus/references/migration-v2.md',
+  '.agents/skills/argus/examples/manifest.json',
+  '.agents/skills/argus/references/examples.md',
+  '.agents/skills/argus/references/examples.zh-CN.md',
+  '.agents/skills/argus/assets/brand/manifest.json',
+  '.agents/skills/argus/assets/brand/argus-logo-color.png',
+  '.agents/skills/argus/assets/brand/argus-mark-color.png',
+  '.agents/skills/argus/assets/brand/argus-paper-teaser.png',
+  '.agents/skills/argus/assets/brand/product-ai-powered.jpg',
   '.agents/skills/argus/scripts/run-argus.mjs',
+  '.agents/skills/argus/scripts/download-examples.mjs',
   '~/.realsee/credentials',
   '.claude-plugin/marketplace.json',
   'npx skills add realsee-developer/skills --skill argus',
@@ -39,9 +49,14 @@ const requiredEntries = [
   'run-argus.mjs start',
   'run-argus.mjs status',
   'run-argus.mjs collect',
+  'download-examples.mjs --region cn --output /absolute/example-output',
   'check:arkclaw-sync',
   'remote upload',
-  'user consent'
+  'user consent',
+  'https://argus.realsee.ai/',
+  'https://h5.realsee.ai/argus',
+  'https://argus-paper.realsee.ai/',
+  'https://developer.realsee.ai/'
 ];
 
 export function validateAiIndexText(text) {

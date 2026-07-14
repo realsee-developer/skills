@@ -16,7 +16,7 @@
 Preview：
 
 ```bash
-npm run release:gate -- --channel preview --tag v2.0.0-rc.1
+npm run release:gate -- --channel preview --tag v2.0.0-rc.3
 ```
 
 Stable：
@@ -30,8 +30,8 @@ npm run release:gate -- --channel stable --tag v2.0.0
 ## 必须顺序
 
 1. 保持现有 `v1.0.2` tag 不变。
-2. 发布并验证 `@realsee/universal-uploader@0.1.0`。
-3. 切 `v2.0.0-rc.1`，在 CN 与 global 各跑真实多图 E2E。
+2. 发布并验证 `@realsee/universal-uploader@0.1.1`。
+3. 切 `v2.0.0-rc.3`，在 CN 与 global 各跑真实多图 E2E。
 4. 两区都验证上传、任务完成、success/partial/error 收集与结果下载。
 5. 把发布 metadata 改成 stable/passed，发布 `v2.0.0`。
 6. 验证双语迁移指南，以及 Claude、Codex、`npx skills`、CN-only Arkclaw 的全新安装。

@@ -16,6 +16,12 @@ Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET` 和 `REALSEE_REGION`（`gl
 
 提交请求可能已经到达 Gateway，但响应丢失。不要对同一输入重新运行 `start`：提交不会自动重试，因为这可能创建重复的远端任务。请保留该 run 目录以便排查。
 
+## Gateway 诊断 ID
+
+JSON 输出可能包含 `trace_id` 和 `request_id`；命令失败时也可能以 `Trace ID` 和 `Request ID` 的形式输出相同信息。它们只用于关联当前 Gateway 阶段的支持排查。如果当前阶段没有返回诊断 ID，对应字段会是 null 或省略；CLI 不会复用更早的文件令牌或上传阶段 ID。对 `submission_unknown` 尤其如此：不能把之前成功请求的 ID 误认为丢失的提交响应 ID。
+
+联系 Realsee 支持时，请保留 workspace 路径和已显示的诊断 ID。不要附带凭证、上传令牌、签名 URL 或下载后的结果归档。
+
 ## 任务仍在排队或处理中
 
 CLI 不会启动 detached poller。稍后再次执行 `status --workspace <run-dir> --json`。每次 `status` 调用只查询一次远端状态。

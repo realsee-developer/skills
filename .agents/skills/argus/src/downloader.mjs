@@ -4,7 +4,7 @@ import { mkdir, rename, rm, statfs } from 'node:fs/promises';
 import { request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { basename, dirname, join } from 'node:path';
-import { finished } from 'node:stream/promises';
+import { finished, pipeline } from 'node:stream/promises';
 
 const MAX_REDIRECTS = 5;
 const DEFAULT_TIMEOUT_MS = 60_000;
@@ -27,6 +27,7 @@ export async function downloadFileAtomic({
   outputPath,
   expectedBytes,
   expectedMd5,
+  expectedSha256,
   signal,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   transport = nodeTransport,
@@ -62,6 +63,7 @@ export async function downloadFileAtomic({
       outputPath,
       expectedBytes: expectedBytes ?? headerBytes,
       expectedMd5,
+      expectedSha256,
       signal
     });
     return {
@@ -87,39 +89,57 @@ function nodeTransport({ url, signal, timeoutMs }) {
   });
 }
 
-async function writeBodyAtomic({ body, outputPath, expectedBytes, expectedMd5, signal }) {
+async function writeBodyAtomic({ body, outputPath, expectedBytes, expectedMd5, expectedSha256, signal }) {
   const outputDir = dirname(outputPath);
   await mkdir(outputDir, { recursive: true });
   const tmpPath = join(outputDir, `.${basename(outputPath)}.${process.pid}.${randomUUID()}.tmp`);
-  const hash = createHash('md5');
+  const md5Hash = createHash('md5');
+  const sha256Hash = createHash('sha256');
   let bytes = 0;
   let writer;
 
   try {
     writer = createWriteStream(tmpPath, { flags: 'wx', mode: 0o600 });
-    for await (const chunk of chunks(body)) {
-      if (signal?.aborted) throw signal.reason ?? new Error('download aborted');
-      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-      bytes += buffer.length;
-      hash.update(buffer);
-      if (!writer.write(buffer)) await onceDrain(writer);
-    }
-    await endWriter(writer);
+    await pipeline(
+      (async function* () {
+        for await (const chunk of chunks(body)) {
+          if (signal?.aborted) throw signal.reason ?? new Error('download aborted');
+          const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+          bytes += buffer.length;
+          if (expectedBytes !== undefined && expectedBytes !== null && bytes > expectedBytes) {
+            throw new Error(`downloaded more than expected ${expectedBytes} bytes`);
+          }
+          md5Hash.update(buffer);
+          sha256Hash.update(buffer);
+          yield buffer;
+        }
+      })(),
+      writer,
+      { signal }
+    );
 
     if (expectedBytes !== undefined && expectedBytes !== null && bytes !== expectedBytes) {
       throw new Error(`downloaded ${bytes} bytes; expected ${expectedBytes}`);
     }
     if (bytes === 0) throw new Error('downloaded file is empty');
-    const md5 = hash.digest('hex');
+    const md5 = md5Hash.digest('hex');
+    const sha256 = sha256Hash.digest('hex');
     if (expectedMd5 && md5 !== normalizeMd5(expectedMd5)) {
       throw new Error('downloaded file MD5 does not match task metadata');
+    }
+    if (expectedSha256 && sha256 !== normalizeSha256(expectedSha256)) {
+      throw new Error('downloaded file SHA-256 does not match manifest');
     }
     await rename(tmpPath, outputPath);
     return { bytes, md5 };
   } catch (error) {
     if (writer) {
       writer.destroy();
-      await finished(writer).catch(() => {});
+      try {
+        await finished(writer, { cleanup: true });
+      } catch {
+        // Preserve the original transfer or integrity error.
+      }
     }
     await rm(tmpPath, { force: true });
     throw error;
@@ -143,6 +163,14 @@ function normalizeMd5(value) {
   return md5;
 }
 
+function normalizeSha256(value) {
+  const sha256 = String(value).trim().toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(sha256)) {
+    throw new Error('expected SHA-256 must be 64 hexadecimal characters');
+  }
+  return sha256;
+}
+
 function parseContentLength(value) {
   if (value === undefined || value === null || value === '') return null;
   if (!/^\d+$/.test(String(value))) throw new Error('invalid download Content-Length');
@@ -153,20 +181,6 @@ function parseContentLength(value) {
 
 function isRedirect(statusCode) {
   return [301, 302, 303, 307, 308].includes(statusCode);
-}
-
-function onceDrain(stream) {
-  return new Promise((resolve, reject) => {
-    stream.once('drain', resolve);
-    stream.once('error', reject);
-  });
-}
-
-function endWriter(stream) {
-  return new Promise((resolve, reject) => {
-    stream.once('error', reject);
-    stream.end(resolve);
-  });
 }
 
 async function* chunks(body) {

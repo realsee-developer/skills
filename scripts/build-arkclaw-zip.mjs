@@ -28,6 +28,7 @@ const repoRoot = resolve(import.meta.dirname, '..');
 const skillSource = join(repoRoot, 'arkclaw', 'argus');
 const distDir = join(repoRoot, 'dist', 'arkclaw');
 const zipPath = join(distDir, 'argus.zip');
+export const ARKCLAW_MAX_ZIP_BYTES = 10_000_000;
 
 async function exists(path) {
   try {
@@ -113,6 +114,12 @@ export async function buildArkclawZip(options = {}) {
   }
 
   const archiveStat = await stat(activeZipPath);
+  if (archiveStat.size > ARKCLAW_MAX_ZIP_BYTES) {
+    await rm(activeZipPath, { force: true });
+    throw new Error(
+      `Arkclaw ZIP is ${archiveStat.size} bytes and exceeds Arkclaw 10 MB limit (${ARKCLAW_MAX_ZIP_BYTES} bytes)`
+    );
+  }
   console.log(
     `arkclaw zip ok: ${relative(activeRepoRoot, activeZipPath)} (${(archiveStat.size / 1024).toFixed(1)} KB)`
   );

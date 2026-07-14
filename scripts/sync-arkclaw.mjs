@@ -2,7 +2,7 @@ import { readFile, rm, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { applyArkclawOverlay, ARKCLAW_ENTRYPOINT } from './arkclaw-overlay.mjs';
+import { applyArkclawOverlay, ARKCLAW_OVERLAY_PATHS } from './arkclaw-overlay.mjs';
 import { copyDistributionFiles } from './distribution-files.mjs';
 
 const repoRoot = resolve(import.meta.dirname, '..');
@@ -27,12 +27,14 @@ export async function syncArkclaw(options = {}) {
     targetRoot: activeTargetRoot
   });
 
-  const entrypoint = join(activeTargetRoot, ARKCLAW_ENTRYPOINT);
-  const original = await readFile(entrypoint, 'utf8');
-  await writeFile(entrypoint, applyArkclawOverlay(original, ARKCLAW_ENTRYPOINT));
+  for (const relativePath of ARKCLAW_OVERLAY_PATHS) {
+    const path = join(activeTargetRoot, relativePath);
+    const original = await readFile(path, 'utf8');
+    await writeFile(path, applyArkclawOverlay(original, relativePath));
+  }
 
   console.log(
-    `synced canonical argus skill to ${relative(activeRepoRoot, activeTargetRoot)} with CN-only entrypoint overlay`
+    `synced canonical argus skill to ${relative(activeRepoRoot, activeTargetRoot)} with CN-only overlays`
   );
 }
 

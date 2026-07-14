@@ -42,7 +42,7 @@ export class UniversalObjectTransferPort {
       }
     });
     if (typeof uploader.uploadFile !== 'function') {
-      throw new Error('@realsee/universal-uploader 0.1.0 with uploadFile() is required');
+      throw new Error('@realsee/universal-uploader 0.1.1 with uploadFile() is required');
     }
     const receipt = await uploader.uploadFile(objectName, filePath, { signal, onProgress });
     return sanitizeUploadReceipt(receipt, lease, objectName, this.region);

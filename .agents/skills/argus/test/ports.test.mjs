@@ -74,3 +74,24 @@ test('private COS key uses the safe receipt object path and never a token', () =
     'prefix/input.zip'
   );
 });
+
+test('object transfer reports the exact uploader version required by the lockfile', async () => {
+  class LegacyUploader {}
+  const port = new UniversalObjectTransferPort({
+    region: 'global',
+    requireImpl(specifier) {
+      if (specifier === '@realsee/universal-uploader') return { Uploader: LegacyUploader };
+      return { default: {} };
+    }
+  });
+
+  await assert.rejects(
+    () => port.upload({
+      filePath: '/workspace/input.zip',
+      objectName: 'input.zip',
+      lease: {},
+      refreshLease: async () => ({})
+    }),
+    /@realsee\/universal-uploader 0\.1\.1 with uploadFile\(\) is required/u
+  );
+});
