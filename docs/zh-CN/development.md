@@ -45,7 +45,7 @@ npm run test:skill
 
 ## Skill 工作流
 
-单一事实源是 `.agents/skills/argus/`。Claude plugin 生成到 `plugins/realsee-skills/`；Arkclaw 包生成到 `arkclaw/argus/`，只有一处确定性的 CN-only entrypoint overlay。
+单一事实源是 `.agents/skills/argus/`。Claude plugin 生成到 `plugins/realsee-skills/`；Arkclaw 包生成到 `arkclaw/argus/`，对运行区域、示例下载和相应说明应用确定性的 CN-only overlay。
 
 修改 `argus` 时：
 

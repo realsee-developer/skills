@@ -10,6 +10,7 @@ const targetSkill = join(pluginRoot, 'skills', 'argus');
 const manifestPath = join(pluginRoot, 'copy-manifest.json');
 const expectedPluginRoot = join(repoRoot, 'plugins', 'realsee-skills');
 const rootPackage = JSON.parse(await readFile(join(repoRoot, 'package.json'), 'utf8'));
+const pluginLicense = 'LicenseRef-Realsee-SDK';
 
 const pluginPackage = {
   name: 'realsee-skills',
@@ -31,22 +32,31 @@ const pluginPackage = {
 const pluginMetadata = {
   $schema: 'https://json.schemastore.org/claude-code-plugin-manifest.json',
   name: 'realsee-skills',
-  description: 'Realsee skills for Claude Code. Exposes Argus multi-panorama reconstruction with depth, merged GLB, and camera artifacts.',
+  description: 'Realsee Argus for Claude Code: reconstruct 1–99 exact 2:1 panoramas into validated depth, a merged GLB point cloud, poses, and optional intrinsics.',
   author: {
     name: 'Realsee',
     url: 'https://github.com/realsee-developer'
-  }
+  },
+  homepage: 'https://argus.realsee.ai/',
+  repository: 'https://github.com/realsee-developer/skills',
+  license: pluginLicense,
+  keywords: ['realsee', 'argus', 'panorama', 'metric-3d', 'point-cloud', 'depth-map']
 };
 
-const validatePluginScript = String.raw`import { lstat, readdir, readFile } from 'node:fs/promises';
+const validatePluginScript = String.raw`import { createReadStream } from 'node:fs';
+import { lstat, readdir, readFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 
 const pluginRoot = resolve(import.meta.dirname, '..');
 const officialManifest = join(pluginRoot, '.claude-plugin', 'plugin.json');
 const wrongManifest = join(pluginRoot, 'plugin.json');
 const packagePath = join(pluginRoot, 'package.json');
+const pluginLicense = join(pluginRoot, 'LICENSE');
 const skillPath = join(pluginRoot, 'skills', 'argus');
 const skillFile = join(skillPath, 'SKILL.md');
+const skillLicense = join(skillPath, 'LICENSE');
+const brandManifest = join(skillPath, 'assets', 'brand', 'manifest.json');
+const forbiddenLocalPath = ['', 'Users', ''].join('/');
 
 async function exists(path) {
   try {
@@ -90,6 +100,16 @@ function parseFrontmatterName(text) {
   return nameLine ? nameLine.slice('name:'.length).trim() : null;
 }
 
+async function containsForbiddenLocalPath(file) {
+  let tail = '';
+  for await (const chunk of createReadStream(file, { highWaterMark: 64 * 1024 })) {
+    const text = tail + chunk.toString('latin1');
+    if (text.includes(forbiddenLocalPath)) return true;
+    tail = text.slice(-(forbiddenLocalPath.length - 1));
+  }
+  return false;
+}
+
 if (!(await exists(officialManifest))) {
   throw new Error('missing official plugin manifest: .claude-plugin/plugin.json');
 }
@@ -99,19 +119,31 @@ if (await exists(wrongManifest)) {
 if (!(await exists(packagePath))) {
   throw new Error('missing package.json');
 }
+if (!(await exists(pluginLicense))) {
+  throw new Error('missing plugin license: LICENSE');
+}
 if (!(await exists(skillPath))) {
   throw new Error('missing skill directory: skills/argus');
+}
+if (!(await exists(skillLicense))) {
+  throw new Error('missing skill license: skills/argus/LICENSE');
+}
+if (!(await exists(brandManifest))) {
+  throw new Error('missing Argus brand manifest');
 }
 
 const files = await walk(pluginRoot);
 for (const file of files) {
-  const text = await readFile(file, 'utf8');
-  if (text.includes(['', 'Users', ''].join('/'))) {
+  if (await containsForbiddenLocalPath(file)) {
     throw new Error('forbidden local user path in ' + relative(pluginRoot, file));
   }
 }
 
 assertNoWorkspaceOrLinkDeps(JSON.parse(await readFile(packagePath, 'utf8')), 'plugin package');
+const pluginManifest = JSON.parse(await readFile(officialManifest, 'utf8'));
+if (pluginManifest.license !== 'LicenseRef-Realsee-SDK') {
+  throw new Error('plugin manifest license must be LicenseRef-Realsee-SDK');
+}
 const skillPackagePath = join(skillPath, 'package.json');
 if (await exists(skillPackagePath)) {
   assertNoWorkspaceOrLinkDeps(JSON.parse(await readFile(skillPackagePath, 'utf8')), 'skill package');
@@ -131,7 +163,10 @@ import { join, relative, resolve } from 'node:path';
 const pluginRoot = resolve(import.meta.dirname, '..');
 const required = [
   '.claude-plugin/plugin.json',
+  'LICENSE',
   'skills/argus',
+  'skills/argus/LICENSE',
+  'skills/argus/assets/brand/manifest.json',
   'package.json'
 ];
 
@@ -163,6 +198,7 @@ if (pluginRoot !== expectedPluginRoot) {
 }
 await rm(pluginRoot, { recursive: true, force: true });
 await mkdir(pluginRoot, { recursive: true });
+await copyFile(join(repoRoot, 'LICENSE'), join(pluginRoot, 'LICENSE'));
 await writeJson(join(pluginRoot, 'package.json'), pluginPackage);
 await writeJson(join(pluginRoot, '.claude-plugin', 'plugin.json'), pluginMetadata);
 await writeText(join(pluginRoot, 'scripts', 'validate-plugin.mjs'), validatePluginScript);

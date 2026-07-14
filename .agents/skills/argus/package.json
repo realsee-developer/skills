@@ -2,6 +2,7 @@
   "name": "@realsee/argus-skill",
   "version": "2.0.0",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
   "type": "module",
   "engines": {
     "node": ">=22",
@@ -10,6 +11,7 @@
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "argus": "node scripts/run-argus.mjs",
+    "examples:download": "node scripts/download-examples.mjs",
     "audit:prod": "npm audit --omit=dev --audit-level=high"
   },
   "dependencies": {

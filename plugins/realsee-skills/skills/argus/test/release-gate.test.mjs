@@ -7,6 +7,7 @@ import { classifyReleaseTag } from '../../../../scripts/classify-release-tag.mjs
 import {
   getReleaseGateCommands,
   parseReleaseGateArgs,
+  validatePreviewReleaseMetadata,
   validatePublicGatewayOpenApi,
   validateStableReleaseMetadata
 } from '../../../../scripts/release-gate.mjs';
@@ -35,6 +36,7 @@ test('stable release gate runs the same CI command set as preview before public 
   assert.ok(cleanIndex > rebuildIndex, 'generated drift check must run after rebuild');
   assert.ok(smokeIndex > cleanIndex, 'fresh-install smoke must run after generated drift check');
   assert.ok(worktreeCleanIndex > smokeIndex, 'the entire worktree must be clean after external smoke tools run');
+  assert.ok(stableCommands.some(([command, args]) => command === 'npm' && args.join(' ') === 'run test:repo'));
   assert.ok(stableCommands.some(([command, args]) => command === 'npm' && args.join(' ') === 'run test:skill'));
   assert.ok(stableCommands.some(([command, args]) =>
     command === 'npm' && args.join(' ') === '--prefix .agents/skills/argus run audit:prod'
@@ -77,6 +79,16 @@ test('release workflow isolates the read-only gate from fresh privileged publica
   assert.doesNotMatch(release, /npm run release:gate/);
 });
 
+test('branch and pull-request release checks derive channel and tag from release metadata', async () => {
+  const workflow = await readFile(join(repoRoot, '.github', 'workflows', 'release-gate.yml'), 'utf8');
+  assert.match(workflow, /RELEASE_METADATA_CHANNEL/u);
+  assert.match(workflow, /stable\) RELEASE_CHANNEL=stable/u);
+  assert.match(workflow, /development\) RELEASE_CHANNEL=preview/u);
+  assert.match(workflow, /next_release_candidate/);
+  assert.doesNotMatch(workflow, /RELEASE_TAG:.*github\.ref_name/);
+  assert.doesNotMatch(workflow, /startsWith\(github\.ref_name/u);
+});
+
 test('stable metadata stays blocked until both-region E2E is explicitly verified', () => {
   const metadata = {
     version: '2.0.0',
@@ -95,6 +107,31 @@ test('stable metadata stays blocked until both-region E2E is explicitly verified
   metadata.skills.argus.stable_gate = 'passed';
   assert.equal(validateStableReleaseMetadata(metadata, 'v2.0.0'), true);
   assert.equal(validateStableReleaseMetadata(metadata, 'v2.0.1'), false);
+});
+
+test('preview metadata accepts only the declared next release candidate', () => {
+  const metadata = {
+    version: '2.0.0',
+    channel: 'development',
+    skills: {
+      argus: {
+        state: 'preview',
+        stable_gate: 'pending',
+        next_release_candidate: 'v2.0.0-rc.3'
+      }
+    }
+  };
+
+  assert.equal(validatePreviewReleaseMetadata(metadata, 'v2.0.0-rc.3'), true);
+  assert.equal(validatePreviewReleaseMetadata(metadata, 'v2.0.0-rc.1'), false);
+  assert.equal(validatePreviewReleaseMetadata(metadata, 'v2.0.1-rc.3'), false);
+
+  metadata.skills.argus.next_release_candidate = 'v2.0.1-rc.3';
+  assert.equal(validatePreviewReleaseMetadata(metadata, 'v2.0.1-rc.3'), false);
+
+  metadata.skills.argus.next_release_candidate = 'v2.0.0-rc.3';
+  metadata.skills.argus.stable_gate = 'passed';
+  assert.equal(validatePreviewReleaseMetadata(metadata, 'v2.0.0-rc.3'), false);
 });
 
 test('release gate requires an explicit tag', () => {

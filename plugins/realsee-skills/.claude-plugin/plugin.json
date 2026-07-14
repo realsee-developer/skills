@@ -1,9 +1,20 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "realsee-skills",
-  "description": "Realsee skills for Claude Code. Exposes Argus multi-panorama reconstruction with depth, merged GLB, and camera artifacts.",
+  "description": "Realsee Argus for Claude Code: reconstruct 1–99 exact 2:1 panoramas into validated depth, a merged GLB point cloud, poses, and optional intrinsics.",
   "author": {
     "name": "Realsee",
     "url": "https://github.com/realsee-developer"
-  }
+  },
+  "homepage": "https://argus.realsee.ai/",
+  "repository": "https://github.com/realsee-developer/skills",
+  "license": "LicenseRef-Realsee-SDK",
+  "keywords": [
+    "realsee",
+    "argus",
+    "panorama",
+    "metric-3d",
+    "point-cloud",
+    "depth-map"
+  ]
 }

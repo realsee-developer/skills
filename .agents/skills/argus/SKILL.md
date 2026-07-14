@@ -1,7 +1,7 @@
 ---
 name: argus
-description: Process one to 99 local 2:1 panorama images with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Use for multi-panorama Argus reconstruction, Argus ZIP input, or explicit start/status/collect task lifecycle requests.
-compatibility: Requires Node.js 22+ and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
+description: Use this skill to process one to 99 local exact 2:1 equirectangular panorama images with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Trigger for Argus panorama reconstruction, Argus ZIP input, or explicit Argus start/status/collect lifecycle requests. Do not trigger for panorama editing or stitching, arbitrary-photo 3D generation, existing GLB inspection, or research-only questions.
+compatibility: Requires a POSIX shell, Node.js 22+, npm 10+, npm registry access, and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
 metadata:
   version: "2.0.0"
   documentation: README.md
@@ -10,6 +10,8 @@ metadata:
 # argus
 
 Use this Skill to submit 1–99 exact 2:1 equirectangular panoramas to Realsee Argus and collect a validated `output.zip`. The public entrypoint is `scripts/run-argus.mjs`; `<skillDir>` below means the directory containing this file.
+
+Treat the official product, demo, research, and developer sites as background only. Do not infer arbitrary-photo input or other product workflows from them; follow the narrower Skill 2.0 contract in this file.
 
 Argus is a remote upload. Do not upload until the user has selected the input and consented. Never print, log, or persist credentials, upload tokens, presigned URLs, or raw provider errors. Do not open output files unless the user asks.
 
@@ -60,6 +62,16 @@ Two mutually exclusive modes are supported:
 The CLI performs authoritative validation and deterministic packaging. Inputs must be JPEG, PNG, or WebP, RGB, 8-bit, and exactly `width == 2 * height`. A resolution below 2048×1024 emits a warning. Square 1:1 images are rejected; users who require the old square/single-GLB workflow must pin `v1.0.2`.
 
 ZIP mode is not a validation bypass. The CLI safely extracts, validates, Unicode-normalizes, sorts, and repacks it before upload. Do not manually rename output IDs: consumers trust the algorithm's `name_mapping`.
+
+The Skill ships only `examples/manifest.json`, which lists two first-party example sets and their CDN URLs, byte lengths, and SHA-256 digests. Panorama JPEGs are absent from the current release tree and every generated distribution. If the user wants official examples, ask them to choose a region and an absolute output directory outside `<skillDir>`, then run:
+
+```bash
+node <skillDir>/scripts/download-examples.mjs \
+  --region cn \
+  --output "/absolute/example-output"
+```
+
+The downloader publishes the directory only after every file passes its manifest byte-length and SHA-256 checks. Do not create, rename, or replace the requested output path or its parent while the command is running. Use `global` instead of `cn` when appropriate; the CN-only Arkclaw distribution only allows `cn`. Downloading does not consent to a later Argus upload. Before `start`, the user must still select the downloaded files and consent to sending them to Realsee. See the [example panorama guide](references/examples.md) and its [Chinese version](references/examples.zh-CN.md).
 
 ## 4. Start once
 
@@ -125,9 +137,14 @@ For `partial`, the CLI exits 0. Still show a prominent warning and the complete 
 
 ## References
 
+- [Argus](https://argus.realsee.ai/)
+- [Interactive demo](https://h5.realsee.ai/argus)
+- [Research](https://argus-paper.realsee.ai/)
+- [Realsee Developer Platform](https://developer.realsee.ai/)
 - [Gateway workflow](references/api-workflow.md)
 - [Gateway OpenAPI](references/argus-gateway-openapi.json)
 - [Algorithm I/O contract](references/algorithm-io.md) / [中文](references/algorithm-io.zh-CN.md)
+- [Official example panoramas](references/examples.md) / [中文](references/examples.zh-CN.md)
 - [`output.json` JSON Schema](references/argus-output.schema.json)
 - [2.0 migration guide](references/migration-v2.md) / [中文](references/migration-v2.zh-CN.md)
 - [Troubleshooting](references/troubleshooting.md)

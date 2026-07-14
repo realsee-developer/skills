@@ -11,11 +11,28 @@ Primary Skill:
 - Definition: .agents/skills/argus/SKILL.md
 - English docs: .agents/skills/argus/README.md
 - Chinese docs: .agents/skills/argus/README.zh-CN.md
+- Bundled license: .agents/skills/argus/LICENSE
 - CLI: .agents/skills/argus/scripts/run-argus.mjs
+- Official example downloader: .agents/skills/argus/scripts/download-examples.mjs
 - Public Gateway contract: .agents/skills/argus/references/argus-gateway-openapi.json
 - Algorithm I/O: .agents/skills/argus/references/algorithm-io.md and .agents/skills/argus/references/algorithm-io.zh-CN.md
 - Algorithm manifest schema: .agents/skills/argus/references/argus-output.schema.json
 - Migration: .agents/skills/argus/references/migration-v2.md and .agents/skills/argus/references/migration-v2.zh-CN.md
+- Official example manifest: .agents/skills/argus/examples/manifest.json
+- Official example guide: .agents/skills/argus/references/examples.md and .agents/skills/argus/references/examples.zh-CN.md
+- Panorama example JPEGs are not tracked or distributed; download a manifest set to an external absolute directory and verify bytes plus SHA-256.
+- Brand asset manifest: .agents/skills/argus/assets/brand/manifest.json
+- Primary brand logo: .agents/skills/argus/assets/brand/argus-logo-color.png
+- Brand mark: .agents/skills/argus/assets/brand/argus-mark-color.png
+- Research teaser: .agents/skills/argus/assets/brand/argus-paper-teaser.png
+- Product visual: .agents/skills/argus/assets/brand/product-ai-powered.jpg
+
+Official Argus resources:
+- Product: https://argus.realsee.ai/
+- Interactive demo: https://h5.realsee.ai/argus
+- Research: https://argus-paper.realsee.ai/
+- Developer platform: https://developer.realsee.ai/
+- Scope rule: these sites provide product context; agents must not expand the Skill 2.0 contract beyond 1–99 local RGB8 panoramas with exact 2:1 dimensions.
 
 Capability:
 - Input: 1–99 JPEG/PNG/WebP RGB8 equirectangular panoramas, exact width == 2 * height.
@@ -25,8 +42,12 @@ Capability:
 - Remote lifecycle: task_status queued | processing | succeeded | failed.
 - Algorithm result: result_status success | partial | error; partial exits 0 with warning and non-empty missing_ids.
 - No detached poller, old VGGT fallback, square input, legacy preview, or 1.x workspace migration.
+- Official first-party example metadata is installed with the Skill; panorama JPEGs require an explicit verified CDN download.
+- Downloading examples is not upload consent. Example execution is still a remote upload: obtain user consent and use the Gateway matching REALSEE_REGION.
+- Brand images are local documentation assets governed by their manifest; do not hotlink or infer runtime features from imagery.
 
 Explicit CLI lifecycle:
+- Download examples: node .agents/skills/argus/scripts/download-examples.mjs --region cn --output /absolute/example-output
 - Start images: node .agents/skills/argus/scripts/run-argus.mjs start --image /absolute/a.jpg --image /absolute/b.webp --workspace /absolute/workspace-root --yes --json
 - Start ZIP: node .agents/skills/argus/scripts/run-argus.mjs start --zip /absolute/input.zip --workspace /absolute/workspace-root --yes --json
 - Status once: node .agents/skills/argus/scripts/run-argus.mjs status --workspace /absolute/workspace-root/<run-dir> --json

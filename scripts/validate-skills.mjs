@@ -57,6 +57,7 @@ function frontmatterName(text) {
 
 await assertFile(join(skillRoot, 'SKILL.md'), 'Skill definition');
 await assertFile(join(skillRoot, 'README.md'), 'Skill README');
+await assertFile(join(skillRoot, 'LICENSE'), 'Skill license');
 await assertMissing(join(skillRoot, 'agents', 'openai.yaml'), 'OpenAI agent config');
 
 for (const file of await walkFiles(skillRoot)) {
@@ -68,6 +69,10 @@ for (const file of await walkFiles(skillRoot)) {
 const skillText = await readFile(join(skillRoot, 'SKILL.md'), 'utf8');
 if (frontmatterName(skillText) !== 'argus') {
   throw new Error('SKILL.md frontmatter name must be argus');
+}
+const skillPackage = JSON.parse(await readFile(join(skillRoot, 'package.json'), 'utf8'));
+if (skillPackage.license !== 'SEE LICENSE IN LICENSE') {
+  throw new Error('Skill package must reference its bundled LICENSE');
 }
 
 const docFiles = [];

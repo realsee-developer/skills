@@ -27,9 +27,10 @@
     "npm": ">=10"
   },
   "scripts": {
-    "ci": "npm run scan:secrets && npm run validate:docs && npm run validate:ai && npm run validate:repo-boundary && npm run validate:skills && npm run rebuild && npm run validate:channel-metadata && npm run test:skill",
+    "ci": "npm run scan:secrets && npm run validate:docs && npm run validate:ai && npm run validate:repo-boundary && npm run validate:skills && npm run rebuild && npm run validate:channel-metadata && npm run test:repo && npm run test:skill",
     "doctor": "npm run doctor:local",
     "rebuild": "npm run sync:claude-plugin && npm run sync:arkclaw && npm run check:claude-sync && npm run check:arkclaw-sync",
+    "test:repo": "node --test test/*.test.mjs",
     "test:skill": "node --test .agents/skills/argus/test/*.test.mjs",
     "validate:docs": "node scripts/validate-docs.mjs",
     "validate:ai": "node scripts/validate-ai-index.mjs",

@@ -14,7 +14,7 @@
       "required_capability": "Argus Gateway capability",
       "stable_gate": "pending",
       "legacy_release": "v1.0.2",
-      "next_release_candidate": "v2.0.0-rc.1"
+      "next_release_candidate": "v2.0.0-rc.3"
     }
   }
 }

@@ -45,7 +45,7 @@ Use focused commands while editing:
 
 ## Skill Workflow
 
-The source of truth is `.agents/skills/argus/`. The Claude plugin is generated into `plugins/realsee-skills/`; the Arkclaw package is generated into `arkclaw/argus/` with one deterministic CN-only entrypoint overlay.
+The source of truth is `.agents/skills/argus/`. The Claude plugin is generated into `plugins/realsee-skills/`; the Arkclaw package is generated into `arkclaw/argus/` with deterministic CN-only overlays for runtime region, example downloads, and matching guidance.
 
 When changing `argus`:
 

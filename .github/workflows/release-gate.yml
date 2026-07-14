@@ -20,9 +20,9 @@ on:
           - preview
           - stable
       tag:
-        description: Release tag or validation label
+        description: Release tag to validate
         required: true
-        default: manual-github-check
+        default: v2.0.0-rc.3
         type: string
 
 permissions:
@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   release-gate:
-    name: Release gate (${{ github.event_name == 'workflow_dispatch' && inputs.channel || (startsWith(github.ref_name, 'stable/') && 'stable' || 'preview') }})
+    name: Release gate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -49,6 +49,22 @@ jobs:
 
       - name: Run release gate
         env:
-          RELEASE_CHANNEL: ${{ github.event_name == 'workflow_dispatch' && inputs.channel || (startsWith(github.ref_name, 'stable/') && 'stable' || 'preview') }}
-          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
-        run: npm run release:gate -- --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
+          RELEASE_CHANNEL: ${{ github.event_name == 'workflow_dispatch' && inputs.channel || '' }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+        run: |
+          if [ -z "$RELEASE_CHANNEL" ]; then
+            RELEASE_METADATA_CHANNEL="$(node -p "JSON.parse(require('node:fs').readFileSync('release-channel.json')).channel")"
+            case "$RELEASE_METADATA_CHANNEL" in
+              stable) RELEASE_CHANNEL=stable ;;
+              development) RELEASE_CHANNEL=preview ;;
+              *) echo "Unsupported release metadata channel: $RELEASE_METADATA_CHANNEL" >&2; exit 1 ;;
+            esac
+          fi
+          if [ -z "$RELEASE_TAG" ]; then
+            if [ "$RELEASE_CHANNEL" = "stable" ]; then
+              RELEASE_TAG="$(node -p "'v' + JSON.parse(require('node:fs').readFileSync('release-channel.json')).version")"
+            else
+              RELEASE_TAG="$(node -p "JSON.parse(require('node:fs').readFileSync('release-channel.json')).skills.argus.next_release_candidate")"
+            fi
+          fi
+          npm run release:gate -- --channel "$RELEASE_CHANNEL" --tag "$RELEASE_TAG"
