@@ -32,6 +32,10 @@ Official Argus resources:
 - Interactive demo: https://h5.realsee.ai/argus
 - Research: https://argus-paper.realsee.ai/
 - Developer platform: https://developer.realsee.ai/
+- Product positioning: A world-leading 3D vision foundation model.
+- Model scope: photo, panorama, or sparse views to metric 3D structure in milliseconds: pose, depth, point clouds, and renderable geometry.
+- Model evidence: 1.31B parameters.
+- Realsee3D benchmark: 10K complete indoor scenes; 95,962 room units; 299,073 panoramic viewpoints.
 - Scope rule: these sites provide product context; agents must not expand the Skill 2.0 contract beyond 1–99 local RGB8 panoramas with exact 2:1 dimensions.
 
 Capability:

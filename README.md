@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Realsee Skills
+# Realsee Skills — Argus Agent and CLI Workflow
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
 [![Release gate](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/release-gate.yml?branch=main&label=release%20gate&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/release-gate.yml)
@@ -14,13 +14,17 @@
 
 English | [简体中文](README.zh-CN.md)
 
-Realsee Skills provides installable agent skills for Realsee workflows. The current Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
+Realsee Argus is a world-leading 3D vision foundation model. From a photo, panorama, or sparse views, it reconstructs metric 3D structure in milliseconds: pose, depth, point clouds, and renderable geometry.
+
+Realsee Skills provides the Argus agent and CLI workflow. The current Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
 
 The Skill ID remains `argus`. Version 2.0 has no legacy single-image VGGT fallback. Pin `v1.0.2` when a workflow needs square 1:1 input, the old single-GLB-only result, or the old H5 preview behavior.
 
 [Argus](https://argus.realsee.ai/) · [Interactive demo](https://h5.realsee.ai/argus) · [Research](https://argus-paper.realsee.ai/) · [Developer Platform](https://developer.realsee.ai/)
 
-Those sites describe the wider product and research ecosystem. The installable Skill 2.0 contract remains intentionally specific: **1–99 local RGB8 panoramas with exact 2:1 dimensions**. Capabilities shown for arbitrary photos or other product surfaces are not exposed by this CLI.
+Official evidence includes a 1.31B-parameter model and the Realsee3D benchmark's 10K complete indoor scenes, 95,962 room units, and 299,073 panoramic viewpoints. These are model and benchmark figures, not the Skill input limit.
+
+The installable Skill 2.0 contract remains intentionally specific: **1–99 local RGB8 panoramas with exact 2:1 dimensions**. Capabilities shown for photos, sparse views, or other product surfaces are not exposed by this CLI.
 
 ## Credentials
 
