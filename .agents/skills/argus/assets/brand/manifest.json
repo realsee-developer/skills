@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schema_version": 1,
+  "name": "Realsee Argus official brand assets",
+  "official_site": "https://argus.realsee.ai/",
+  "provenance": {
+    "owner": "Realsee",
+    "kind": "first_party_official_brand_assets",
+    "license": "SEE LICENSE IN LICENSE"
+  },
+  "cdn": {
+    "host": "global-static.realsee-cdn.com",
+    "base_url": "https://global-static.realsee-cdn.com/release/web/argus/assets/"
+  },
+  "files": [
+    {
+      "name": "argus-logo-color.png",
+      "kind": "logo",
+      "source_url": "https://global-static.realsee-cdn.com/release/web/argus/assets/argus-logo-color.png",
+      "format": "png",
+      "width": 1800,
+      "height": 500,
+      "bytes": 62417,
+      "sha256": "303a83712bc345d6cb238dd336a6f70db8775d88bef5e570daf1915ee928b189"
+    },
+    {
+      "name": "argus-mark-color.png",
+      "kind": "mark",
+      "source_url": "https://global-static.realsee-cdn.com/release/web/argus/assets/argus-mark-color.png",
+      "format": "png",
+      "width": 776,
+      "height": 800,
+      "bytes": 63901,
+      "sha256": "26a96338ac5c23878d65005342e5a0a3ca58c40c59237afdf41d25725a9ddc8d"
+    },
+    {
+      "name": "argus-paper-teaser.png",
+      "kind": "paper_teaser",
+      "source_url": "https://global-static.realsee-cdn.com/release/web/argus/assets/argus-paper-teaser.png",
+      "format": "png",
+      "width": 1800,
+      "height": 630,
+      "bytes": 419701,
+      "sha256": "d7fb26974acef306bed1d938031360ef9ff367e4ca8987e686078d686fada1c2"
+    },
+    {
+      "name": "product-ai-powered.jpg",
+      "kind": "product_image",
+      "source_url": "https://global-static.realsee-cdn.com/release/web/argus/assets/product-ai-powered.jpg",
+      "format": "jpeg",
+      "width": 1600,
+      "height": 900,
+      "bytes": 123582,
+      "sha256": "4ea6cd64ae8d6859503d666fc7c50e81030907183caa60ffcbc95bbcc0cdbf18"
+    },
+    {
+      "name": "product-gimbal.jpg",
+      "kind": "product_image",
+      "source_url": "https://global-static.realsee-cdn.com/release/web/argus/assets/product-gimbal.jpg",
+      "format": "jpeg",
+      "width": 1600,
+      "height": 900,
+      "bytes": 64834,
+      "sha256": "e2b7a4ea91647c5cc57a82b1ee29eb0524cbaa086a98658425a521918065a5a4"
+    },
+    {
+      "name": "product-tour-editor.jpg",
+      "kind": "product_image",
+      "source_url": "https://global-static.realsee-cdn.com/release/web/argus/assets/product-tour-editor.jpg",
+      "format": "jpeg",
+      "width": 1000,
+      "height": 750,
+      "bytes": 87235,
+      "sha256": "3d76c6b55168f45d2d696dcbd883de08b78edb8d59223535fd9d2b692f489f71"
+    },
+    {
+      "name": "realsee3d-overview.png",
+      "kind": "product_overview",
+      "source_url": "https://global-static.realsee-cdn.com/release/web/argus/assets/realsee3d-overview.png",
+      "format": "png",
+      "width": 1800,
+      "height": 481,
+      "bytes": 158569,
+      "sha256": "c8234f11a33029c7971b7f817cf6dc07740ae9d1773df8a4a89eea9970a5572e"
+    }
+  ]
+}

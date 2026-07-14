@@ -16,7 +16,7 @@ During implementation, metadata stays `channel: development`, `state: preview`, 
 Preview:
 
 ```bash
-npm run release:gate -- --channel preview --tag v2.0.0-rc.1
+npm run release:gate -- --channel preview --tag v2.0.0-rc.3
 ```
 
 Stable:
@@ -30,8 +30,8 @@ Both gates run repository checks, regeneration/byte consistency for Claude and A
 ## Required order
 
 1. Keep the existing `v1.0.2` tag unchanged.
-2. Publish and verify `@realsee/universal-uploader@0.1.0`.
-3. Cut `v2.0.0-rc.1` and run real multi-image E2E in both CN and global.
+2. Publish and verify `@realsee/universal-uploader@0.1.1`.
+3. Cut `v2.0.0-rc.3` and run real multi-image E2E in both CN and global.
 4. In both regions verify upload, task completion, success/partial/error collection, and result download.
 5. Set release metadata to stable/passed and publish `v2.0.0`.
 6. Verify the bilingual migration guide and fresh installs for Claude, Codex, `npx skills`, and CN-only Arkclaw.

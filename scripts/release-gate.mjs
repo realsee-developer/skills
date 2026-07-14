@@ -15,6 +15,7 @@ const CI_COMMANDS = [
   ['npm', ['run', 'smoke']],
   ['node', ['scripts/check-worktree-clean.mjs']],
   ['npm', ['run', 'validate:channel-metadata']],
+  ['npm', ['run', 'test:repo']],
   ['npm', ['run', 'test:skill']],
   ['npm', ['--prefix', '.agents/skills/argus', 'run', 'audit:prod']]
 ];
@@ -32,6 +33,18 @@ export async function main(argv = process.argv.slice(2), options = {}) {
   const args = parseReleaseGateArgs(argv);
   const commandRoot = options.root ?? root;
   const commandEnv = options.env ?? process.env;
+
+  if (args.channel === 'preview') {
+    const releaseMetadata = JSON.parse(
+      await readFile(join(commandRoot, 'release-channel.json'), 'utf8')
+    );
+    if (!validatePreviewReleaseMetadata(releaseMetadata, args.tag)) {
+      console.error(
+        `preview release gate failed for ${args.tag}: tag must match the pending next_release_candidate`
+      );
+      return 1;
+    }
+  }
 
   for (const [command, commandArgs] of getReleaseGateCommands(args.channel)) {
     run(command, commandArgs, { root: commandRoot, env: commandEnv });
@@ -174,6 +187,17 @@ export function validatePublicGatewayOpenApi(openapi) {
     && requiredSchemas.every((schema) => openapi.components?.schemas?.[schema])
     && serverUrls.has('https://app-gateway.realsee.ai')
     && serverUrls.has('https://app-gateway.realsee.cn');
+}
+
+export function validatePreviewReleaseMetadata(metadata, tag) {
+  const candidate = String(tag ?? '');
+  const match = candidate.match(/^v(\d+\.\d+\.\d+)-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*$/u);
+  const argus = metadata?.skills?.argus;
+  return match?.[1] === metadata?.version
+    && candidate === argus?.next_release_candidate
+    && metadata?.channel === 'development'
+    && argus?.state === 'preview'
+    && argus?.stable_gate === 'pending';
 }
 
 export function validateStableReleaseMetadata(metadata, tag) {

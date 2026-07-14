@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://argus.realsee.ai/">
+    <img src=".agents/skills/argus/assets/brand/argus-logo-color.png" alt="Argus by Realsee" width="560">
+  </a>
+</p>
+
 # Realsee Skills
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
@@ -11,6 +17,10 @@ English | [简体中文](README.zh-CN.md)
 Realsee Skills provides installable agent skills for Realsee workflows. The current Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
 
 The Skill ID remains `argus`. Version 2.0 has no legacy single-image VGGT fallback. Pin `v1.0.2` when a workflow needs square 1:1 input, the old single-GLB-only result, or the old H5 preview behavior.
+
+[Argus](https://argus.realsee.ai/) · [Interactive demo](https://h5.realsee.ai/argus) · [Research](https://argus-paper.realsee.ai/) · [Developer Platform](https://developer.realsee.ai/)
+
+Those sites describe the wider product and research ecosystem. The installable Skill 2.0 contract remains intentionally specific: **1–99 local RGB8 panoramas with exact 2:1 dimensions**. Capabilities shown for arbitrary photos or other product surfaces are not exposed by this CLI.
 
 ## Credentials
 
@@ -58,6 +68,18 @@ npm run rebuild
 
 See [the install overview](docs/install-guides.md), [Claude Code](docs/claude-plugin.md), and [Codex](docs/codex.md) for host-specific details.
 
+## Official example manifest
+
+Every Skill install includes `examples/manifest.json`, which lists the CDN URL, byte length, and SHA-256 for the CN and Global first-party sample sets. Panorama JPEGs are absent from the current release tree and every generated Skill distribution. Download one set to a new absolute directory outside the installed Skill:
+
+```bash
+node <skillDir>/scripts/download-examples.mjs \
+  --region cn \
+  --output /absolute/example-output
+```
+
+Use the set matching `REALSEE_REGION`. The downloader publishes the output only after every file passes its manifest checks. Running Argus is a separate remote upload and still requires user consent.
+
 ## Direct CLI
 
 Start from repeated images:
@@ -101,13 +123,23 @@ Inputs are 1–99 JPEG, PNG, or WebP RGB8 panoramas with exact `width == 2 * hei
 
 Remote `task_status` (`queued`, `processing`, `succeeded`, `failed`) is separate from algorithm `result_status` (`success`, `partial`, `error`). A partial result exits 0 but includes a prominent warning and non-empty `missing_ids`; an error exits non-zero.
 
-The collector retains `output.zip`, safely extracts it, and indexes `output.json`, the merged GLB, EXR depth maps, poses, and optional intrinsics in local `result.json`.
+The collector retains `output.zip`, safely extracts it, and writes this validated local result matrix:
+
+| Artifact | Availability |
+| --- | --- |
+| `output.json` | Required algorithm manifest. |
+| `pointcloud/merged.glb` | One merged `right-handed, Y-up` point cloud for successfully reconstructed images. |
+| `depth/*_depth.exr` | One meter-scale floating-point depth map per successful image. |
+| `pose/*_pose.json` | One camera pose per successful image. |
+| `intrinsics/*_intrinsics.json` | Optional; absence is valid. |
+| `result.json` | Local index for statuses, paths, warnings, and `missing_ids`. |
 
 Real Argus runs upload the normalized input ZIP to Realsee remote services. Obtain user consent before upload. Never commit or log credentials, upload tokens, private result URLs, or generated artifacts.
 
 ## Contracts and migration
 
 - [Skill README](.agents/skills/argus/README.md)
+- [Official brand asset manifest](.agents/skills/argus/assets/brand/manifest.json)
 - [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json)
 - [Algorithm I/O contract](.agents/skills/argus/references/algorithm-io.md)
 - [`output.json` JSON Schema](.agents/skills/argus/references/argus-output.schema.json)
@@ -116,7 +148,7 @@ Real Argus runs upload the normalized input ZIP to Realsee remote services. Obta
 
 ## Development
 
-Canonical source lives in `.agents/skills/argus/`. The Claude plugin and CN-only Arkclaw package are generated from it and checked for byte consistency (with one deterministic Arkclaw region overlay).
+Canonical source lives in `.agents/skills/argus/`. The Claude plugin and CN-only Arkclaw package are generated from it and checked for byte consistency (with deterministic Arkclaw overlays for runtime region, example downloads, and matching guidance).
 
 ```bash
 npm run doctor

@@ -8,6 +8,10 @@ function toGitPath(path) {
   return path.split(sep).join('/');
 }
 
+export function isPanoramaExampleJpeg(path) {
+  return /(?:^|\/)examples\/.*\.jpe?g$/iu.test(toGitPath(path));
+}
+
 export function isGitIgnored(repoRoot, path) {
   const rel = relative(repoRoot, path);
   if (!rel || rel.startsWith('..')) {
@@ -29,7 +33,7 @@ export async function listDistributionFiles({ repoRoot, sourceRoot }) {
 
   async function walk(path) {
     const name = basename(path);
-    if (ALWAYS_EXCLUDED.has(name) || isGitIgnored(repoRoot, path)) return;
+    if (ALWAYS_EXCLUDED.has(name) || isPanoramaExampleJpeg(path) || isGitIgnored(repoRoot, path)) return;
 
     const stat = await lstat(path);
     const rel = relative(sourceRoot, path);

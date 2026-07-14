@@ -4,7 +4,10 @@ import { join, relative, resolve } from 'node:path';
 const pluginRoot = resolve(import.meta.dirname, '..');
 const required = [
   '.claude-plugin/plugin.json',
+  'LICENSE',
   'skills/argus',
+  'skills/argus/LICENSE',
+  'skills/argus/assets/brand/manifest.json',
   'package.json'
 ];
 

@@ -34,6 +34,11 @@ for (const region of requiredRegions) {
   assert(skill.regions.includes(region), `skills.argus.regions must include ${region}`);
 }
 assert(skill.legacy_release === 'v1.0.2', 'skills.argus.legacy_release must remain v1.0.2');
+assert(
+  new RegExp(`^v${metadata.version.replaceAll('.', '\\.')}-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*$`, 'u')
+    .test(skill.next_release_candidate),
+  'skills.argus.next_release_candidate must be a prerelease tag for metadata.version'
+);
 if (metadata.channel === 'stable' || skill.state === 'stable') {
   assert(skill.stable_gate === 'passed', 'stable metadata requires stable_gate=passed');
 }

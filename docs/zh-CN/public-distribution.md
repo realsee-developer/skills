@@ -16,7 +16,7 @@
 
 - [ ] `npm run rebuild` 同时生成 `plugins/realsee-skills/` 与 `arkclaw/argus/`。
 - [ ] Claude plugin 文件与 `.agents/skills/argus/` 字节一致。
-- [ ] Arkclaw 除强制 `REALSEE_REGION=cn` 的确定性 CLI environment overlay 外，均为 canonical bytes。
+- [ ] Arkclaw 除运行区域、示例下载器和相应生成说明所需的确定性 CN-only overlay 外，均为 canonical bytes。
 - [ ] Codex 安装与 `npx skills add . --skill argus` 都解析同一 canonical Skill。
 - [ ] Plugin manifest 没有 `userConfig` 或 MCP server。
 
@@ -38,15 +38,15 @@
 
 ## Uploader 门禁
 
-- [ ] `@realsee/universal-uploader@0.1.0` 已发布且可安装。
+- [ ] `@realsee/universal-uploader@0.1.1` 已发布且可安装。
 - [ ] 单测、类型检查、构建、`npm pack` smoke 与 GitLab CI 通过。
 - [ ] 生产依赖 audit 没有 high 或 critical。
 - [ ] Argus 只安装 AWS Node 和腾讯 COS Node adapter 依赖，不传递安装浏览器 COS、OSS 或 uploader CLI 依赖。
 
 ## 真实 E2E 与推进
 
-- [ ] `v2.0.0-rc.1` 在 global/AWS 完成真实多图运行。
-- [ ] `v2.0.0-rc.1` 在 CN/腾讯 COS 完成真实多图运行。
+- [ ] `v2.0.0-rc.3` 在 global/AWS 完成真实多图运行。
+- [ ] `v2.0.0-rc.3` 在 CN/腾讯 COS 完成真实多图运行。
 - [ ] 两区都验证下载以及 success、partial、error 处理。
 - [ ] 上述通过后才设置 `state: stable`、`stable_gate: passed` 并发布 `v2.0.0`。
 - [ ] 通过 Claude plugin、Codex、`npx skills` 与 CN-only Arkclaw 做全新安装测试。
