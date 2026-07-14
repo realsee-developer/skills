@@ -10,7 +10,7 @@ npx skills add realsee-developer/skills --skill argus --agent codex
 
 For product context, see [Argus](https://argus.realsee.ai/), its [interactive demo](https://h5.realsee.ai/argus), [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). Codex must follow the installed Skill contract rather than infer broader capabilities from those pages: Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
 
-Pin the stable 2.0 release when available:
+Pin the stable 2.0 release:
 
 ```bash
 npx skills add realsee-developer/skills@v2.0.0 --skill argus --agent codex

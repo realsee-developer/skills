@@ -10,7 +10,7 @@ npx skills add realsee-developer/skills --skill argus --agent codex
 
 产品背景见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Codex 必须遵循已安装 Skill 的合同，不能从这些页面推断额外能力：Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
 
-Stable 2.0 发布后可固定版本：
+固定 stable 2.0 版本：
 
 ```bash
 npx skills add realsee-developer/skills@v2.0.0 --skill argus --agent codex

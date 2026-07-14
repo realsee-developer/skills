@@ -85,6 +85,8 @@ test('branch and pull-request release checks derive channel and tag from release
   assert.match(workflow, /stable\) RELEASE_CHANNEL=stable/u);
   assert.match(workflow, /development\) RELEASE_CHANNEL=preview/u);
   assert.match(workflow, /next_release_candidate/);
+  assert.match(workflow, /default: stable/u);
+  assert.match(workflow, /default: v2\.0\.0/u);
   assert.doesNotMatch(workflow, /RELEASE_TAG:.*github\.ref_name/);
   assert.doesNotMatch(workflow, /startsWith\(github\.ref_name/u);
 });
@@ -106,6 +108,9 @@ test('stable metadata stays blocked until both-region E2E is explicitly verified
   metadata.skills.argus.state = 'stable';
   metadata.skills.argus.stable_gate = 'passed';
   assert.equal(validateStableReleaseMetadata(metadata, 'v2.0.0'), true);
+  metadata.skills.argus.next_release_candidate = 'v2.0.0-rc.3';
+  assert.equal(validateStableReleaseMetadata(metadata, 'v2.0.0'), false);
+  delete metadata.skills.argus.next_release_candidate;
   assert.equal(validateStableReleaseMetadata(metadata, 'v2.0.1'), false);
 });
 

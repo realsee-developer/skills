@@ -7,7 +7,7 @@ Languages: English default; Simplified Chinese in README.zh-CN.md, docs/zh-CN/, 
 
 Primary Skill:
 - ID: argus
-- State: preview until real global and cn E2E gates pass
+- State: stable
 - Definition: .agents/skills/argus/SKILL.md
 - English docs: .agents/skills/argus/README.md
 - Chinese docs: .agents/skills/argus/README.zh-CN.md

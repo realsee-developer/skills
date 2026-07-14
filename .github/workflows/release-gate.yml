@@ -14,7 +14,7 @@ on:
       channel:
         description: Release channel to validate
         required: true
-        default: preview
+        default: stable
         type: choice
         options:
           - preview
@@ -22,7 +22,7 @@ on:
       tag:
         description: Release tag to validate
         required: true
-        default: v2.0.0-rc.3
+        default: v2.0.0
         type: string
 
 permissions:

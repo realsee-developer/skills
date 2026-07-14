@@ -207,6 +207,7 @@ export function validateStableReleaseMetadata(metadata, tag) {
     && metadata?.channel === 'stable'
     && argus?.state === 'stable'
     && argus?.stable_gate === 'passed'
+    && argus?.next_release_candidate === undefined
     && Array.isArray(argus?.regions)
     && argus.regions.includes('global')
     && argus.regions.includes('cn');
