@@ -2,8 +2,20 @@
 
 Purpose: Source-available Realsee agent Skill distribution for users and agent runtimes.
 Current release line: Argus Skill 2.0.0; legacy square/single-GLB workflows remain pinned at v1.0.2.
-Agent priority: inspect this file, then README.md, docs/usage.md, AGENTS.md, and .agents/skills/argus/SKILL.md.
+Agent priority: inspect this file, then README.md, docs/usage.md, AGENTS.md, and the selected Skill definition below.
 Languages: English default; Simplified Chinese in README.zh-CN.md, docs/zh-CN/, and same-directory *.zh-CN.md pairs.
+
+Local Blender Skill:
+- ID: realsee-blender-reconstruction
+- Definition: .agents/skills/realsee-blender-reconstruction/SKILL.md
+- English docs: .agents/skills/realsee-blender-reconstruction/README.md
+- Chinese docs: .agents/skills/realsee-blender-reconstruction/README.zh-CN.md
+- Input: local Realsee scans, CAD, point clouds, panoramas, or existing reconstruction evidence.
+- Output: editable native Blender space, source comparisons, saved-file editing verification.
+- Optional: walkthrough, physics/USDZ, generated secondary assets, lightweight web preview.
+- No credentials or remote upload needed for local inputs; Argus generation is separate.
+- Local install: npx skills add . --skill realsee-blender-reconstruction --agent codex
+- Included in generated Claude plugin; Arkclaw and install:codex-skills remain Argus-specific.
 
 Primary Skill:
 - ID: argus
@@ -110,5 +122,5 @@ Common maintenance commands:
 Safety:
 - Every real Argus run is a remote upload and requires user consent.
 - Do not commit secrets, generated credentials, account identifiers, private URLs, output.zip, extracted artifacts, .env files, or temporary workspaces.
-- Edit .agents/skills/argus/; generated Claude and Arkclaw copies are rebuilt from canonical source.
+- Edit .agents/skills/; Claude includes canonical skills, and Arkclaw rebuilds only the Argus source.
 - Do not add internal evidence, private source references, live scorecards, internal process docs, or local absolute paths.

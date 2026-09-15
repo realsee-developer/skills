@@ -2,9 +2,23 @@
 
 [English](usage.md) | [简体中文](zh-CN/usage.md)
 
-This repository provides the installable `argus` Skill for Claude Code, Codex, and other hosts supported by `npx skills`.
+This repository provides `argus` and `realsee-blender-reconstruction` for Claude Code, Codex, and other hosts supported by `npx skills`.
 
-Official resources: [Argus](https://argus.realsee.ai/), [interactive demo](https://h5.realsee.ai/argus), [research](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). These sites may show broader photo and product workflows; the Skill documented here accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+## Local Blender space reconstruction
+
+Use [realsee-blender-reconstruction](../.agents/skills/realsee-blender-reconstruction/README.md) when Realsee exports already exist locally and the goal is an editable native scene. It does not require Argus credentials or a remote job. From this checkout:
+
+```sh
+npx skills add . --skill realsee-blender-reconstruction --agent codex
+```
+
+Then open the modeling project and ask:
+
+> Use $realsee-blender-reconstruction with data/. Reconstruct the evidenced space, prioritizing structure and connections. Save output/reconstruction_native.blend and verify source comparisons and actual edits after reopening.
+
+The skill includes optional walkthrough, physics/USDZ, image-and-text asset generation, and web-preview guidance when requested. `npm run install:codex-skills` remains the Argus-specific installer. The rest of this guide describes Argus remote processing.
+
+Official resources: [Argus](https://argus.realsee.ai/), [interactive demo](https://h5.realsee.ai/argus), [research](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). These sites may show broader photo and product workflows; the Argus Skill accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
 
 ## Install
 

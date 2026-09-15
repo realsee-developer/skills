@@ -4,6 +4,8 @@
 
 Argus Skill 2.0 has one canonical source, an explicit persisted lifecycle, and generated packages for each supported agent host.
 
+The additional instruction skill `.agents/skills/realsee-blender-reconstruction/` handles existing exports in local Blender. Claude packaging discovers canonical skill directories and checks byte consistency for all of them; it does not require an npm runtime for instruction-only skills. The Argus lifecycle and Arkclaw overlays below remain Argus-specific.
+
 ## Source-of-truth map
 
 ```text

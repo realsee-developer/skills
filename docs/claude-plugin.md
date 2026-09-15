@@ -9,7 +9,7 @@ Install the `realsee-skills` plugin from a Claude Code session:
 /plugin install realsee-skills@realsee-developer-skills
 ```
 
-The plugin exposes `realsee-skills:argus` and has no install-time configuration or MCP server. The Skill resolves credentials at runtime.
+The generated plugin exposes `realsee-skills:argus` and `realsee-skills:realsee-blender-reconstruction`, with no install-time configuration or MCP server. Argus resolves credentials at runtime; local Blender modeling needs no Realsee credentials. See the [Blender workflow](../.agents/skills/realsee-blender-reconstruction/README.md). The Argus setup below remains specific to Argus.
 
 Official context is available at [Argus](https://argus.realsee.ai/), the [interactive demo](https://h5.realsee.ai/argus), the [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). The agent must not infer broader photo support from those pages: this Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
 
