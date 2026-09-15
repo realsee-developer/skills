@@ -70,4 +70,4 @@ The agent must obtain upload consent before start. For `result_status: partial`,
 
 ## Release policy
 
-`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.1.0` includes both skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.
+`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.2.0` includes both skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.

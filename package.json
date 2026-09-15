@@ -1,6 +1,6 @@
 {
   "name": "realsee-skills",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Agent skills for Realsee Argus panorama reconstruction and editable Blender spaces.",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
@@ -31,7 +31,7 @@
   },
   "scripts": {
     "ci": "npm run scan:secrets && npm run validate:docs && npm run validate:ai && npm run validate:repo-boundary && npm run validate:skills && npm run rebuild && npm run validate:channel-metadata && npm run test:repo && npm run test:skill",
-    "doctor": "npm run doctor:local",
+    "doctor": "node scripts/doctor-local.mjs",
     "rebuild": "npm run sync:claude-plugin && npm run sync:arkclaw && npm run check:claude-sync && npm run check:arkclaw-sync",
     "test:repo": "node --test test/*.test.mjs",
     "test:skill": "node --test .agents/skills/argus/test/*.test.mjs",

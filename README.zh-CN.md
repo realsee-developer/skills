@@ -18,6 +18,14 @@
 
 需要从全景图生成深度、点云和位姿时，选择 **Argus**；需要基于已有资料创建或修改可编辑场景时，选择 **Blender 重建**。Argus 产物可以作为重建资料，但运行一项 skill 不会自动运行另一项。
 
+## AI Agent 入口
+
+从 [llms.txt](llms.txt) 选择 skill，直接读取对应 `SKILL.md`。可以对 Agent 说：
+
+> 读取这个仓库的 llms.txt，按我的任务选择 skill，为我的宿主安装并检查前置条件，然后按 skill 指令执行。在本地补齐缺失配置，发送文件前取得上传授权。
+
+结构化本地诊断见[安装指南](docs/zh-CN/install-guides.md#agent-预检)。
+
 ## 安装
 
 ### Claude Code — 安装两项 skill
@@ -103,7 +111,7 @@ Argus 产品资料：[官网](https://argus.realsee.ai/) · [Demo](https://h5.re
 | 来源 | 内容 |
 | --- | --- |
 | 当前 `main` | Argus 与 Blender 重建两项 skill，以及最新使用指导 |
-| 稳定版本 `v2.1.0` | 包含两项 skill；使用 `realsee-developer/skills@v2.1.0` 固定安装版本 |
+| 稳定版本 `v2.2.0` | 包含两项 skill；使用 `realsee-developer/skills@v2.2.0` 固定安装版本 |
 | 旧版 `v2.0.0` | 仅含 Argus，不含 Blender 重建 |
 | 历史版本 `v1.0.2` | 旧方图与单 GLB 工作流，见[迁移说明](.agents/skills/argus/references/migration-v2.zh-CN.md) |
 

@@ -11,6 +11,10 @@
 - 实际验证重建指令需要本地 Blender；本地建模无需 Realsee 凭据
 - 不提交 `.env` 文件或生成的私有产物
 
+## 维护者初始化
+
+运行 `npm run setup:local`，安装锁定的 Argus 依赖（禁用生命周期脚本）、重建两种分发并运行 Argus 本地诊断。仓库根目录没有依赖。缺少 Argus 凭据不影响维护，仅在实际运行 Argus 时配置。Skill 使用者应按[安装指南](install-guides.md)接入。
+
 ## 本地检查
 
 发布或更新受保护分支前运行完整门禁：
@@ -43,7 +47,7 @@ npm run test:skill
 | `npm run test:repo` | 修改仓库工具或分发行为后。 |
 | `npm run test:skill` | 修改 `argus` 代码后。 |
 | `npm run rebuild` | 重新生成并字节校验 Claude plugin 与 CN-only Arkclaw copy。 |
-| `npm run doctor` | 通过 `doctor:local` 检查 Argus 与仓库前置条件，不检查 Blender。 |
+| `npm run doctor` | 默认检查 Argus；使用 `-- --skill realsee-blender-reconstruction` 检查 Blender。结构化诊断见 [Agent 预检](install-guides.md#agent-预检)。 |
 | `npm run doctor:live -- --skill argus --channel preview` | 仅检查所需配置是否存在；无副作用的能力探测尚未实现，stable 模式会因缺少该验证而失败。 |
 
 ## Skill 工作流

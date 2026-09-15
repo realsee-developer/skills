@@ -11,6 +11,10 @@ This repository maintains Realsee agent skills under `.agents/skills/`: Argus ha
 - Local Blender for exercising reconstruction instructions; no Realsee credentials are needed for local modeling
 - No committed `.env` files or generated private artifacts
 
+## Maintainer setup
+
+Run `npm run setup:local` to install locked Argus dependencies with lifecycle scripts disabled, rebuild both distributions, and run the Argus local diagnostic. The repository root has no dependencies. Missing Argus credentials do not block maintenance; configure them only for an Argus run. Skill users should follow the [installation guide](install-guides.md).
+
 ## Local Checks
 
 Run the complete gate before publishing or updating protected branches:
@@ -43,7 +47,7 @@ Use focused commands while editing:
 | `npm run test:repo` | After changing repository tooling or distribution behavior. |
 | `npm run test:skill` | After changing `argus` code. |
 | `npm run rebuild` | Regenerate and byte-check the Claude plugin and CN-only Arkclaw copies. |
-| `npm run doctor` | Check Argus and repository prerequisites through `doctor:local`; does not discover Blender. |
+| `npm run doctor` | Check Argus by default; use `-- --skill realsee-blender-reconstruction` for Blender. Structured diagnostics: [agent preflight](install-guides.md#agent-preflight). |
 | `npm run doctor:live -- --skill argus --channel preview` | Check required configuration presence only; the no-side-effect capability probe is not implemented. Stable mode fails without that verification. |
 
 ## Skill Workflow
