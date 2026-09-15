@@ -8,6 +8,7 @@ This repository is optimized for agents and automation that help users inspect, 
 
 - Audience: users, agent runtimes, and maintainers.
 - Primary capability: `argus`, which processes 1–99 local 2:1 panoramas into depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated result index.
+- Local modeling capability: `realsee-blender-reconstruction`, for editable Blender spaces from existing exports; no Argus credentials needed.
 - Distribution model: source-available capability packaging.
 
 ## Safe Operating Rules

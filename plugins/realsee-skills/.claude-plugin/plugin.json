@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "realsee-skills",
-  "description": "Realsee Argus for Claude Code: reconstruct 1–99 exact 2:1 panoramas into validated depth, a merged GLB point cloud, poses, and optional intrinsics.",
+  "description": "Realsee skills for Claude Code: Argus panorama reconstruction and local editable Blender space modeling.",
   "author": {
     "name": "Realsee",
     "url": "https://github.com/realsee-developer"

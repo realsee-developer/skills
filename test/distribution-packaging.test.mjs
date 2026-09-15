@@ -156,7 +156,7 @@ test('Claude plugin generator emits resolvable SPDX custom-license metadata', as
   const rootLicense = 'fixture custom license\n';
   try {
     await mkdir(join(root, 'scripts'), { recursive: true });
-    for (const script of ['sync-claude-plugin.mjs', 'distribution-files.mjs']) {
+    for (const script of ['sync-claude-plugin.mjs', 'check-claude-sync.mjs', 'distribution-files.mjs']) {
       await copyFile(join(repoRoot, 'scripts', script), join(root, 'scripts', script));
     }
     await writeFile(join(root, 'package.json'), '{"name":"fixture","version":"2.0.0"}\n');
@@ -167,6 +167,11 @@ test('Claude plugin generator emits resolvable SPDX custom-license metadata', as
     await writeFile(join(sourceRoot, 'LICENSE'), 'fixture skill license\n');
     await writeFile(join(sourceRoot, 'package.json'), '{"name":"argus","version":"2.0.0"}\n');
     await writeFile(join(sourceRoot, 'assets', 'brand', 'manifest.json'), '{}\n');
+    const instructionSkill = join(root, '.agents', 'skills', 'realsee-blender-reconstruction');
+    await mkdir(join(instructionSkill, 'references'), { recursive: true });
+    await writeFile(join(instructionSkill, 'SKILL.md'), '---\nname: realsee-blender-reconstruction\ndescription: Reconstruct spaces locally in Blender.\n---\n');
+    await writeFile(join(instructionSkill, 'LICENSE'), 'fixture skill license\n');
+    await writeFile(join(instructionSkill, 'references', 'acceptance.md'), 'Reopen the native scene and test edits.\n');
     const git = spawnSync('git', ['init', '-q'], { cwd: root, encoding: 'utf8' });
     assert.equal(git.status, 0, git.stderr);
 
@@ -183,6 +188,27 @@ test('Claude plugin generator emits resolvable SPDX custom-license metadata', as
     const validator = join(pluginRoot, 'scripts', 'validate-plugin.mjs');
     const valid = spawnSync(process.execPath, [validator], { cwd: pluginRoot, encoding: 'utf8' });
     assert.equal(valid.status, 0, valid.stderr);
+
+    const targetInstruction = join(pluginRoot, 'skills', 'realsee-blender-reconstruction');
+    assert.equal(await readFile(join(targetInstruction, 'references', 'acceptance.md'), 'utf8'),
+      await readFile(join(instructionSkill, 'references', 'acceptance.md'), 'utf8'));
+    assert.equal(existsSync(join(targetInstruction, 'package.json')), false);
+    const copyManifest = JSON.parse(await readFile(join(pluginRoot, 'copy-manifest.json'), 'utf8'));
+    assert.equal(copyManifest.source, '.agents/skills/argus');
+    assert.deepEqual(copyManifest.skills, ['argus', 'realsee-blender-reconstruction']);
+    const checkSync = () => spawnSync(process.execPath, [join(root, 'scripts', 'check-claude-sync.mjs')], {
+      cwd: root, encoding: 'utf8'
+    });
+    const synced = checkSync();
+    assert.equal(synced.status, 0, synced.stderr);
+    await writeFile(join(targetInstruction, 'references', 'acceptance.md'), 'stale generated copy\n');
+    const stale = checkSync();
+    assert.notEqual(stale.status, 0);
+    assert.match(stale.stderr, /differs: realsee-blender-reconstruction/u);
+    await rm(join(targetInstruction, 'LICENSE'));
+    const missingSkillLicense = spawnSync(process.execPath, [validator], { cwd: pluginRoot, encoding: 'utf8' });
+    assert.notEqual(missingSkillLicense.status, 0);
+    assert.match(missingSkillLicense.stderr, /missing skill license: skills\/realsee-blender-reconstruction/u);
 
     await rm(join(pluginRoot, 'LICENSE'));
     const missingLicense = spawnSync(process.execPath, [validator], {
