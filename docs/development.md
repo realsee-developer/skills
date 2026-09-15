@@ -2,12 +2,13 @@
 
 [English](development.md) | [简体中文](zh-CN/development.md)
 
-This repository is a Node.js workspace for Realsee agent skills. Argus 2.0 runtime code and canonical contracts live under `.agents/skills/argus/`.
+This repository maintains Realsee agent skills under `.agents/skills/`: Argus has a Node.js runtime and API contracts; `realsee-blender-reconstruction` contains local modeling instructions and references.
 
 ## Requirements
 
 - Node.js 22 or newer
 - npm 10 or newer
+- Local Blender for exercising reconstruction instructions; no Realsee credentials are needed for local modeling
 - No committed `.env` files or generated private artifacts
 
 ## Local Checks
@@ -28,6 +29,7 @@ npm run validate:repo-boundary
 npm run validate:skills
 npm run rebuild
 npm run validate:channel-metadata
+npm run test:repo
 npm run test:skill
 ```
 
@@ -38,14 +40,15 @@ Use focused commands while editing:
 | `npm run validate:ai` | After changing `llms.txt` or repository entry points. |
 | `npm run validate:docs` | After changing bilingual repository docs. |
 | `npm run validate:skills` | After changing skill metadata, README files, or references. |
+| `npm run test:repo` | After changing repository tooling or distribution behavior. |
 | `npm run test:skill` | After changing `argus` code. |
 | `npm run rebuild` | Regenerate and byte-check the Claude plugin and CN-only Arkclaw copies. |
-| `npm run doctor` | Check local prerequisites through `doctor:local`. |
-| `npm run doctor:live` | Check live Argus prerequisites and environment. |
+| `npm run doctor` | Check Argus and repository prerequisites through `doctor:local`; does not discover Blender. |
+| `npm run doctor:live -- --skill argus --channel preview` | Check required configuration presence only; the no-side-effect capability probe is not implemented. Stable mode fails without that verification. |
 
 ## Skill Workflow
 
-The source of truth is `.agents/skills/argus/`. The Claude plugin is generated into `plugins/realsee-skills/`; the Arkclaw package is generated into `arkclaw/argus/` with deterministic CN-only overlays for runtime region, example downloads, and matching guidance.
+The source of truth for all skills is `.agents/skills/`. Claude includes both canonical skills; Arkclaw includes only Argus. The Claude plugin is generated into `plugins/realsee-skills/`; the Arkclaw package is generated into `arkclaw/argus/` with deterministic CN-only overlays for runtime region, example downloads, and matching guidance.
 
 When changing `argus`:
 
@@ -56,12 +59,14 @@ When changing `argus`:
 
 Do not edit either generated copy directly. New runtime behavior should be exercised through `ArgusTaskPort` and `ObjectTransferPort` fakes. Include focused input, lifecycle, output-contract, and idempotence tests.
 
+For Blender instructions, edit `.agents/skills/realsee-blender-reconstruction/` and its bilingual references, then run `npm run validate:skills`, `npm run rebuild`, and `npm run ci`. Documentation checks do not prove modeling behavior: when changing the modeling workflow, exercise the affected instructions on appropriate local evidence and report the actual scope verified. No npm runtime or remote-service fake is required for this instruction-only skill.
+
 ## Configuration
 
-Public documentation uses only these environment variable names:
+Argus configuration uses these environment variables:
 
 - `REALSEE_APP_KEY`
 - `REALSEE_APP_SECRET`
 - `REALSEE_REGION`
 
-The existing agent-driven `~/.realsee/credentials` loading flow remains supported. Do not commit real values, account identifiers, internal URLs, generated credentials, `output.zip`, extracted artifacts, or temporary workspaces.
+Follow the [Argus credential setup](usage.md#credentials-and-upload-consent) for inherited environment values, an existing `~/.realsee/credentials`, and secure local configuration of missing values. Persist app credentials only with explicit user authorization, outside the repository with mode 0600. Never persist temporary upload tokens or signed URLs. Do not commit real values, account identifiers, internal URLs, generated credentials, `output.zip`, extracted artifacts, or temporary workspaces.

@@ -2,7 +2,7 @@
 
 [English](ARCHITECTURE.md) | 简体中文
 
-Argus Skill 2.0 使用一个 canonical source、显式持久化生命周期，以及面向不同 agent host 的生成包。
+Realsee Skills 将所有规范 skill 源码保存在 `.agents/skills/`，并生成面向各宿主的分发包。Argus 提供 Node.js 远程处理运行时；Blender 重建是本地指令型 skill。
 
 新增的指令 skill `.agents/skills/realsee-blender-reconstruction/` 在本地 Blender 中处理已有导出。Claude 打包发现规范 skill 目录，并逐个检查字节一致性；纯指令 skill 不要求 npm 运行时。下文 Argus 生命周期和 Arkclaw overlay 仍仅适用于 Argus。
 
@@ -21,6 +21,11 @@ Argus Skill 2.0 使用一个 canonical source、显式持久化生命周期，�
     ├── algorithm-io*.md              双语算法输入输出合同
     ├── argus-output.schema.json      JSON Schema 2020-12 输出联合
     └── migration-v2*.md              双语 1.x 迁移指南
+
+.agents/skills/realsee-blender-reconstruction/  规范本地建模指令
+├── SKILL.md / SKILL.zh-CN.md         Agent 工作流
+├── README.md / README.zh-CN.md       用户文档
+└── references/                      配准、建模、性能、验收与按需扩展
 
 plugins/realsee-skills/               生成的 Claude plugin copy
 arkclaw/argus/                        带确定性 CN-only overlay 的 Arkclaw copy
@@ -84,24 +89,19 @@ Gateway 基础地址与凭证/region 合同不变，只替换 Argus 接口：
 ## 分发流
 
 ```text
-                         .agents/skills/argus
-                           canonical source
-                 ┌──────────────┼──────────────┐
-                 │              │              │
-                 ▼              ▼              ▼
-        Claude plugin copy   Codex / npx    Arkclaw copy
-        字节一致             直接用 source   canonical bytes +
-                                           CN-only overlay
+.agents/skills/argus/                         -> Claude plugin / npx skills / Codex installer
+                                             -> Arkclaw (CN-only overlays)
+.agents/skills/realsee-blender-reconstruction/ -> Claude plugin / npx skills
 ```
 
 `npm run rebuild` 重新生成 Claude 与 Arkclaw 包，并与 canonical bytes 比较。确定性的 Arkclaw overlay 会在 `scripts/run-argus.mjs` 中强制 `REALSEE_REGION=cn`、把 `scripts/download-examples.mjs` 限制为 CN，并让生成后的 Skill、README 与示例指南明确同一限制；其余文件必须与 canonical source 字节级一致。
 
 ## 校验与发布
 
-`npm run ci` 依次运行 secret 扫描、双语文档、AI 索引、仓库边界、Skill 校验、分发生成与一致性检查、发布元数据校验和完整 Skill 测试。
+`npm run ci` 依次运行 secret 扫描、双语文档、AI 索引、仓库边界、Skill 校验、分发生成与一致性检查、发布元数据校验、仓库测试（`test:repo`）和 Argus 运行时测试（`test:skill`）。这些检查验证打包与合同，不执行 Blender 重建或真实 Argus 任务。
 
-`v1.0.2` 保持为冻结的旧版本。2.0 按以下顺序发布：先发布 uploader 0.1.1，再切 `v2.0.0-rc.3`，完成 CN/Global 真机 E2E（含 partial/error 收集），最后把 `v2.0.0` 标记为 stable。两区都通过前，release metadata 保持 preview/development，stable gate 为 pending。
+`release-channel.json` 当前记录 Argus 2.0.0 为 stable，stable gate 为 passed；它记录 Argus 发布就绪状态，不代表 Blender 验收。`v1.0.2` 保持为冻结旧版本，`v2.0.0` 标签仅包含 Argus。当前门禁要求与首次 2.0 发布历史见[发布指南](docs/zh-CN/release.md)。
 
 ## 生成文件
 
-不要手工修改 `plugins/realsee-skills/**` 或 `arkclaw/argus/**`。修改 `.agents/skills/argus/**` 和窄范围 Arkclaw overlay generator，然后运行 `npm run rebuild`。
+不要手工修改 `plugins/realsee-skills/**` 或 `arkclaw/argus/**`。修改 `.agents/skills/**` 下对应源码；只有 Argus 分发差异涉及 overlay 时才修改 Arkclaw 生成器，然后运行 `npm run rebuild`。

@@ -2,7 +2,7 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-Argus Skill 2.0 has one canonical source, an explicit persisted lifecycle, and generated packages for each supported agent host.
+Realsee Skills keeps canonical skill sources under `.agents/skills/` and generates host-specific distribution packages. Argus provides a Node.js remote-processing runtime; Blender reconstruction is a local instruction skill.
 
 The additional instruction skill `.agents/skills/realsee-blender-reconstruction/` handles existing exports in local Blender. Claude packaging discovers canonical skill directories and checks byte consistency for all of them; it does not require an npm runtime for instruction-only skills. The Argus lifecycle and Arkclaw overlays below remain Argus-specific.
 
@@ -21,6 +21,11 @@ The additional instruction skill `.agents/skills/realsee-blender-reconstruction/
     ├── algorithm-io*.md              Bilingual algorithm I/O contract
     ├── argus-output.schema.json      JSON Schema 2020-12 output union
     └── migration-v2*.md              Bilingual 1.x migration guide
+
+.agents/skills/realsee-blender-reconstruction/  Canonical local modeling instructions
+├── SKILL.md / SKILL.zh-CN.md         Agent workflow
+├── README.md / README.zh-CN.md       User documentation
+└── references/                      Registration, modeling, performance, acceptance, extensions
 
 plugins/realsee-skills/               Generated Claude plugin copy
 arkclaw/argus/                        Generated Arkclaw copy with deterministic CN-only overlays
@@ -84,24 +89,19 @@ The file-token response is an in-memory upload lease. `bucket + region + prefix`
 ## Distribution flow
 
 ```text
-                         .agents/skills/argus
-                           canonical source
-                 ┌──────────────┼──────────────┐
-                 │              │              │
-                 ▼              ▼              ▼
-        Claude plugin copy   Codex / npx    Arkclaw copy
-        byte-identical       direct source  canonical bytes +
-                                           CN-only overlays
+.agents/skills/argus/                         -> Claude plugin / npx skills / Codex installer
+                                             -> Arkclaw (CN-only overlays)
+.agents/skills/realsee-blender-reconstruction/ -> Claude plugin / npx skills
 ```
 
 `npm run rebuild` regenerates Claude and Arkclaw packages and checks them against canonical bytes. Deterministic Arkclaw overlays force `REALSEE_REGION=cn` in `scripts/run-argus.mjs`, restrict `scripts/download-examples.mjs` to CN, and make the generated Skill, README, and example guides state the same limitation. All remaining files must match canonical source byte-for-byte.
 
 ## Validation and release
 
-`npm run ci` runs secret scanning, bilingual-doc checks, AI-index checks, repository-boundary checks, Skill validation, distribution regeneration and consistency checks, release metadata validation, and the full Skill test suite.
+`npm run ci` runs secret scanning, bilingual-doc checks, AI-index checks, repository-boundary checks, Skill validation, distribution regeneration and consistency checks, release metadata validation, repository tests (`test:repo`), and Argus runtime tests (`test:skill`). These checks validate packaging and contracts; they do not execute a Blender reconstruction or a live Argus task.
 
-Version `v1.0.2` remains the frozen legacy line. Version 2.0 follows this promotion order: publish uploader 0.1.1, cut `v2.0.0-rc.3`, complete real CN and global E2E (including partial/error collection), then mark `v2.0.0` stable. Until both regions pass, release metadata remains preview/development with a pending stable gate.
+`release-channel.json` currently records Argus 2.0.0 as stable with a passed stable gate. It records Argus release readiness, not Blender acceptance. `v1.0.2` remains the frozen legacy line; the `v2.0.0` tag contains Argus only. See the [release guide](docs/release.md) for current gate requirements and the historical 2.0 promotion sequence.
 
 ## Generated files
 
-Do not edit `plugins/realsee-skills/**` or `arkclaw/argus/**` by hand. Edit `.agents/skills/argus/**` and the narrow Arkclaw overlay generator, then run `npm run rebuild`.
+Do not edit `plugins/realsee-skills/**` or `arkclaw/argus/**` by hand. Edit the relevant source under `.agents/skills/**`; change the Arkclaw overlay generator only for Argus-specific distribution differences. Then run `npm run rebuild`.

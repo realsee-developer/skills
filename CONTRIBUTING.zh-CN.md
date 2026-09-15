@@ -7,8 +7,8 @@ Realsee Skills 用于公开受支持的 skill 能力。外部 pull request 不�
 ## 开始之前
 
 1. 阅读 `.agents/skills/` 下相关 skill 的 README。
-2. 检查 `release-channel.json` 中的当前 skill 状态。
-3. 避免提交生成产物、凭证、账号标识、私有 URL、`.env` 文件、下载的 Argus 压缩包、解压产物或临时 workspace 文件。
+2. 检查 `release-channel.json` 中的 Argus 发布就绪状态，以及所选 skill README 的适用范围；发布元数据不记录 Blender 场景验收。
+3. 避免提交私有运行产物、凭证、账号标识、私有 URL、`.env` 文件、下载的 Argus 压缩包、解压产物或临时 workspace 文件。
 
 ## 维护者开发流程
 
@@ -32,6 +32,8 @@ npm run validate:docs
 npm run ci
 ```
 
+修改 Blender 指令时，运行 `npm run validate:skills`、`npm run rebuild` 和 `npm run ci`。改变建模行为时，使用本地资料验证受影响的流程；文档校验不等于 Blender 执行测试。保持中英文指令一致。Claude 和 Arkclaw 的生成分发文件受版本控制，重建产生变化时应一并纳入修改。
+
 ## Pull Request 检查项
 
 - 改动只解决一个明确问题。
@@ -45,7 +47,7 @@ npm run ci
 新的 skill 包由 Realsee 维护者在能力、API 合同和发布门禁获批后加入。新的 skill 包应包含：
 
 - 带准确 frontmatter 的 `SKILL.md`
-- skill `README.md`
-- 对 upload、gateway、download 路径可注入假对象的测试
+- 双语用户文档（`README.md` 和 `README.zh-CN.md`）及随附 `LICENSE`
+- 运行时涉及 upload、gateway、download 服务时，对相应路径提供可注入 fake 的测试；纯指令 skill 使用与实际任务相关的验证
 - 涉及远程服务时的外部 API 合同引用
 - 对上传本地文件流程的明确同意说明

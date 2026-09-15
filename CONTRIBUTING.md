@@ -7,8 +7,8 @@ Realsee Skills is published to expose supported skill capabilities. External pul
 ## Before You Start
 
 1. Read the relevant skill README under `.agents/skills/`.
-2. Check `release-channel.json` for the current skill state.
-3. Avoid committing generated outputs, credentials, account identifiers, private URLs, `.env` files, downloaded Argus archives, extracted artifacts, or temporary workspace files.
+2. Check `release-channel.json` for Argus release readiness and the selected skill README for its scope. The release metadata does not track Blender scene acceptance.
+3. Avoid committing private runtime outputs, credentials, account identifiers, private URLs, `.env` files, downloaded Argus archives, extracted artifacts, or temporary workspace files.
 
 ## Maintainer Development Flow
 
@@ -32,6 +32,8 @@ npm run validate:docs
 npm run ci
 ```
 
+For Blender instruction changes, run `npm run validate:skills`, `npm run rebuild`, and `npm run ci`. When changing modeling behavior, verify the affected workflow using local evidence; documentation validation alone is not a Blender execution test. Keep English and Chinese instructions aligned. Generated Claude and Arkclaw distribution files are tracked and must be included when rebuilding changes them.
+
 ## Pull Request Checklist
 
 - The change is scoped to one problem.
@@ -45,7 +47,7 @@ npm run ci
 New skill packages are added by Realsee maintainers after the capability, API contract, and release gate are approved. A new skill package should include:
 
 - `SKILL.md` with accurate frontmatter
-- A skill `README.md`
-- Tests with injectable fakes for upload, gateway, and download paths
+- Bilingual user documentation (`README.md` and `README.zh-CN.md`) and a bundled `LICENSE`
+- Tests with injectable fakes for upload, gateway, and download paths when a runtime uses those services; instruction-only skills need task-relevant verification instead
 - References for external API contracts when remote services are involved
 - Explicit consent language for workflows that upload local files

@@ -16,7 +16,7 @@ Then open the modeling project and ask:
 
 > Use $realsee-blender-reconstruction with data/. Reconstruct the evidenced space, prioritizing structure and connections. Save output/reconstruction_native.blend and verify source comparisons and actual edits after reopening.
 
-The skill includes optional walkthrough, physics/USDZ, image-and-text asset generation, and web-preview guidance when requested. `npm run install:codex-skills` remains the Argus-specific installer. The rest of this guide describes Argus remote processing.
+Verify that local Blender runs and inspect its version; keep inputs, scripts, and outputs in the modeling project. The skill includes optional walkthrough, physics/USDZ, image-and-text asset generation, and web-preview guidance when requested. `npm run install:codex-skills` remains the Argus-specific installer. The rest of this guide describes Argus remote processing.
 
 Official resources: [Argus](https://argus.realsee.ai/), [interactive demo](https://h5.realsee.ai/argus), [research](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). These sites may show broader photo and product workflows; the Argus Skill accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
 
@@ -34,6 +34,14 @@ From a local checkout:
 ```bash
 npx skills add . --skill argus
 ```
+
+## Credentials and upload consent
+
+Only Argus requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`; Arkclaw fixes it to `cn`). The agent first checks the inherited shell environment; if configuration is incomplete, it loads an existing `~/.realsee/credentials`, then requests only what is still missing. Have the user configure secrets in their local shell or a secure credential interface, rather than collecting them field by field in chat.
+
+Never echo credentials or put values in recorded command arguments or environment prefixes. Only when the user explicitly chooses persistent storage may app credentials be saved outside the repository in `~/.realsee/credentials` with mode 0600. Upload tokens and signed URLs must never be persisted; run state contains no credentials.
+
+`start` sends the selected files to Realsee. File selection and example downloads are not upload consent; an explicit request to upload those files is sufficient. Reuse existing consent for the same input and scope without another confirmation. `--yes` in the examples records that consent has been obtained; it does not replace user authorization.
 
 ## Official example manifest
 
@@ -126,4 +134,4 @@ Collection retains `output.zip`, safely extracts it, validates the manifest and 
 - Output schema: [argus-output.schema.json](../.agents/skills/argus/references/argus-output.schema.json)
 - Machine index: [llms.txt](../llms.txt)
 
-Real Argus runs are remote uploads. Obtain user consent first and do not persist credentials, upload tokens, or signed result URLs.
+Follow the credential and upload-consent requirements above; use validated local artifacts as durable deliverables.

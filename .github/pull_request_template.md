@@ -14,6 +14,6 @@
 
 - [ ] The change is scoped to one problem.
 - [ ] Documentation reflects changed commands, configuration, release gates, or skill usage.
-- [ ] Source skill changes were rebuilt into `plugins/realsee-skills/` when needed.
+- [ ] Source skill changes were rebuilt into `plugins/realsee-skills/` and, for Argus, `arkclaw/argus/` when needed.
 - [ ] No secrets, generated credentials, account identifiers, private URLs, GLB files, or temporary workspaces are committed.
 - [ ] This change is a maintainer-controlled update, not an unsolicited roadmap or product feature proposal.
