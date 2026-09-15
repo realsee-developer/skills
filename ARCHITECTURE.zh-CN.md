@@ -4,6 +4,8 @@
 
 Argus Skill 2.0 使用一个 canonical source、显式持久化生命周期，以及面向不同 agent host 的生成包。
 
+新增的指令 skill `.agents/skills/realsee-blender-reconstruction/` 在本地 Blender 中处理已有导出。Claude 打包发现规范 skill 目录，并逐个检查字节一致性；纯指令 skill 不要求 npm 运行时。下文 Argus 生命周期和 Arkclaw overlay 仍仅适用于 Argus。
+
 ## Source-of-truth 地图
 
 ```text

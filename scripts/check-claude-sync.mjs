@@ -1,11 +1,11 @@
-import { lstat, readFile } from 'node:fs/promises';
+import { lstat, readdir, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { listDistributionFiles } from './distribution-files.mjs';
 
 const repoRoot = resolve(import.meta.dirname, '..');
-const sourceRoot = join(repoRoot, '.agents', 'skills', 'argus');
-const targetRoot = join(repoRoot, 'plugins', 'realsee-skills', 'skills', 'argus');
+const sourceRoot = join(repoRoot, '.agents', 'skills');
+const targetRoot = join(repoRoot, 'plugins', 'realsee-skills', 'skills');
 
 async function exists(path) {
   try {
@@ -19,6 +19,14 @@ async function exists(path) {
 
 if (!(await exists(sourceRoot))) throw new Error('missing canonical source skill');
 if (!(await exists(targetRoot))) throw new Error('missing generated skill copy; run npm run sync:claude-plugin');
+
+const sourceNames = (await readdir(sourceRoot, { withFileTypes: true }))
+  .filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+const targetNames = (await readdir(targetRoot, { withFileTypes: true }))
+  .filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+if (JSON.stringify(sourceNames) !== JSON.stringify(targetNames)) {
+  throw new Error('claude skill directories differ; run npm run sync:claude-plugin');
+}
 
 const sourceFiles = await listDistributionFiles({ repoRoot, sourceRoot });
 const targetFiles = await listDistributionFiles({ repoRoot, sourceRoot: targetRoot });

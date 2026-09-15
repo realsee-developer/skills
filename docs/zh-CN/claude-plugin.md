@@ -9,7 +9,7 @@
 /plugin install realsee-skills@realsee-developer-skills
 ```
 
-Plugin 暴露 `realsee-skills:argus`，没有安装期配置或 MCP server。Skill 在运行时解析凭证。
+生成的 Plugin 暴露 `realsee-skills:argus` 和 `realsee-skills:realsee-blender-reconstruction`，没有安装期配置或 MCP server。Argus 在运行时解析凭证，本地 Blender 建模无需 Realsee 凭据，使用方式见 [Blender 工作流](../../.agents/skills/realsee-blender-reconstruction/README.zh-CN.md)。下文配置仍仅适用于 Argus。
 
 官方背景资料见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Agent 不能据此推断更广的照片能力：本 Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
 

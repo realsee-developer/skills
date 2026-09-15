@@ -2,7 +2,8 @@ import { lstat, readdir, readFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
-const skillRoot = join(root, '.agents', 'skills', 'argus');
+const sourceRoot = join(root, '.agents', 'skills');
+const skillRoot = join(sourceRoot, 'argus');
 const userDocGlobs = [
   join(skillRoot, 'README.md'),
   join(skillRoot, 'SKILL.md'),
@@ -55,20 +56,30 @@ function frontmatterName(text) {
   return nameLine?.slice(nameLine.indexOf(':') + 1).trim().replace(/^['"]|['"]$/g, '');
 }
 
-await assertFile(join(skillRoot, 'SKILL.md'), 'Skill definition');
-await assertFile(join(skillRoot, 'README.md'), 'Skill README');
-await assertFile(join(skillRoot, 'LICENSE'), 'Skill license');
-await assertMissing(join(skillRoot, 'agents', 'openai.yaml'), 'OpenAI agent config');
-
-for (const file of await walkFiles(skillRoot)) {
-  if (relative(skillRoot, file).split(/[/\\]/).join('/') === 'agents/openai.yaml') {
-    throw new Error(`OpenAI agent config must not exist under skill: ${relative(root, file)}`);
+for (const entry of await readdir(sourceRoot, { withFileTypes: true })) {
+  const path = join(sourceRoot, entry.name);
+  if (entry.isSymbolicLink()) throw new Error(`symlink is forbidden: ${relative(root, path)}`);
+  if (!entry.isDirectory()) continue;
+  for (const file of ['SKILL.md', 'README.md', 'README.zh-CN.md', 'LICENSE']) {
+    await assertFile(join(path, file), 'Skill ' + file);
+    if (!(await readFile(join(path, file), 'utf8')).trim()) {
+      throw new Error(`Skill file must not be empty: ${relative(root, join(path, file))}`);
+    }
   }
-}
-
-const skillText = await readFile(join(skillRoot, 'SKILL.md'), 'utf8');
-if (frontmatterName(skillText) !== 'argus') {
-  throw new Error('SKILL.md frontmatter name must be argus');
+  await assertMissing(join(path, 'agents', 'openai.yaml'), 'OpenAI agent config');
+  await walkFiles(path);
+  const text = await readFile(join(path, 'SKILL.md'), 'utf8');
+  if (frontmatterName(text) !== entry.name) {
+    throw new Error(`SKILL.md frontmatter name must be ${entry.name}`);
+  }
+  const description = text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1]
+    .split(/\r?\n/).find((line) => /^description:\s*\S/.test(line));
+  if (!description) throw new Error(`SKILL.md description is required: ${entry.name}`);
+  for (const [file, target] of [['README.md', 'README.zh-CN.md'], ['README.zh-CN.md', 'README.md']]) {
+    if (!(await readFile(join(path, file), 'utf8')).includes(target)) {
+      throw new Error(`${entry.name}/${file} must link to ${target}`);
+    }
+  }
 }
 const skillPackage = JSON.parse(await readFile(join(skillRoot, 'package.json'), 'utf8'));
 if (skillPackage.license !== 'SEE LICENSE IN LICENSE') {

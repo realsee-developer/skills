@@ -1,10 +1,15 @@
-import { mkdir, readFile, rm, stat, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat, writeFile, copyFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { listDistributionFiles } from './distribution-files.mjs';
 
 const repoRoot = resolve(import.meta.dirname, '..');
-const sourceSkill = join(repoRoot, '.agents', 'skills', 'argus');
+const sourceSkillsRoot = join(repoRoot, '.agents', 'skills');
+const skillNames = (await readdir(sourceSkillsRoot, { withFileTypes: true }))
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name)
+  .sort();
+const sourceSkill = join(sourceSkillsRoot, 'argus');
 const pluginRoot = join(repoRoot, 'plugins', 'realsee-skills');
 const targetSkill = join(pluginRoot, 'skills', 'argus');
 const manifestPath = join(pluginRoot, 'copy-manifest.json');
@@ -32,7 +37,7 @@ const pluginPackage = {
 const pluginMetadata = {
   $schema: 'https://json.schemastore.org/claude-code-plugin-manifest.json',
   name: 'realsee-skills',
-  description: 'Realsee Argus for Claude Code: reconstruct 1–99 exact 2:1 panoramas into validated depth, a merged GLB point cloud, poses, and optional intrinsics.',
+  description: 'Realsee skills for Claude Code: Argus panorama reconstruction and local editable Blender space modeling.',
   author: {
     name: 'Realsee',
     url: 'https://github.com/realsee-developer'
@@ -56,6 +61,7 @@ const skillPath = join(pluginRoot, 'skills', 'argus');
 const skillFile = join(skillPath, 'SKILL.md');
 const skillLicense = join(skillPath, 'LICENSE');
 const brandManifest = join(skillPath, 'assets', 'brand', 'manifest.json');
+const requiredSkillNames = ${JSON.stringify(skillNames)};
 const forbiddenLocalPath = ['', 'Users', ''].join('/');
 
 async function exists(path) {
@@ -139,6 +145,17 @@ for (const file of files) {
   }
 }
 
+for (const name of requiredSkillNames) {
+  const path = join(pluginRoot, 'skills', name);
+  if (!(await exists(join(path, 'LICENSE')))) {
+    throw new Error('missing skill license: skills/' + name + '/LICENSE');
+  }
+  const text = await readFile(join(path, 'SKILL.md'), 'utf8');
+  if (parseFrontmatterName(text) !== name) {
+    throw new Error('skill frontmatter name must match directory: ' + name);
+  }
+}
+
 assertNoWorkspaceOrLinkDeps(JSON.parse(await readFile(packagePath, 'utf8')), 'plugin package');
 const pluginManifest = JSON.parse(await readFile(officialManifest, 'utf8'));
 if (pluginManifest.license !== 'LicenseRef-Realsee-SDK') {
@@ -205,23 +222,28 @@ await writeText(join(pluginRoot, 'scripts', 'validate-plugin.mjs'), validatePlug
 await writeText(join(pluginRoot, 'scripts', 'doctor-local-env.mjs'), doctorScript);
 
 const copied = [];
-const distributionFiles = await listDistributionFiles({ repoRoot, sourceRoot: sourceSkill });
-for (const rel of distributionFiles) {
-  const source = join(sourceSkill, rel);
-  const target = join(targetSkill, rel);
-  const sourceStat = await stat(source);
-  await mkdir(dirname(target), { recursive: true });
-  await copyFile(source, target);
-  copied.push({
-    source: relative(repoRoot, source),
-    target: relative(repoRoot, target),
-    size: sourceStat.size
-  });
+for (const name of skillNames) {
+  const sourceRoot = join(sourceSkillsRoot, name);
+  const targetRoot = join(pluginRoot, 'skills', name);
+  const distributionFiles = await listDistributionFiles({ repoRoot, sourceRoot });
+  for (const rel of distributionFiles) {
+    const source = join(sourceRoot, rel);
+    const target = join(targetRoot, rel);
+    const sourceStat = await stat(source);
+    await mkdir(dirname(target), { recursive: true });
+    await copyFile(source, target);
+    copied.push({
+      source: relative(repoRoot, source),
+      target: relative(repoRoot, target),
+      size: sourceStat.size
+    });
+  }
 }
 await writeJson(manifestPath, {
   source: relative(repoRoot, sourceSkill),
   target: relative(repoRoot, targetSkill),
+  skills: skillNames,
   files: copied
 });
 
-console.log('synced ' + copied.length + ' files to ' + relative(repoRoot, targetSkill));
+console.log('synced ' + copied.length + ' files across ' + skillNames.length + ' skills to ' + relative(repoRoot, pluginRoot));

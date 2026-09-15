@@ -1,6 +1,10 @@
 {
   "source": ".agents/skills/argus",
   "target": "plugins/realsee-skills/skills/argus",
+  "skills": [
+    "argus",
+    "realsee-blender-reconstruction"
+  ],
   "files": [
     {
       "source": ".agents/skills/argus/assets/brand/argus-logo-color.png",
@@ -346,6 +350,81 @@
       "source": ".agents/skills/argus/test/skill-description-contract.test.mjs",
       "target": "plugins/realsee-skills/skills/argus/test/skill-description-contract.test.mjs",
       "size": 2564
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/LICENSE",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/LICENSE",
+      "size": 17396
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/README.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/README.md",
+      "size": 2944
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/README.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/README.zh-CN.md",
+      "size": 2588
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/acceptance.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/acceptance.md",
+      "size": 6410
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/acceptance.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/acceptance.zh-CN.md",
+      "size": 5085
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/automation-performance.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/automation-performance.md",
+      "size": 5800
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/automation-performance.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/automation-performance.zh-CN.md",
+      "size": 4911
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/extensions.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/extensions.md",
+      "size": 4980
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/extensions.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/extensions.zh-CN.md",
+      "size": 3876
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/fast-workflow.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/fast-workflow.md",
+      "size": 7640
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/fast-workflow.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/fast-workflow.zh-CN.md",
+      "size": 6439
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/reconstruction.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/reconstruction.md",
+      "size": 6098
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/references/reconstruction.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/reconstruction.zh-CN.md",
+      "size": 4814
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/SKILL.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/SKILL.md",
+      "size": 8934
+    },
+    {
+      "source": ".agents/skills/realsee-blender-reconstruction/SKILL.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/SKILL.zh-CN.md",
+      "size": 7227
     }
   ]
 }

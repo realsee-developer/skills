@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Realsee Skills — Argus Agent and CLI Workflow
+# Realsee Skills — Argus and Blender Workflows
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
 [![Release gate](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/release-gate.yml?branch=main&label=release%20gate&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/release-gate.yml)
@@ -16,7 +16,7 @@ English | [简体中文](README.zh-CN.md)
 
 Realsee Argus is a world-leading 3D vision foundation model. From a photo, panorama, or sparse views, it reconstructs metric 3D structure in milliseconds: pose, depth, point clouds, and renderable geometry.
 
-Realsee Skills provides the Argus agent and CLI workflow. The current Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
+Realsee Skills provides the Argus agent and CLI workflow. The Argus Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
 
 The Skill ID remains `argus`. Version 2.0 has no legacy single-image VGGT fallback. Pin `v1.0.2` when a workflow needs square 1:1 input, the old single-GLB-only result, or the old H5 preview behavior.
 
@@ -26,9 +26,18 @@ Official evidence includes a 1.31B-parameter model and the Realsee3D benchmark's
 
 The installable Skill 2.0 contract remains intentionally specific: **1–99 local RGB8 panoramas with exact 2:1 dimensions**. Capabilities shown for photos, sparse views, or other product surfaces are not exposed by this CLI.
 
+## Skills
+
+| Skill | What it does | Execution |
+| --- | --- | --- |
+| [argus](.agents/skills/argus/SKILL.md) | Panoramas → depth, point cloud, poses | Realsee remote processing |
+| [realsee-blender-reconstruction](.agents/skills/realsee-blender-reconstruction/README.md) | Existing exports → editable Blender space; optional walkthrough and physics export | Local Blender, no API credentials for local inputs |
+
+Install the Blender skill from this local checkout with `npx skills add . --skill realsee-blender-reconstruction --agent codex`. The Claude plugin includes both skills after `npm run rebuild`; Arkclaw remains the Argus-specific distribution. The Argus credential and CLI sections below apply to `argus`.
+
 ## Credentials
 
-Every install path uses the unchanged runtime contract:
+Every Argus install path uses the unchanged runtime contract:
 
 | Key | Purpose | Sensitive |
 | --- | --- | --- |
@@ -74,7 +83,7 @@ See [the install overview](docs/install-guides.md), [Claude Code](docs/claude-pl
 
 ## Official example manifest
 
-Every Skill install includes `examples/manifest.json`, which lists the CDN URL, byte length, and SHA-256 for the CN and Global first-party sample sets. Panorama JPEGs are absent from the current release tree and every generated Skill distribution. Download one set to a new absolute directory outside the installed Skill:
+Every Argus Skill install includes `examples/manifest.json`, which lists the CDN URL, byte length, and SHA-256 for the CN and Global first-party sample sets. Panorama JPEGs are absent from the current release tree and every generated Skill distribution. Download one set to a new absolute directory outside the installed Skill:
 
 ```bash
 node <skillDir>/scripts/download-examples.mjs \
@@ -152,7 +161,7 @@ Real Argus runs upload the normalized input ZIP to Realsee remote services. Obta
 
 ## Development
 
-Canonical source lives in `.agents/skills/argus/`. The Claude plugin and CN-only Arkclaw package are generated from it and checked for byte consistency (with deterministic Arkclaw overlays for runtime region, example downloads, and matching guidance).
+Canonical sources live under `.agents/skills/`. The Claude plugin includes both skills and checks byte consistency. The CN-only Arkclaw package is generated from Argus with deterministic overlays for runtime region, example downloads, and matching guidance.
 
 ```bash
 npm run doctor
