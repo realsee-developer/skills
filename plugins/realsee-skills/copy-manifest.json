@@ -244,7 +244,7 @@
     {
       "source": ".agents/skills/argus/test/ai-index.test.mjs",
       "target": "plugins/realsee-skills/skills/argus/test/ai-index.test.mjs",
-      "size": 1166
+      "size": 2361
     },
     {
       "source": ".agents/skills/argus/test/artifact.test.mjs",

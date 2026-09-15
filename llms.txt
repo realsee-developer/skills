@@ -1,138 +1,40 @@
 # Realsee Skills
 
-Purpose: Source-available Realsee agent Skill distribution for users and agent runtimes.
-Current release line: Realsee Skills 2.1.0 (stable/passed in release-channel.json); legacy square/single-GLB workflows remain pinned at v1.0.2.
-Version scope: v2.1.0 includes Argus and Blender reconstruction; v2.0.0 contains Argus only. Argus release metadata does not certify Blender results.
-Agent priority: inspect this file, then README.md, docs/usage.md, AGENTS.md, and the selected Skill definition below.
-Languages: English default; Simplified Chinese in README.zh-CN.md, docs/zh-CN/, and same-directory *.zh-CN.md pairs.
+Agent skills for panorama reconstruction and editable Blender spaces. Read the selected SKILL.md directly; load its references only for the current task.
 
-Local Blender Skill:
-- ID: realsee-blender-reconstruction
-- Definition: .agents/skills/realsee-blender-reconstruction/SKILL.md
-- English docs: .agents/skills/realsee-blender-reconstruction/README.md
-- Chinese docs: .agents/skills/realsee-blender-reconstruction/README.zh-CN.md
-- Input: local Realsee scans, CAD, point clouds, panoramas, or existing reconstruction evidence.
-- Output: editable native Blender space, source comparisons, saved-file editing verification.
-- Optional: walkthrough, physics/USDZ, generated secondary assets, lightweight web preview.
-- No credentials or remote upload needed for local inputs; Argus generation is separate.
-- Repository install: npx skills add realsee-developer/skills@v2.1.0 --skill realsee-blender-reconstruction --agent codex
-- Local install: npx skills add . --skill realsee-blender-reconstruction --agent codex
-- Included in generated Claude plugin; Arkclaw and install:codex-skills remain Argus-specific.
+## Select a skill
 
-Primary Skill:
-- ID: argus
-- State: stable
-- Definition: .agents/skills/argus/SKILL.md
-- English docs: .agents/skills/argus/README.md
-- Chinese docs: .agents/skills/argus/README.zh-CN.md
-- Bundled license: .agents/skills/argus/LICENSE
-- CLI: .agents/skills/argus/scripts/run-argus.mjs
-- Official example downloader: .agents/skills/argus/scripts/download-examples.mjs
-- Public Gateway contract: .agents/skills/argus/references/argus-gateway-openapi.json
-- Algorithm I/O: .agents/skills/argus/references/algorithm-io.md and .agents/skills/argus/references/algorithm-io.zh-CN.md
-- Algorithm manifest schema: .agents/skills/argus/references/argus-output.schema.json
-- Migration: .agents/skills/argus/references/migration-v2.md and .agents/skills/argus/references/migration-v2.zh-CN.md
-- Official example manifest: .agents/skills/argus/examples/manifest.json
-- Official example guide: .agents/skills/argus/references/examples.md and .agents/skills/argus/references/examples.zh-CN.md
-- Panorama example JPEGs are not tracked or distributed; download a manifest set to an external absolute directory and verify bytes plus SHA-256.
-- Brand asset manifest: .agents/skills/argus/assets/brand/manifest.json
-- Primary brand logo: .agents/skills/argus/assets/brand/argus-logo-color.png
-- Brand mark: .agents/skills/argus/assets/brand/argus-mark-color.png
-- Research teaser: .agents/skills/argus/assets/brand/argus-paper-teaser.png
-- Product visual: .agents/skills/argus/assets/brand/product-ai-powered.jpg
+- [argus](.agents/skills/argus/SKILL.md): Submit 1–99 local RGB8 JPEG/PNG/WebP panoramas with exact 2:1 dimensions to Realsee. Returns depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated result index. Requires Node.js 22+, npm 10+, app credentials, and consent to remote upload.
+- [realsee-blender-reconstruction](.agents/skills/realsee-blender-reconstruction/SKILL.md): Build or refine an editable native Blender scene from existing scan exports, point clouds, CAD, or panoramas. Requires local Blender and file/command access; local modeling needs no Argus credentials. Argus generation is a separate task.
 
-Official Argus resources:
-- Product: https://argus.realsee.ai/
-- Interactive demo: https://h5.realsee.ai/argus
-- Research: https://argus-paper.realsee.ai/
-- Developer platform: https://developer.realsee.ai/
-- Product positioning: A world-leading 3D vision foundation model.
-- Model scope: photo, panorama, or sparse views to metric 3D structure in milliseconds: pose, depth, point clouds, and renderable geometry.
-- Model evidence: 1.31B parameters.
-- Realsee3D benchmark: 10K complete indoor scenes; 95,962 room units; 299,073 panoramic viewpoints.
-- Scope rule: these sites provide product context; agents must not expand the Skill 2.0 contract beyond 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+## Install the selected skill
 
-Capability:
-- Input: 1–99 JPEG/PNG/WebP RGB8 equirectangular panoramas, exact width == 2 * height.
-- Input modes: repeat --image or pass one mutually exclusive --zip.
-- Packaging: safe validation plus deterministic normalized streaming ZIP.
-- Output: retained output.zip, EXR depth maps in meters, merged GLB, poses, optional intrinsics, output.json, and local result.json index.
-- Remote lifecycle: task_status queued | processing | succeeded | failed.
-- Algorithm result: result_status success | partial | error; partial exits 0 with warning and non-empty missing_ids.
-- No detached poller, old VGGT fallback, square input, legacy preview, or 1.x workspace migration.
-- Official first-party example metadata is installed with the Skill; panorama JPEGs require an explicit verified CDN download.
-- Downloading examples is not upload consent. Example execution is still a remote upload: obtain user consent and use the Gateway matching REALSEE_REGION.
-- Brand images are local documentation assets governed by their manifest; do not hotlink or infer runtime features from imagery.
+Current stable distribution: v2.2.0. Select one command; install both only when both capabilities are needed.
 
-Explicit CLI lifecycle:
-- Download examples: node .agents/skills/argus/scripts/download-examples.mjs --region cn --output /absolute/example-output
-- Start images: node .agents/skills/argus/scripts/run-argus.mjs start --image /absolute/a.jpg --image /absolute/b.webp --workspace /absolute/workspace-root --yes --json
-- Start ZIP: node .agents/skills/argus/scripts/run-argus.mjs start --zip /absolute/input.zip --workspace /absolute/workspace-root --yes --json
-- Status once: node .agents/skills/argus/scripts/run-argus.mjs status --workspace /absolute/workspace-root/<run-dir> --json
-- Collect terminal result: node .agents/skills/argus/scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir> --json
+```bash
+npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstruction --agent codex
+```
 
-Credential contract:
-- Required: REALSEE_APP_KEY, REALSEE_APP_SECRET, REALSEE_REGION.
-- Regions: global -> app-gateway.realsee.ai; cn -> app-gateway.realsee.cn.
-- Resolution: nonempty inherited shell environment, then an existing agent-loaded ~/.realsee/credentials; configure missing values through the local shell or a secure credential interface without echoing secrets into chat.
-- Persist app credentials only with explicit user authorization, outside the repository in mode-0600 ~/.realsee/credentials. Never persist temporary upload tokens or signed URLs.
-- Never print values or pass them as recorded command arguments.
-- state.json/result.json never store credentials, upload tokens, presigned URLs, or raw provider errors.
+For another host, use the [installation guide](docs/install-guides.md). The Claude plugin includes both skills. The dedicated repository Codex installer and Arkclaw ZIP contain only Argus. From a local checkout, replace the repository source with `.` to install the checked-out skill.
 
-Gateway adapter:
-- POST /auth/access_token
-- GET /open/v1/argus/file/token
-- POST /open/v1/argus/task/submit (never automatically retried)
-- GET /open/v1/argus/task/info
-- Bases remain global and cn.
+## Check a local checkout
 
-Install commands:
-- npx skills add realsee-developer/skills@v2.1.0 --skill argus
-- npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent claude-code
-- npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent codex
-- npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent '*'
-- npx skills add . --skill argus
-- npm run install:codex-skills
+These repository commands inspect the selected skill without installing packages, reading credential values from files, or uploading data. Run Node directly when consuming JSON:
 
-Unpinned installs from current main:
-- npx skills add realsee-developer/skills --skill argus
-- npx skills add realsee-developer/skills --skill argus --agent claude-code
-- npx skills add realsee-developer/skills --skill argus --agent codex
-- npx skills add realsee-developer/skills --skill argus --agent '*'
+```bash
+node scripts/doctor-local.mjs --skill argus --json
+node scripts/doctor-local.mjs --skill realsee-blender-reconstruction --json
+```
 
-Repository map:
-- User docs: README.md and README.zh-CN.md
-- Agent rules: AGENTS.md and AGENTS.zh-CN.md
-- Architecture: ARCHITECTURE.md and ARCHITECTURE.zh-CN.md
-- Support: SUPPORT.md and SUPPORT.zh-CN.md
-- Install overview: docs/install-guides.md and docs/zh-CN/install-guides.md
-- Claude Code: docs/claude-plugin.md and docs/zh-CN/claude-plugin.md
-- Codex: docs/codex.md and docs/zh-CN/codex.md
-- Usage: docs/usage.md and docs/zh-CN/usage.md
-- Public distribution: docs/public-distribution.md and docs/zh-CN/public-distribution.md
-- Development: docs/development.md and docs/zh-CN/development.md
-- Release gates: docs/release.md and docs/zh-CN/release.md
-- Generated Claude plugin: plugins/realsee-skills/
-- Generated CN-only Arkclaw copy: arkclaw/argus/
-- Marketplace: .claude-plugin/marketplace.json
-- Release metadata: release-channel.json
+Use `--blender /path/to/blender` when Blender is not on PATH. `status` is `ready`, `needs_configuration`, or `blocked`; each failing or incomplete check includes a next step. This is a local prerequisite check, not proof of service access, input validity, or reconstruction quality. If the skill is already installed without this repository, follow its SKILL.md prerequisite checks instead.
 
-Common maintenance commands:
-- npm run setup:local
-- npm run doctor
-- npm run smoke
-- npm run validate:ai
-- npm run validate:docs
-- npm run validate:skills
-- npm run rebuild
-- npm run check:claude-sync
-- npm run check:arkclaw-sync
-- npm run test:repo
-- npm run test:skill
-- npm run ci
+## Execute
 
-Safety:
-- Every real Argus run is a remote upload and requires informed user consent for the selected files. File selection alone is not consent; reuse existing authorization for the same input and scope.
-- Do not commit secrets, generated credentials, account identifiers, private URLs, output.zip, extracted artifacts, .env files, or temporary workspaces.
-- Edit .agents/skills/; Claude includes canonical skills, and Arkclaw rebuilds only the Argus source.
-- Do not add internal evidence, private source references, live scorecards, internal process docs, or local absolute paths.
+- Argus uses explicit `start`, `status`, and `collect` commands with `--json`. Retain the returned `workspace_dir` for later calls. Never automatically resubmit after `submission_unknown`; show `partial` results and all `missing_ids` honestly.
+- Blender uses local, task-specific Blender operations. Keep project data outside the installed skill and verify the saved scene's editability before claiming completion.
+- File selection and example downloads are not upload consent. Reuse informed consent for the same files and scope. Configure secrets locally; never echo them in chat or logs. Save app credentials only with explicit authorization. See [usage and credential setup](docs/usage.md).
+
+## Repository work only
+
+Read [AGENTS.md](AGENTS.md) before changing this repository. [Development](docs/development.md) describes `setup:local`, rebuilding distributions, and CI; those maintenance steps are not required merely to use a skill. See [Support](SUPPORT.md) for failures and capability access. [简体中文使用指南](docs/zh-CN/usage.md).
