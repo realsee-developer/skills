@@ -64,7 +64,7 @@
     {
       "source": ".agents/skills/argus/package-lock.json",
       "target": "plugins/realsee-skills/skills/argus/package-lock.json",
-      "size": 19865
+      "size": 19881
     },
     {
       "source": ".agents/skills/argus/package.json",
