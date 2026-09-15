@@ -7,7 +7,7 @@
 # argus
 
 ![Skill argus](https://img.shields.io/badge/skill-realsee--argus-6f42c1?style=flat-square)
-![Version 2.0](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
+![Version 2.1.0](https://img.shields.io/badge/version-2.1.0-blue?style=flat-square)
 ![Upload consent](https://img.shields.io/badge/upload-consent%20required-brown?style=flat-square)
 
 [English](README.md) | [简体中文](README.zh-CN.md)
@@ -30,7 +30,7 @@ The product and research pages show the wider Argus ecosystem. This Skill 2.0 ex
 From this package directory:
 
 ```bash
-npm install
+npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 ```
 
 Node.js 22 or newer is required.
@@ -116,7 +116,7 @@ Configuration uses the existing environment contract:
 - `REALSEE_APP_SECRET`
 - `REALSEE_REGION` (forced to `cn` by this Arkclaw build)
 
-Real runs upload the normalized input ZIP to Realsee remote services. Obtain user consent before upload. Credentials, upload tokens, provider errors, and signed result URLs must not be stored in workspace state or public logs.
+Real runs upload the normalized input ZIP to Realsee remote services. Obtain consent to remote processing of the selected files before upload; file selection alone is not consent. Reuse existing consent for the same input and scope. Configure missing secrets through the local shell or a secure credential interface without echoing them into chat. Persist app credentials only when explicitly requested, in a mode-0600 `~/.realsee/credentials` outside the repository. Credentials, upload tokens, provider errors, and signed result URLs must not be stored in workspace state or public logs.
 
 The Arkclaw build is CN-only. Canonical, Claude plugin, Codex, and `npx skills` installs support both Gateway regions.
 

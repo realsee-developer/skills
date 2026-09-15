@@ -74,12 +74,12 @@
     {
       "source": ".agents/skills/argus/README.md",
       "target": "plugins/realsee-skills/skills/argus/README.md",
-      "size": 6076
+      "size": 6485
     },
     {
       "source": ".agents/skills/argus/README.zh-CN.md",
       "target": "plugins/realsee-skills/skills/argus/README.zh-CN.md",
-      "size": 5811
+      "size": 6207
     },
     {
       "source": ".agents/skills/argus/references/algorithm-io.md",
@@ -154,7 +154,7 @@
     {
       "source": ".agents/skills/argus/SKILL.md",
       "target": "plugins/realsee-skills/skills/argus/SKILL.md",
-      "size": 8562
+      "size": 9140
     },
     {
       "source": ".agents/skills/argus/src/archive.mjs",
@@ -339,7 +339,7 @@
     {
       "source": ".agents/skills/argus/test/release-gate.test.mjs",
       "target": "plugins/realsee-skills/skills/argus/test/release-gate.test.mjs",
-      "size": 7756
+      "size": 7887
     },
     {
       "source": ".agents/skills/argus/test/sanitizer.test.mjs",
@@ -369,12 +369,12 @@
     {
       "source": ".agents/skills/realsee-blender-reconstruction/references/acceptance.md",
       "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/acceptance.md",
-      "size": 6410
+      "size": 6516
     },
     {
       "source": ".agents/skills/realsee-blender-reconstruction/references/acceptance.zh-CN.md",
       "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/references/acceptance.zh-CN.md",
-      "size": 5085
+      "size": 5156
     },
     {
       "source": ".agents/skills/realsee-blender-reconstruction/references/automation-performance.md",
@@ -419,12 +419,12 @@
     {
       "source": ".agents/skills/realsee-blender-reconstruction/SKILL.md",
       "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/SKILL.md",
-      "size": 8934
+      "size": 7571
     },
     {
       "source": ".agents/skills/realsee-blender-reconstruction/SKILL.zh-CN.md",
       "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/SKILL.zh-CN.md",
-      "size": 7227
+      "size": 6002
     }
   ]
 }

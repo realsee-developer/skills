@@ -37,7 +37,7 @@ Choose subjects present in this scene, not hard-coded case-study names. Record b
 1. From the reopened final scene, change a real wall segment or opening dimension through local geometry or an exposed native parameter. Verify the opening/geometry actually changes; object translation alone does not count.
 2. Rotate an evidenced door around its hinge. Check that the hinge stays fixed, the frame stays fixed, and its attached parts follow the leaf.
 3. If included, move a furniture item independently and change its assigned material. Check shared mesh/material datablocks: make a single-user copy where an independent edit requires it, and verify unrelated components did not change. A texture link may override a base-color default, so inspect the actual material result.
-4. For a representative reused scan/generated mesh, perform a local vertex/face edit in Edit Mode and verify it persists. Do not accept an object transform as proof of topology editability.
+4. If the reconstructed deliverable includes a reused scan/generated mesh beyond the hidden reference, perform a local vertex/face edit on a representative object through Edit Mode or the native mesh API and verify it persists. Do not accept an object transform as proof of topology editability.
 5. Save to a distinct test `.blend`, exit, and open it in another fresh process. Compare the saved state with the expected edits and unchanged neighbors, and capture useful before/after evidence.
 6. Confirm the original deliverable remains in its intended unedited state, for example by comparing its file hash before and after the test. Keep test files separate from final outputs.
 

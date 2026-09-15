@@ -11,15 +11,11 @@ Deliver a convincing, usable whole-space model promptly, then refine the parts t
 
 ## Default: whole space first, selective refinement
 
-Use the user's intended views and edits to set detail, not the maximum detail visible when zooming into every source. Read [fast modeling and preview workflow](references/fast-workflow.md) at the start; use [automation performance](references/automation-performance.md) when scripting many objects or diagnosing slow iterations.
+Use the user's intended views and edits to set detail, not the maximum detail visible when zooming into every source. Read [fast modeling and preview workflow](references/fast-workflow.md) when starting a whole-space reconstruction or choosing an iteration strategy; use [automation performance](references/automation-performance.md) when scripting many objects or diagnosing slow iterations.
 
-- Produce an early, reference-disabled overview of **all** requested areas with real openings and simple native geometry. Do not finish one room's accessories while another room's structure is missing. A blockout is a useful checkpoint, not the final handoff.
-- Fix scale, connectivity, wall/opening silhouettes, major surface finishes, and dominant lighting before tiny bevels, labels, scratches, bottle contents, or hidden hardware. Give a detail more effort when it affects a requested edit, contact, shadow, reflection, silhouette, or close-up.
-- Choose the simplest native construction that meets the need. Reuse repeated components/materials; use textures or bump/normal detail for surface relief that does not need geometric editing. Do not replace a required opening or component with a flat image.
-- Inspect the most useful source for the current decision. Use one canonical scan and lighter working references; inspect RAW, every duplicate format, or full-resolution cloud regions only when they resolve a specific ambiguity or are explicitly required.
-- Work in coherent batches, then show an overview and the changed area. Maintain a short ranked list of visible or functional defects; each iteration should resolve a named defect. Patch the saved scene instead of repeatedly rebuilding the entire project.
-- Stop polishing a part when it meets the requested use and another unresolved issue has greater impact. If a low-impact detail remains ambiguous or repeated tweaks show no useful improvement, keep the supported approximation, note it briefly, and move on. Do not invent precision or chase pixel identity with a photograph.
-- Finish with representative real editing checks and an honest concise handoff. Once those pass and the requested result is achieved, deliver; do not start optional audits or decorative passes merely to keep working. Explicit exhaustive reconstruction or engineering checks still take precedence.
+- Build and preview all requested areas with the scan reference disabled before refining individual rooms. Prioritize scale, connectivity, openings, major finishes, and lighting; a blockout is a checkpoint, not the final handoff.
+- Use the simplest editable construction that meets the requested use. Inspect sources and add detail when they resolve a visible or functional defect; follow the linked workflow for batching, previews, and stopping criteria.
+- Verify representative real edits and deliver once the requested result is achieved. User-specified exhaustive reconstruction or engineering checks take precedence.
 
 For a narrow edit to an existing scene, inspect the target and its dependencies, patch a preserved copy, and verify the changed result. A wall-color change needs the actual shader result, data-sharing check, saved persistence, and unaffected neighbors; it does not initiate source registration or reconstruction-wide geometry tests. Reuse prior acceptance evidence and rerun only invalidated checks. If earlier checks are unavailable, report the scope actually verified instead of claiming a new full-scene certification.
 
@@ -27,7 +23,7 @@ For a narrow edit to an existing scene, inspect the target and its dependencies,
 
 Use the selected project directory as `PROJECT_ROOT`, never the installed skill directory. Resolve input and output paths against it. Use the user's paths; otherwise inspect `data/` and deliver `output/reconstruction_native.blend`. If inputs are absent, explain exactly what is missing; do not create an empty folder and treat it as evidence. Preserve original inputs and existing user models.
 
-Read an existing project brief or acceptance requirements if provided. The user's requested scope and tolerances take precedence over this workflow. Do not import the source case's room list, dimensions, camera count, blanket 10 mm tolerance, or Goal-mode setup as defaults. Activate a persistent goal only when requested and actually supported.
+Read an existing project brief or acceptance requirements if provided. The user's requested scope and tolerances take precedence over this workflow. Do not inherit a reference case's scope, dimensions, tolerances, or execution settings.
 
 Discover Blender from PATH, the user's executable setting, or the available local integration, then verify its version. Resolve an executable symlink before launch. Background `bpy` execution works without MCP. Inspect APIs in the installed Blender before writing version-sensitive import, material, render-device, or export calls. Store project scripts, checkpoints, and previews in the project, not in this skill.
 

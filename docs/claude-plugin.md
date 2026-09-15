@@ -20,7 +20,6 @@ It carries `examples/manifest.json`, but no panorama JPEGs. To use official samp
 ```bash
 git clone https://github.com/realsee-developer/skills.git
 cd skills
-npm install
 (cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 npm run rebuild
 claude --plugin-dir ./plugins/realsee-skills
@@ -33,15 +32,9 @@ node plugins/realsee-skills/scripts/validate-plugin.mjs
 npm run check:claude-sync
 ```
 
-## Credentials
+## Credentials and consent
 
-The existing runtime precedence remains:
-
-1. inherited `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION`;
-2. an existing `~/.realsee/credentials` loaded by the agent;
-3. one-field-per-turn collection in chat.
-
-The agent must never echo values or place them in recorded command arguments. Credentials, upload tokens, presigned URLs, and raw provider errors are not persisted in run state.
+Only Argus needs credentials. Follow the [usage guide](usage.md#credentials-and-upload-consent) to check environment variables, load an existing credential file, and configure missing values through a local shell or secure interface. Persist app credentials outside the repository with mode 0600 only when explicitly authorized; never persist upload tokens or signed URLs. File selection is not upload consent; reuse consent for the same input and scope.
 
 ## Prompt examples
 
@@ -58,9 +51,10 @@ Or name the Skill explicitly:
 
 ```text
 Use realsee-skills:argus on /path/input.zip.
+Use realsee-skills:realsee-blender-reconstruction with data/ to save output/reconstruction_native.blend.
 ```
 
-## Skill surface
+## Argus command surface
 
 | Action | Command |
 | --- | --- |
@@ -76,4 +70,4 @@ The agent must obtain upload consent before start. For `result_status: partial`,
 
 ## Release policy
 
-Stable 2.0 installs use `v2.0.0` only after global and CN E2E pass. Users who require the 1.x square or single-GLB workflow pin `v1.0.2`.
+`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.1.0` includes both skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.

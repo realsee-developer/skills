@@ -2,25 +2,28 @@
 
 [English](public-distribution.md) | [简体中文](zh-CN/public-distribution.md)
 
-Run this checklist before promoting Argus Skill 2.0.
+Use this checklist for a planned distribution or release change. Current Argus metadata is `2.1.0` / stable / passed; the first 2.0 promotion is historical. See the [release guide](release.md) for gate conditions. Argus-specific runtime and live checks below do not apply to the instruction-only Blender skill.
+
+The real E2E promotion items apply when promoting an Argus preview to stable. Version 2.1.0 retains the existing stable remote contract and status; do not report inherited verification as a new run. Uploader release checks apply when releasing the uploader itself.
 
 ## Repository and versions
 
 - [ ] `v1.0.2` remains unchanged; no `v1.0` alias exists.
-- [ ] Root, Skill package, plugin package, and `release-channel.json` versions agree.
-- [ ] Preview metadata remains pending until real two-region E2E passes.
+- [ ] Root, Argus runtime package, plugin package, and `release-channel.json` versions agree.
+- [ ] For a new preview, the tag matches `next_release_candidate` and the metadata version; metadata remains development/preview/pending until real two-region E2E passes.
 - [ ] `npm run ci` and the selected release gate pass on a clean clone.
 - [ ] Git status contains no credentials, `.env`, workspaces, output ZIPs, or extracted artifacts.
 
 ## Canonical distribution
 
 - [ ] `npm run rebuild` regenerates both `plugins/realsee-skills/` and `arkclaw/argus/`.
-- [ ] Claude plugin files are byte-identical to `.agents/skills/argus/`.
+- [ ] Claude plugin includes both `argus` and `realsee-blender-reconstruction`, with files byte-identical to their canonical directories under `.agents/skills/`.
 - [ ] Arkclaw files are canonical bytes except deterministic CN-only overlays for the runtime region, example downloader, and matching generated guidance.
-- [ ] Codex install and `npx skills add . --skill argus` both resolve the same canonical Skill.
+- [ ] The dedicated Codex installer and Arkclaw package support only Argus; `npx skills add . --skill argus` and `npx skills add . --skill realsee-blender-reconstruction` resolve their respective canonical skills.
+- [ ] Versioned installation examples only name tags containing the selected skill; `v2.1.0` contains both skills, while `v2.0.0` does not contain Blender.
 - [ ] Plugin manifest has no `userConfig` and no MCP server.
 
-## Contracts and docs
+## Argus contracts and docs
 
 - [ ] Gateway OpenAPI contains exactly the four public methods and both bases.
 - [ ] Bilingual algorithm I/O docs agree on auto IDs, `missing_ids`, `error`, optional normals, fixed `right-handed, Y-up`, and EXR-only stable depth.
@@ -28,7 +31,7 @@ Run this checklist before promoting Argus Skill 2.0.
 - [ ] English/Chinese usage and migration docs explain that square/single-GLB users pin `v1.0.2`.
 - [ ] No document mentions detached polling, `--async`, `--resume`, or a 2.0 H5 preview as supported behavior.
 
-## Runtime verification
+## Argus runtime verification
 
 - [ ] Input tests cover 1, 99, and 100 images; JPEG/PNG/WebP; invalid ratio/RGB8; duplicate names; nested/corrupt/Zip Slip/Bomb archives.
 - [ ] Gateway tests cover paths, methods, envelopes, status mapping, and both region bases.
@@ -36,7 +39,7 @@ Run this checklist before promoting Argus Skill 2.0.
 - [ ] Artifact tests cover success/partial/error, ID consistency, invalid paths, invalid GLB/EXR, missing pose/depth, optional intrinsics, and atomic recovery.
 - [ ] `start`, `status`, and `collect` return the documented JSON and exit codes.
 
-## Uploader gate
+## Uploader release checks
 
 - [ ] `@realsee/universal-uploader@0.1.1` is published and installable.
 - [ ] Unit tests, typecheck, build, `npm pack` smoke, and GitLab CI pass.
@@ -45,8 +48,9 @@ Run this checklist before promoting Argus Skill 2.0.
 
 ## Real E2E and promotion
 
-- [ ] `v2.0.0-rc.3` completes a real multi-image run in global/AWS.
-- [ ] `v2.0.0-rc.3` completes a real multi-image run in CN/Tencent COS.
+- [ ] The selected Argus release candidate completes a real multi-image run in global/AWS.
+- [ ] The selected Argus release candidate completes a real multi-image run in CN/Tencent COS.
 - [ ] Both regions verify download plus success, partial, and error handling.
-- [ ] Only after those checks, set `state: stable`, `stable_gate: passed`, and publish `v2.0.0`.
-- [ ] Test fresh installs through Claude plugin, Codex, `npx skills`, and CN-only Arkclaw.
+- [ ] Only after those checks, record stable/passed metadata for the selected version, remove `next_release_candidate`, and obtain authorization before publishing a new tag.
+- [ ] Test fresh installs through Claude plugin, the Argus-only Codex installer, `npx skills` for each skill, and CN-only Arkclaw.
+- [ ] For Blender guidance changes, review input prerequisites, local tool requirements, editable deliverables, and applicable acceptance checks against the canonical skill; do not claim a real reconstruction was run unless it was.
