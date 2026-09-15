@@ -20,7 +20,7 @@ Plugin 包含 `examples/manifest.json`，但不包含全景 JPEG。需要官方�
 ```bash
 git clone https://github.com/realsee-developer/skills.git
 cd skills
-npm install
+npm ci
 (cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 npm run rebuild
 claude --plugin-dir ./plugins/realsee-skills
@@ -33,15 +33,9 @@ node plugins/realsee-skills/scripts/validate-plugin.mjs
 npm run check:claude-sync
 ```
 
-## 凭证
+## 凭据与授权
 
-继续使用原有运行时优先级：
-
-1. 继承的 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET`、`REALSEE_REGION`；
-2. 由 agent 加载现有 `~/.realsee/credentials`；
-3. 在对话中一字段一轮收集。
-
-Agent 不得回显值，也不得把它们放进会被记录的命令参数。凭证、上传 token、预签名 URL 和 provider 原始错误不写入 run state。
+仅 Argus 需要凭据。按[使用指南](usage.md#凭据与上传授权)检查环境变量、加载已有凭据文件，并通过本地 shell 或安全界面补齐缺失配置。仅在明确授权后以 0600 权限在仓库外保存应用凭据；上传 token 与签名 URL 不得持久化。文件选择不等于上传同意，同一输入和范围复用已有授权。
 
 ## 提示词示例
 
@@ -58,9 +52,10 @@ Agent 不得回显值，也不得把它们放进会被记录的命令参数。�
 
 ```text
 Use realsee-skills:argus on /path/input.zip.
+Use realsee-skills:realsee-blender-reconstruction with data/ to save output/reconstruction_native.blend.
 ```
 
-## Skill 调用面
+## Argus 调用面
 
 | 动作 | 命令 |
 | --- | --- |
@@ -76,4 +71,4 @@ Start 前必须取得上传同意。`result_status: partial` 时，即使 CLI �
 
 ## 发布策略
 
-Global 与 CN E2E 都通过后，stable 2.0 安装使用 `v2.0.0`。需要 1.x 方图或单 GLB 工作流的用户固定 `v1.0.2`。
+`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.0.0` 包含 Argus，不包含 Blender skill；Blender 使用当前仓库或已核对的本地 checkout。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。

@@ -6,25 +6,19 @@ This repository is primarily published so users can inspect, install, and run Re
 
 ## Reporting Bugs
 
-Use the bug report issue template and include:
-
-- Skill name, usually `argus`
-- Command that failed
-- Lifecycle command that failed (`start`, `status`, or `collect`)
-- Sanitized error output
-- Operating system, Node.js version, and npm version
+Use the `Bug report` issue template. Include the skill name, installed revision, host, OS, reproduction steps, and sanitized errors. Follow [Support](../SUPPORT.md) for skill-specific details: Argus reports need lifecycle and Node.js/npm context; Blender reports need Blender/integration versions, input export types, failed steps, and expected versus actual deliverables.
 
 Never include `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, generated credentials, internal URLs, account identifiers, or private result links.
 
 ## Capability Feedback
 
-Use the capability request template when a supported workflow is missing a public capability, unclear documentation, or a runtime behavior blocks integration. Include:
+Use the `Capability request` template when a supported workflow is missing a public capability, unclear documentation, or a runtime behavior blocks integration. Include:
 
 - User workflow
 - Expected input and output
 - Whether remote upload is required
 - Any relevant public API references or capability documentation
-- Whether the issue is about local lifecycle state, live usage, artifact validation, or installation
+- Whether the issue is about Argus lifecycle state or live usage, Blender reconstruction, artifact validation, or installation
 
 ## Pull Requests
 

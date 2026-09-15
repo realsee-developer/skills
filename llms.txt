@@ -1,7 +1,8 @@
 # Realsee Skills
 
 Purpose: Source-available Realsee agent Skill distribution for users and agent runtimes.
-Current release line: Argus Skill 2.0.0; legacy square/single-GLB workflows remain pinned at v1.0.2.
+Current release line: Argus Skill 2.0.0 (stable/passed in release-channel.json); legacy square/single-GLB workflows remain pinned at v1.0.2.
+Version scope: v2.0.0 contains Argus only. Install Blender reconstruction from the current repository or a checkout containing that skill; Argus release metadata does not certify Blender results.
 Agent priority: inspect this file, then README.md, docs/usage.md, AGENTS.md, and the selected Skill definition below.
 Languages: English default; Simplified Chinese in README.zh-CN.md, docs/zh-CN/, and same-directory *.zh-CN.md pairs.
 
@@ -14,6 +15,7 @@ Local Blender Skill:
 - Output: editable native Blender space, source comparisons, saved-file editing verification.
 - Optional: walkthrough, physics/USDZ, generated secondary assets, lightweight web preview.
 - No credentials or remote upload needed for local inputs; Argus generation is separate.
+- Repository install: npx skills add realsee-developer/skills --skill realsee-blender-reconstruction --agent codex
 - Local install: npx skills add . --skill realsee-blender-reconstruction --agent codex
 - Included in generated Claude plugin; Arkclaw and install:codex-skills remain Argus-specific.
 
@@ -72,7 +74,8 @@ Explicit CLI lifecycle:
 Credential contract:
 - Required: REALSEE_APP_KEY, REALSEE_APP_SECRET, REALSEE_REGION.
 - Regions: global -> app-gateway.realsee.ai; cn -> app-gateway.realsee.cn.
-- Existing precedence: inherited shell env, then agent-loaded ~/.realsee/credentials, then one-field-per-turn Q&A.
+- Resolution: nonempty inherited shell environment, then an existing agent-loaded ~/.realsee/credentials; configure missing values through the local shell or a secure credential interface without echoing secrets into chat.
+- Persist app credentials only with explicit user authorization, outside the repository in mode-0600 ~/.realsee/credentials. Never persist temporary upload tokens or signed URLs.
 - Never print values or pass them as recorded command arguments.
 - state.json/result.json never store credentials, upload tokens, presigned URLs, or raw provider errors.
 
@@ -101,6 +104,8 @@ Repository map:
 - Codex: docs/codex.md and docs/zh-CN/codex.md
 - Usage: docs/usage.md and docs/zh-CN/usage.md
 - Public distribution: docs/public-distribution.md and docs/zh-CN/public-distribution.md
+- Development: docs/development.md and docs/zh-CN/development.md
+- Release gates: docs/release.md and docs/zh-CN/release.md
 - Generated Claude plugin: plugins/realsee-skills/
 - Generated CN-only Arkclaw copy: arkclaw/argus/
 - Marketplace: .claude-plugin/marketplace.json
@@ -116,11 +121,12 @@ Common maintenance commands:
 - npm run rebuild
 - npm run check:claude-sync
 - npm run check:arkclaw-sync
+- npm run test:repo
 - npm run test:skill
 - npm run ci
 
 Safety:
-- Every real Argus run is a remote upload and requires user consent.
+- Every real Argus run is a remote upload and requires informed user consent for the selected files. File selection alone is not consent; reuse existing authorization for the same input and scope.
 - Do not commit secrets, generated credentials, account identifiers, private URLs, output.zip, extracted artifacts, .env files, or temporary workspaces.
 - Edit .agents/skills/; Claude includes canonical skills, and Arkclaw rebuilds only the Argus source.
 - Do not add internal evidence, private source references, live scorecards, internal process docs, or local absolute paths.

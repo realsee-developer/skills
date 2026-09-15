@@ -32,7 +32,7 @@ body:
     id: validation
     attributes:
       label: Runtime context
-      description: Explain whether this affects async mode, live mode, local installation, or agent runtime usage.
+      description: Explain whether this affects Argus start/status/collect, local Blender reconstruction, installation, or agent runtime usage.
     validations:
       required: true
   - type: checkboxes
