@@ -16,7 +16,7 @@
 
 Realsee Argus 是全球领先的 3D 视觉基础模型。它可从照片、全景图或稀疏视图中，在毫秒级重建具备度量尺度的 3D 结构，包括位姿、深度、点云和可渲染几何。
 
-Realsee Skills 提供 Argus 的 Agent 与 CLI 工作流。Argus Skill 是 `argus` 2.0：处理 1–99 张严格 2:1 全景图，产出 EXR 深度图、一个合并 GLB 点云、逐图相机位姿、可选内参和经过校验的本地结果索引。
+Realsee Skills 提供 Argus 远程处理与本地 Blender 可编辑空间重建两项工作流。Argus Skill 是 `argus` 2.0：处理 1–99 张严格 2:1 全景图，产出 EXR 深度图、一个合并 GLB 点云、逐图相机位姿、可选内参和经过校验的本地结果索引。
 
 Skill ID 仍为 `argus`。2.0 不包含旧版单图 VGGT fallback；需要 1:1 方图、旧版仅单 GLB 结果或旧 H5 preview 行为时，请固定到 `v1.0.2`。
 
@@ -33,7 +33,7 @@ Skill ID 仍为 `argus`。2.0 不包含旧版单图 VGGT fallback；需要 1:1 �
 | [argus](.agents/skills/argus/SKILL.md) | 全景 → 深度、点云和位姿 | Realsee 远程处理 |
 | [realsee-blender-reconstruction](.agents/skills/realsee-blender-reconstruction/README.zh-CN.md) | 已有导出 → 可编辑 Blender 空间；可选漫游与物理导出 | 本地 Blender，本地资料无需 API 凭据 |
 
-在此本地检出目录运行 `npx skills add . --skill realsee-blender-reconstruction --agent codex` 安装 Blender skill。`npm run rebuild` 后 Claude 插件包含两个 skill，Arkclaw 保持 Argus 专用分发。下方凭据和 CLI 章节适用于 `argus`。
+在此本地检出目录运行 `npx skills add . --skill realsee-blender-reconstruction --agent codex` 安装 Blender skill。当前 Claude 插件包含两个 skill；Arkclaw 和 `npm run install:codex-skills` 仅支持 Argus。下方凭据和 CLI 章节适用于 `argus`。
 
 ## 凭证
 
@@ -60,6 +60,7 @@ Codex：
 
 ```bash
 npx skills add realsee-developer/skills --skill argus --agent codex
+npx skills add realsee-developer/skills --skill realsee-blender-reconstruction --agent codex
 ```
 
 任意检测到的 agent host：
@@ -74,10 +75,14 @@ npx skills add realsee-developer/skills --skill argus --agent '*'
 ```bash
 git clone https://github.com/realsee-developer/skills.git
 cd skills
-npm install
+npm ci
 (cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 npm run rebuild
+npx skills add . --skill argus --agent codex
+npx skills add . --skill realsee-blender-reconstruction --agent codex
 ```
+
+本地示例将两项 skill 安装到 Codex；其他宿主请替换 `--agent`，Claude 开发安装见下方指南。Argus 需要 POSIX shell、Node.js 22+、npm 10+、网络与应用凭据；Blender 需要本地可运行的 Blender 和已有资料。`v2.0.0` 仅包含 Argus，Blender 使用当前仓库或本地 checkout。安全配置与上传授权见[使用指南](docs/zh-CN/usage.md#凭据与上传授权)。
 
 宿主细节见[安装总览](docs/zh-CN/install-guides.md)、[Claude Code](docs/zh-CN/claude-plugin.md) 与 [Codex](docs/zh-CN/codex.md)。
 

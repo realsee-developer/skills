@@ -42,7 +42,7 @@ Resolve values in the existing order:
      && [ -n "${REALSEE_REGION:-}" ] && echo present || echo missing
    ```
 
-2. If `~/.realsee/credentials` already exists, load it into the shell and probe presence. Never display the file:
+2. If configuration is incomplete and `~/.realsee/credentials` already exists, load it into the shell and probe presence. Never display the file:
 
    ```bash
    [ -f ~/.realsee/credentials ] && set -a && . ~/.realsee/credentials && set +a; \
@@ -77,11 +77,10 @@ The downloader publishes the directory only after every file passes its manifest
 
 Before starting, ensure the user has selected the files and consented to sending them to Realsee for remote processing. An explicit request to upload those files is sufficient; file selection alone is not consent. If either is missing, ask one question stating that the selected files will leave the machine. Reuse existing consent for the same input and scope. Do not ask a redundant second confirmation.
 
-For repeated images:
+Run lifecycle commands in a shell with credentials resolved in step 2. For repeated images:
 
 ```bash
-set -a; . ~/.realsee/credentials; set +a; \
-  node <skillDir>/scripts/run-argus.mjs start \
+node <skillDir>/scripts/run-argus.mjs start \
   --image "/absolute/path/a.jpg" \
   --image "/absolute/path/b.webp" \
   --workspace "/absolute/workspace-root" \
@@ -91,14 +90,13 @@ set -a; . ~/.realsee/credentials; set +a; \
 For an existing ZIP:
 
 ```bash
-set -a; . ~/.realsee/credentials; set +a; \
-  node <skillDir>/scripts/run-argus.mjs start \
+node <skillDir>/scripts/run-argus.mjs start \
   --zip "/absolute/path/input.zip" \
   --workspace "/absolute/workspace-root" \
   --yes --json
 ```
 
-If credentials already exist in the inherited shell, omit the `source` prefix. Capture `workspace_dir` from the JSON response; it is the durable run handle for later commands.
+When starting a new shell for `status` or `collect`, resolve credentials there before invoking the command. Capture `workspace_dir` from the JSON response; it is the durable run handle for later commands.
 
 `start` validates and packages locally, uploads one ZIP, submits once, persists `task_code`, and returns. It does not poll in the background. Never automatically rerun `start` after `submission_unknown`: the submit operation is not idempotent and a blind retry may create a duplicate task.
 
@@ -107,8 +105,7 @@ If credentials already exist in the inherited shell, omit the `source` prefix. C
 Run one status query:
 
 ```bash
-set -a; . ~/.realsee/credentials; set +a; \
-  node <skillDir>/scripts/run-argus.mjs status \
+node <skillDir>/scripts/run-argus.mjs status \
   --workspace "<workspace_dir>" --json
 ```
 
@@ -119,8 +116,7 @@ Interpret `task_status` as `queued`, `processing`, `succeeded`, or `failed`. Whe
 When the task succeeds, run:
 
 ```bash
-set -a; . ~/.realsee/credentials; set +a; \
-  node <skillDir>/scripts/run-argus.mjs collect \
+node <skillDir>/scripts/run-argus.mjs collect \
   --workspace "<workspace_dir>" --json
 ```
 

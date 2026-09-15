@@ -16,7 +16,7 @@ English | [简体中文](README.zh-CN.md)
 
 Realsee Argus is a world-leading 3D vision foundation model. From a photo, panorama, or sparse views, it reconstructs metric 3D structure in milliseconds: pose, depth, point clouds, and renderable geometry.
 
-Realsee Skills provides the Argus agent and CLI workflow. The Argus Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
+Realsee Skills provides two workflows: Argus remote processing and local editable Blender space reconstruction. The Argus Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
 
 The Skill ID remains `argus`. Version 2.0 has no legacy single-image VGGT fallback. Pin `v1.0.2` when a workflow needs square 1:1 input, the old single-GLB-only result, or the old H5 preview behavior.
 
@@ -33,7 +33,7 @@ The installable Skill 2.0 contract remains intentionally specific: **1–99 loca
 | [argus](.agents/skills/argus/SKILL.md) | Panoramas → depth, point cloud, poses | Realsee remote processing |
 | [realsee-blender-reconstruction](.agents/skills/realsee-blender-reconstruction/README.md) | Existing exports → editable Blender space; optional walkthrough and physics export | Local Blender, no API credentials for local inputs |
 
-Install the Blender skill from this local checkout with `npx skills add . --skill realsee-blender-reconstruction --agent codex`. The Claude plugin includes both skills after `npm run rebuild`; Arkclaw remains the Argus-specific distribution. The Argus credential and CLI sections below apply to `argus`.
+Install the Blender skill from this local checkout with `npx skills add . --skill realsee-blender-reconstruction --agent codex`. The current Claude plugin includes both skills; Arkclaw and `npm run install:codex-skills` support only Argus. The Argus credential and CLI sections below apply to `argus`.
 
 ## Credentials
 
@@ -60,6 +60,7 @@ Codex:
 
 ```bash
 npx skills add realsee-developer/skills --skill argus --agent codex
+npx skills add realsee-developer/skills --skill realsee-blender-reconstruction --agent codex
 ```
 
 Any detected agent host:
@@ -74,10 +75,14 @@ Install from a local checkout:
 ```bash
 git clone https://github.com/realsee-developer/skills.git
 cd skills
-npm install
+npm ci
 (cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 npm run rebuild
+npx skills add . --skill argus --agent codex
+npx skills add . --skill realsee-blender-reconstruction --agent codex
 ```
+
+The local example installs both skills into Codex; change `--agent` for another host, or follow the Claude development guide below. Argus requires a POSIX shell, Node.js 22+, npm 10+, network access, and app credentials; Blender requires working local Blender and existing source inputs. `v2.0.0` includes only Argus; install Blender from the current repository or a local checkout. See the [usage guide](docs/usage.md#credentials-and-upload-consent) for secure setup and upload consent.
 
 See [the install overview](docs/install-guides.md), [Claude Code](docs/claude-plugin.md), and [Codex](docs/codex.md) for host-specific details.
 

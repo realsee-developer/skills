@@ -2,12 +2,13 @@
 
 [English](../development.md) | 简体中文
 
-本仓库是 Realsee agent skills 的 Node.js 工作区。Argus 2.0 runtime 代码与 canonical contracts 位于 `.agents/skills/argus/`。
+本仓库在 `.agents/skills/` 下维护 Realsee agent skills：Argus 包含 Node.js 运行时与 API 合同；`realsee-blender-reconstruction` 包含本地建模指令与参考资料。
 
 ## 要求
 
 - Node.js 22 或更高版本
 - npm 10 或更高版本
+- 实际验证重建指令需要本地 Blender；本地建模无需 Realsee 凭据
 - 不提交 `.env` 文件或生成的私有产物
 
 ## 本地检查
@@ -28,6 +29,7 @@ npm run validate:repo-boundary
 npm run validate:skills
 npm run rebuild
 npm run validate:channel-metadata
+npm run test:repo
 npm run test:skill
 ```
 
@@ -38,14 +40,15 @@ npm run test:skill
 | `npm run validate:ai` | 修改 `llms.txt` 或仓库入口后。 |
 | `npm run validate:docs` | 修改双语仓库文档后。 |
 | `npm run validate:skills` | 修改 skill metadata、README 或 references 后。 |
+| `npm run test:repo` | 修改仓库工具或分发行为后。 |
 | `npm run test:skill` | 修改 `argus` 代码后。 |
 | `npm run rebuild` | 重新生成并字节校验 Claude plugin 与 CN-only Arkclaw copy。 |
-| `npm run doctor` | 通过 `doctor:local` 检查本地前置条件。 |
-| `npm run doctor:live` | 检查 live Argus 前置条件和环境。 |
+| `npm run doctor` | 通过 `doctor:local` 检查 Argus 与仓库前置条件，不检查 Blender。 |
+| `npm run doctor:live -- --skill argus --channel preview` | 仅检查所需配置是否存在；无副作用的能力探测尚未实现，stable 模式会因缺少该验证而失败。 |
 
 ## Skill 工作流
 
-单一事实源是 `.agents/skills/argus/`。Claude plugin 生成到 `plugins/realsee-skills/`；Arkclaw 包生成到 `arkclaw/argus/`，对运行区域、示例下载和相应说明应用确定性的 CN-only overlay。
+所有 skill 的规范源码在 `.agents/skills/`。Claude 包含两项 skill，Arkclaw 仅包含 Argus。Claude plugin 生成到 `plugins/realsee-skills/`；Arkclaw 包生成到 `arkclaw/argus/`，对运行区域、示例下载和相应说明应用确定性的 CN-only overlay。
 
 修改 `argus` 时：
 
@@ -56,12 +59,14 @@ npm run test:skill
 
 不要直接编辑两个生成 copy。新增 runtime 行为应通过 `ArgusTaskPort` 与 `ObjectTransferPort` fake 测试，并覆盖输入、生命周期、输出合同与幂等。
 
+修改 Blender 指令时，编辑 `.agents/skills/realsee-blender-reconstruction/` 及双语参考资料，然后运行 `npm run validate:skills`、`npm run rebuild` 和 `npm run ci`。文档检查不能证明建模行为：改变建模流程时，使用合适的本地资料验证受影响的指令，并报告实际验证范围。此纯指令 skill 不要求 npm 运行时或远程服务 fake。
+
 ## 配置
 
-公开文档只使用这些环境变量名：
+Argus 配置使用以下环境变量：
 
 - `REALSEE_APP_KEY`
 - `REALSEE_APP_SECRET`
 - `REALSEE_REGION`
 
-继续支持现有 agent-driven `~/.realsee/credentials` 加载流程。不要提交真实值、账号标识、内部 URL、生成凭证、`output.zip`、解压产物或临时 workspace。
+继承环境变量、已有 `~/.realsee/credentials` 和缺失配置的本地安全设置方式见 [Argus 凭据配置](usage.md)。只有用户明确授权才可在仓库外以 0600 权限保存应用凭据，临时上传令牌和签名 URL 不得持久化。不要提交真实值、账号标识、内部 URL、生成凭证、`output.zip`、解压产物或临时 workspace。
