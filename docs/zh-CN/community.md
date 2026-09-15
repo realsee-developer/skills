@@ -6,25 +6,19 @@
 
 ## 报告 Bug
 
-使用 bug report issue template，并包含：
-
-- Skill 名称，通常是 `argus`
-- 失败的命令
-- 失败的生命周期命令（`start`、`status` 或 `collect`）
-- 已脱敏的错误输出
-- 操作系统、Node.js 版本和 npm 版本
+使用 `Bug report` issue 模板，附 skill 名称、安装的修订版本、宿主、操作系统、复现步骤和脱敏错误。具体要求见[支持指南](../../SUPPORT.zh-CN.md)：Argus 报告需要生命周期及 Node.js/npm 环境；Blender 报告需要 Blender/集成版本、输入导出类型、失败步骤及预期和实际交付物。
 
 不要包含 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET`、生成凭证、内部 URL、账号标识或私有结果链接。
 
 ## 能力反馈
 
-当受支持工作流缺少公开能力、文档不清晰或 runtime 行为阻塞集成时，使用 capability request template。请包含：
+当受支持工作流缺少公开能力、文档不清晰或 runtime 行为阻塞集成时，使用 `Capability request` 模板。请包含：
 
 - 用户工作流
 - 期望输入和输出
 - 是否需要远程上传
 - 相关公开 API 参考或能力文档
-- 问题涉及本地 lifecycle state、live usage、产物校验、安装还是 agent runtime
+- 问题涉及Argus 生命周期状态或真实运行、Blender 重建、产物校验还是安装
 
 ## Pull Requests
 
