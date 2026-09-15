@@ -20,7 +20,6 @@ Plugin 包含 `examples/manifest.json`，但不包含全景 JPEG。需要官方�
 ```bash
 git clone https://github.com/realsee-developer/skills.git
 cd skills
-npm ci
 (cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 npm run rebuild
 claude --plugin-dir ./plugins/realsee-skills
@@ -71,4 +70,4 @@ Start 前必须取得上传同意。`result_status: partial` 时，即使 CLI �
 
 ## 发布策略
 
-`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.0.0` 包含 Argus，不包含 Blender skill；Blender 使用当前仓库或已核对的本地 checkout。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。
+`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.1.0` 包含两项 skill，旧版 `v2.0.0` 标签仅包含 Argus。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。

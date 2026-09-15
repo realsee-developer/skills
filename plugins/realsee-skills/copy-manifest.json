@@ -74,12 +74,12 @@
     {
       "source": ".agents/skills/argus/README.md",
       "target": "plugins/realsee-skills/skills/argus/README.md",
-      "size": 6483
+      "size": 6485
     },
     {
       "source": ".agents/skills/argus/README.zh-CN.md",
       "target": "plugins/realsee-skills/skills/argus/README.zh-CN.md",
-      "size": 6205
+      "size": 6207
     },
     {
       "source": ".agents/skills/argus/references/algorithm-io.md",

@@ -100,7 +100,7 @@ The file-token response is an in-memory upload lease. `bucket + region + prefix`
 
 `npm run ci` runs secret scanning, bilingual-doc checks, AI-index checks, repository-boundary checks, Skill validation, distribution regeneration and consistency checks, release metadata validation, repository tests (`test:repo`), and Argus runtime tests (`test:skill`). These checks validate packaging and contracts; they do not execute a Blender reconstruction or a live Argus task.
 
-`release-channel.json` currently records Argus 2.0.0 as stable with a passed stable gate. It records Argus release readiness, not Blender acceptance. `v1.0.2` remains the frozen legacy line; the `v2.0.0` tag contains Argus only. See the [release guide](docs/release.md) for current gate requirements and the historical 2.0 promotion sequence.
+`release-channel.json` currently records Argus 2.1.0 as stable with a passed stable gate. It records Argus release readiness, not Blender acceptance. `v1.0.2` remains the frozen legacy line; `v2.1.0` packages both skills, while the `v2.0.0` tag contains Argus only. See the [release guide](docs/release.md) for current gate requirements and the historical 2.0 promotion sequence.
 
 ## Generated files
 
