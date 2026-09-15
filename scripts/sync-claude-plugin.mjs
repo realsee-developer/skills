@@ -32,7 +32,7 @@ const pluginPackage = {
 };
 
 // No userConfig: the skill resolves credentials at runtime by asking the user
-// in chat and (with their consent) persisting them to ~/.realsee/credentials.
+// to configure missing values locally, with opt-in ~/.realsee/credentials storage.
 // See .agents/skills/argus/SKILL.md.
 const pluginMetadata = {
   $schema: 'https://json.schemastore.org/claude-code-plugin-manifest.json',
