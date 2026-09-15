@@ -9,14 +9,15 @@ This repository provides two skills: `argus` uploads panoramas to Realsee for re
 | Host | Install | Skill handle | Guide |
 | --- | --- | --- | --- |
 | Claude Code | `/plugin marketplace add realsee-developer/skills`, then `/plugin install realsee-skills@realsee-developer-skills` | `realsee-skills:argus`, `realsee-skills:realsee-blender-reconstruction` | [Claude Code](claude-plugin.md) |
-| Codex | `npx skills add realsee-developer/skills --skill argus --agent codex` | `$argus`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
-| Any detected host | `npx skills add realsee-developer/skills --skill argus --agent '*'` | Host-specific | This guide |
+| Codex | `npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent codex` | `$argus`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
+| Any detected host | `npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent '*'` | Host-specific | This guide |
 | Arkclaw | Published Arkclaw ZIP | `argus` | CN-only |
 
 For the active host only:
 
 ```bash
-npx skills add realsee-developer/skills --skill argus
+npx skills add realsee-developer/skills@v2.1.0 --skill argus
+npx skills add realsee-developer/skills@v2.1.0 --skill realsee-blender-reconstruction
 ```
 
 The `npx skills` commands in the table install Argus; replace `--skill argus` with `--skill realsee-blender-reconstruction` to install Blender. The current Claude plugin includes both skills; Arkclaw and `npm run install:codex-skills` install only Argus.
@@ -27,11 +28,7 @@ Argus requires a POSIX shell, Node.js 22+, npm 10+, npm registry and regional Ga
 
 ## Reproducible versions
 
-Argus can be pinned to `v2.0.0`. That tag does not contain the Blender skill; install Blender from the current repository or a local checkout pinned to a verified revision containing it.
-
-```bash
-npx skills add realsee-developer/skills@v2.0.0 --skill argus
-```
+Pin `v2.1.0` for either skill. The older `v2.0.0` tag contains only Argus.
 
 Pin `v1.0.2` only for legacy square 1:1 input, the old single-GLB output, or legacy preview behavior:
 
