@@ -11,6 +11,7 @@ const skillPath = join(pluginRoot, 'skills', 'argus');
 const skillFile = join(skillPath, 'SKILL.md');
 const skillLicense = join(skillPath, 'LICENSE');
 const brandManifest = join(skillPath, 'assets', 'brand', 'manifest.json');
+const requiredSkillNames = ["argus","realsee-blender-reconstruction"];
 const forbiddenLocalPath = ['', 'Users', ''].join('/');
 
 async function exists(path) {
@@ -91,6 +92,17 @@ const files = await walk(pluginRoot);
 for (const file of files) {
   if (await containsForbiddenLocalPath(file)) {
     throw new Error('forbidden local user path in ' + relative(pluginRoot, file));
+  }
+}
+
+for (const name of requiredSkillNames) {
+  const path = join(pluginRoot, 'skills', name);
+  if (!(await exists(join(path, 'LICENSE')))) {
+    throw new Error('missing skill license: skills/' + name + '/LICENSE');
+  }
+  const text = await readFile(join(path, 'SKILL.md'), 'utf8');
+  if (parseFrontmatterName(text) !== name) {
+    throw new Error('skill frontmatter name must match directory: ' + name);
   }
 }
 

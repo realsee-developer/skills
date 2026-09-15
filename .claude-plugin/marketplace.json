@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "realsee-skills",
-      "description": "Realsee Argus for Claude Code: reconstruct 1–99 exact 2:1 panoramas into validated depth, a merged GLB point cloud, poses, and optional intrinsics.",
+      "description": "Realsee skills for Claude Code: Argus panorama reconstruction and local editable Blender space modeling.",
       "author": {
         "name": "Realsee",
         "url": "https://github.com/realsee-developer"
@@ -18,7 +18,18 @@
       "category": "development",
       "homepage": "https://argus.realsee.ai/",
       "license": "LicenseRef-Realsee-SDK",
-      "keywords": ["realsee", "argus", "skill", "panorama", "metric-3d", "glb", "depth-map", "camera-pose"]
+      "keywords": [
+        "realsee",
+        "argus",
+        "skill",
+        "panorama",
+        "metric-3d",
+        "glb",
+        "depth-map",
+        "camera-pose",
+        "blender",
+        "editable-space"
+      ]
     }
   ]
 }

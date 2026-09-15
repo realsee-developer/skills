@@ -2,9 +2,23 @@
 
 [English](../usage.md) | 简体中文
 
-本仓库提供可安装到 Claude Code、Codex 和其他 `npx skills` 支持宿主的 `argus` Skill。
+本仓库提供可安装到 Claude Code、Codex 和其他 `npx skills` 支持宿主的 `argus` 与 `realsee-blender-reconstruction`。
 
-官方资料：[Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。这些站点可能展示更广的照片和产品工作流；本文所述 Skill 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
+## 本地 Blender 空间重建
+
+已有本地 Realsee 导出、希望得到可编辑原生场景时，使用 [realsee-blender-reconstruction](../../.agents/skills/realsee-blender-reconstruction/README.zh-CN.md)，无需 Argus 凭据或远程任务。在本检出目录运行：
+
+```sh
+npx skills add . --skill realsee-blender-reconstruction --agent codex
+```
+
+随后打开建模项目并发送：
+
+> 使用 $realsee-blender-reconstruction 读取 data/，优先重建有证据的空间结构和连接，保存 output/reconstruction_native.blend，完成来源对照并在重开后实际验证编辑。
+
+该 skill 包含按需启用的漫游、物理/USDZ、图文生成资产与网页预览指导。`npm run install:codex-skills` 仍为 Argus 专用安装器。本文其余部分介绍 Argus 远程处理。
+
+官方资料：[Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。这些站点可能展示更广的照片和产品工作流；Argus Skill 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
 
 ## 安装
 
