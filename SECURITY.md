@@ -35,4 +35,4 @@ Argus uploads require consent for the selected input and scope; selecting files 
 
 ## Supported Versions
 
-Current release status is recorded in `release-channel.json` (Argus 2.1.0 is stable). Security fixes target the current `main` branch unless maintainers document a stable branch policy.
+Current release status is recorded in `release-channel.json` (Argus 2.2.0 is stable). Security fixes target the current `main` branch unless maintainers document a stable branch policy.

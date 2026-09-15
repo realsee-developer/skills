@@ -1,79 +1,40 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const root = resolve(import.meta.dirname, '..');
-const requiredEntries = [
-  'AGENTS.md',
-  'ARCHITECTURE.md',
-  'SUPPORT.md',
-  'README.md',
-  'README.zh-CN.md',
-  'docs/install-guides.md',
-  'docs/zh-CN/install-guides.md',
-  'docs/claude-plugin.md',
-  'docs/zh-CN/claude-plugin.md',
-  'docs/codex.md',
-  'docs/zh-CN/codex.md',
-  'docs/usage.md',
-  'docs/zh-CN/usage.md',
-  'docs/public-distribution.md',
-  '.agents/skills/argus/SKILL.md',
-  '.agents/skills/argus/README.md',
-  '.agents/skills/argus/README.zh-CN.md',
-  '.agents/skills/argus/LICENSE',
-  '.agents/skills/argus/references/argus-gateway-openapi.json',
-  '.agents/skills/argus/references/algorithm-io.md',
-  '.agents/skills/argus/references/algorithm-io.zh-CN.md',
-  '.agents/skills/argus/references/argus-output.schema.json',
-  '.agents/skills/argus/references/migration-v2.md',
-  '.agents/skills/argus/examples/manifest.json',
-  '.agents/skills/argus/references/examples.md',
-  '.agents/skills/argus/references/examples.zh-CN.md',
-  '.agents/skills/argus/assets/brand/manifest.json',
-  '.agents/skills/argus/assets/brand/argus-logo-color.png',
-  '.agents/skills/argus/assets/brand/argus-mark-color.png',
-  '.agents/skills/argus/assets/brand/argus-paper-teaser.png',
-  '.agents/skills/argus/assets/brand/product-ai-powered.jpg',
-  '.agents/skills/argus/scripts/run-argus.mjs',
-  '.agents/skills/argus/scripts/download-examples.mjs',
-  '~/.realsee/credentials',
-  '.claude-plugin/marketplace.json',
-  'npx skills add realsee-developer/skills --skill argus',
-  '--agent claude-code',
-  '--agent codex',
-  'npm run rebuild',
-  'npm run setup:local',
-  'npm run smoke',
-  'npm run ci',
-  'run-argus.mjs start',
-  'run-argus.mjs status',
-  'run-argus.mjs collect',
-  'download-examples.mjs --region cn --output /absolute/example-output',
-  'check:arkclaw-sync',
-  'remote upload',
-  'user consent',
-  'https://argus.realsee.ai/',
-  'https://h5.realsee.ai/argus',
-  'https://argus-paper.realsee.ai/',
-  'https://developer.realsee.ai/'
-];
 
-export function validateAiIndexText(text) {
-  return requiredEntries
-    .filter((entry) => !text.includes(entry))
-    .map((entry) => `llms.txt must reference ${entry}`);
-}
-
-if (isCliEntry()) {
-  const text = await readFile(resolve(root, 'llms.txt'), 'utf8');
-  const failures = validateAiIndexText(text);
-  if (failures.length) {
-    throw new Error(`AI index validation failed:\n${failures.map((failure) => `- ${failure}`).join('\n')}`);
+export async function validateAiIndex(repoRoot) {
+  const text = await readFile(join(repoRoot, 'llms.txt'), 'utf8');
+  const withoutCode = text.replace(/```[\s\S]*?```/gu, '');
+  const links = [...withoutCode.matchAll(/\]\(([^\s)]+)\)/gu)].map((match) => match[1]);
+  const paths = new Set(links
+    .filter((link) => !/^[a-z][a-z\d+.-]*:/iu.test(link))
+    .map((link) => decodeURIComponent(link.split('#')[0]))
+    .filter(Boolean));
+  const required = ['AGENTS.md', 'docs/install-guides.md', 'docs/usage.md'];
+  for (const entry of await readdir(join(repoRoot, '.agents', 'skills'), { withFileTypes: true })) {
+    if (entry.isDirectory()) required.push(`.agents/skills/${entry.name}/SKILL.md`);
   }
-  console.log('AI index validation ok');
+
+  const failures = required
+    .filter((path) => !paths.has(path))
+    .map((path) => `llms.txt must link to ${path}`);
+  for (const path of paths) {
+    try {
+      if (!(await stat(resolve(repoRoot, path))).isFile()) {
+        failures.push(`llms.txt link is not a file: ${path}`);
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      failures.push(`llms.txt link does not exist: ${path}`);
+    }
+  }
+  return failures;
 }
 
-function isCliEntry() {
-  return process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const failures = await validateAiIndex(root);
+  if (failures.length) throw new Error(`AI index validation failed:\n${failures.join('\n')}`);
+  console.log('AI index validation ok');
 }

@@ -100,7 +100,7 @@ Gateway 基础地址与凭证/region 合同不变，只替换 Argus 接口：
 
 `npm run ci` 依次运行 secret 扫描、双语文档、AI 索引、仓库边界、Skill 校验、分发生成与一致性检查、发布元数据校验、仓库测试（`test:repo`）和 Argus 运行时测试（`test:skill`）。这些检查验证打包与合同，不执行 Blender 重建或真实 Argus 任务。
 
-`release-channel.json` 当前记录 Argus 2.1.0 为 stable，stable gate 为 passed；它记录 Argus 发布就绪状态，不代表 Blender 验收。`v1.0.2` 保持为冻结旧版本，`v2.1.0` 打包两项 skill，`v2.0.0` 标签仅包含 Argus。当前门禁要求与首次 2.0 发布历史见[发布指南](docs/zh-CN/release.md)。
+`release-channel.json` 当前记录 Argus 2.2.0 为 stable，stable gate 为 passed；它记录 Argus 发布就绪状态，不代表 Blender 验收。`v1.0.2` 保持为冻结旧版本，`v2.2.0` 打包两项 skill，`v2.0.0` 标签仅包含 Argus。当前门禁要求与首次 2.0 发布历史见[发布指南](docs/zh-CN/release.md)。
 
 ## 生成文件
 
