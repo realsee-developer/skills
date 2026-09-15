@@ -9,14 +9,15 @@
 | 宿主 | 安装 | Skill 句柄 | 指南 |
 | --- | --- | --- | --- |
 | Claude Code | `/plugin marketplace add realsee-developer/skills`，然后 `/plugin install realsee-skills@realsee-developer-skills` | `realsee-skills:argus`, `realsee-skills:realsee-blender-reconstruction` | [Claude Code](claude-plugin.md) |
-| Codex | `npx skills add realsee-developer/skills --skill argus --agent codex` | `$argus`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
-| 所有检测到的宿主 | `npx skills add realsee-developer/skills --skill argus --agent '*'` | 按宿主确定 | 本指南 |
+| Codex | `npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent codex` | `$argus`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
+| 所有检测到的宿主 | `npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent '*'` | 按宿主确定 | 本指南 |
 | Arkclaw | 发布的 Arkclaw ZIP | `argus` | 仅 CN |
 
 只装到当前宿主：
 
 ```bash
-npx skills add realsee-developer/skills --skill argus
+npx skills add realsee-developer/skills@v2.1.0 --skill argus
+npx skills add realsee-developer/skills@v2.1.0 --skill realsee-blender-reconstruction
 ```
 
 表中 `npx skills` 命令安装 Argus；安装 Blender 时将 `--skill argus` 替换为 `--skill realsee-blender-reconstruction`。Claude 当前插件包含两项 skill；Arkclaw 与 `npm run install:codex-skills` 只安装 Argus。
@@ -27,11 +28,7 @@ Argus 需要 POSIX shell、Node.js 22+、npm 10+、npm registry 与区域 Gatewa
 
 ## 可复现版本
 
-Argus 可固定到 `v2.0.0`。该标签不包含 Blender skill；Blender 请使用当前仓库版本或固定到已核对包含它的本地 checkout。
-
-```bash
-npx skills add realsee-developer/skills@v2.0.0 --skill argus
-```
+两项 skill 均可固定到 `v2.1.0`。旧版 `v2.0.0` 标签仅包含 Argus。
 
 只有旧 1:1 方图、旧版单 GLB 输出或旧 preview 行为才固定 `v1.0.2`：
 

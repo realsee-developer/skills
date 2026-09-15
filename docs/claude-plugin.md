@@ -20,7 +20,6 @@ It carries `examples/manifest.json`, but no panorama JPEGs. To use official samp
 ```bash
 git clone https://github.com/realsee-developer/skills.git
 cd skills
-npm ci
 (cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 npm run rebuild
 claude --plugin-dir ./plugins/realsee-skills
@@ -71,4 +70,4 @@ The agent must obtain upload consent before start. For `result_status: partial`,
 
 ## Release policy
 
-`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.0.0` contains Argus but not the Blender skill; use the current repository or a verified local checkout for Blender. Pin `v1.0.2` for the legacy square or single-GLB workflow.
+`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.1.0` includes both skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.

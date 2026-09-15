@@ -1,182 +1,125 @@
-<p align="center">
-  <a href="https://argus.realsee.ai/">
-    <img src=".agents/skills/argus/assets/brand/argus-logo-color.png" alt="Realsee Argus" width="560">
-  </a>
-</p>
+# Realsee Skills
 
-# Realsee Skills — Argus 与 Blender 工作流
+面向 **全景重建** 与 **Blender 可编辑空间建模** 的 Agent Skills，支持 Claude Code、Codex，以及 `npx skills` 支持的其他宿主。
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
-[![Release gate](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/release-gate.yml?branch=main&label=release%20gate&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/release-gate.yml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/codeql.yml?branch=main&label=CodeQL&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/codeql.yml)
 [![Latest release](https://img.shields.io/github/v/release/realsee-developer/skills?display_name=tag&style=flat-square)](https://github.com/realsee-developer/skills/releases)
-![Node >=22](https://img.shields.io/badge/node-%3E%3D22-339933?style=flat-square)
 
 [English](README.md) | 简体中文
 
-Realsee Argus 是全球领先的 3D 视觉基础模型。它可从照片、全景图或稀疏视图中，在毫秒级重建具备度量尺度的 3D 结构，包括位姿、深度、点云和可渲染几何。
+[选择能力](#选择能力) · [安装](#安装) · [使用](#使用) · [文档导航](#文档导航) · [版本](#版本) · [开发维护](#开发维护)
 
-Realsee Skills 提供 Argus 远程处理与本地 Blender 可编辑空间重建两项工作流。Argus Skill 是 `argus` 2.0：处理 1–99 张严格 2:1 全景图，产出 EXR 深度图、一个合并 GLB 点云、逐图相机位姿、可选内参和经过校验的本地结果索引。
+## 选择能力
 
-Skill ID 仍为 `argus`。2.0 不包含旧版单图 VGGT fallback；需要 1:1 方图、旧版仅单 GLB 结果或旧 H5 preview 行为时，请固定到 `v1.0.2`。
+| 分类 | Skill | 输入 → 输出 | 运行要求 |
+| --- | --- | --- | --- |
+| 全景重建 | [Argus](.agents/skills/argus/README.zh-CN.md) | 1–99 张本地 2:1 全景图 → EXR 深度图、合并 GLB 点云、相机位姿、可选内参与校验后的结果索引 | Realsee 远程服务；应用凭据与上传授权；POSIX shell、Node.js 22+、npm 10+ |
+| 可编辑空间建模 | [Blender 重建](.agents/skills/realsee-blender-reconstruction/README.zh-CN.md) | 已有扫描导出、点云、CAD 或全景图 → 原生可编辑 `.blend` 场景 | 本地 Blender，以及可读取文件、执行命令的 Agent；本地建模无需 Argus 凭据 |
 
-[Argus 官网](https://argus.realsee.ai/) · [交互 Demo](https://h5.realsee.ai/argus) · [研究主页](https://argus-paper.realsee.ai/) · [开发者平台](https://developer.realsee.ai/)
-
-官方公开证据包括 1.31B 参数模型，以及 Realsee3D 基准的 10K 个完整室内场景、95,962 个房间单元和 299,073 个全景视点。这些是模型与基准数据，不是 Skill 的输入数量上限。
-
-可安装的 Skill 2.0 仍保持明确边界：**1–99 张本地 RGB8 且严格 2:1 的全景图**。官网展示的照片、稀疏视图或其他产品能力不属于本 CLI 的公开接口。
-
-## Skills
-
-| Skill | 能力 | 执行方式 |
-| --- | --- | --- |
-| [argus](.agents/skills/argus/SKILL.md) | 全景 → 深度、点云和位姿 | Realsee 远程处理 |
-| [realsee-blender-reconstruction](.agents/skills/realsee-blender-reconstruction/README.zh-CN.md) | 已有导出 → 可编辑 Blender 空间；可选漫游与物理导出 | 本地 Blender，本地资料无需 API 凭据 |
-
-在此本地检出目录运行 `npx skills add . --skill realsee-blender-reconstruction --agent codex` 安装 Blender skill。当前 Claude 插件包含两个 skill；Arkclaw 和 `npm run install:codex-skills` 仅支持 Argus。下方凭据和 CLI 章节适用于 `argus`。
-
-## 凭证
-
-Argus 的所有安装路径继续使用不变的运行时合同：
-
-| Key | 用途 | 敏感 |
-| --- | --- | --- |
-| `REALSEE_APP_KEY` | Realsee Open Platform APP_KEY | 是 |
-| `REALSEE_APP_SECRET` | Realsee Open Platform APP_SECRET | 是 |
-| `REALSEE_REGION` | `global`（`app-gateway.realsee.ai`）或 `cn`（`app-gateway.realsee.cn`） | 否 |
-
-在 [my.realsee.ai](https://my.realsee.ai/?utm_source=github) 或 [my.realsee.cn](https://my.realsee.cn/?utm_source=github) 注册，然后按 [SUPPORT.zh-CN.md](SUPPORT.zh-CN.md) 的渠道申请 Argus Gateway 能力。
+需要从全景图生成深度、点云和位姿时，选择 **Argus**；需要基于已有资料创建或修改可编辑场景时，选择 **Blender 重建**。Argus 产物可以作为重建资料，但运行一项 skill 不会自动运行另一项。
 
 ## 安装
 
-Claude Code marketplace：
+### Claude Code — 安装两项 skill
+
+在 Claude Code 中运行：
 
 ```text
 /plugin marketplace add realsee-developer/skills
 /plugin install realsee-skills@realsee-developer-skills
 ```
 
-Codex：
+当前插件提供 `realsee-skills:argus` 和 `realsee-skills:realsee-blender-reconstruction`。详见 [Claude Code 指南](docs/zh-CN/claude-plugin.md)。
+
+### Codex — 按需选择
+
+安装需要的 skill，或执行两条命令安装全部：
 
 ```bash
 npx skills add realsee-developer/skills --skill argus --agent codex
 npx skills add realsee-developer/skills --skill realsee-blender-reconstruction --agent codex
 ```
 
-任意检测到的 agent host：
+[Codex 指南](docs/zh-CN/codex.md)包含本地检出安装方法。
 
-```bash
-npx skills add realsee-developer/skills --skill argus
-npx skills add realsee-developer/skills --skill argus --agent '*'
-```
+### 其他安装方式
 
-从本地 checkout 安装：
+- **其他 Agent 宿主**：省略 `--agent codex` 以选择宿主，或使用 `--agent '*'` 安装到所有检测到的宿主。
+- **本地检出**：在包含目标 skill 的仓库目录执行 `npx skills add . --skill <skill-id> --agent codex`。
+- **Arkclaw**：Release 附件 `argus.zip` 仅包含 Argus，仅支持 CN 区域。
+- **仓库 Codex 安装器**：`npm run install:codex-skills` 仅安装 Argus，会替换已有 Argus 目标目录。
 
-```bash
-git clone https://github.com/realsee-developer/skills.git
-cd skills
-npm ci
-(cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
-npm run rebuild
-npx skills add . --skill argus --agent codex
-npx skills add . --skill realsee-blender-reconstruction --agent codex
-```
+依赖、安装路径和版本固定方式见[安装总览](docs/zh-CN/install-guides.md)。
 
-本地示例将两项 skill 安装到 Codex；其他宿主请替换 `--agent`，Claude 开发安装见下方指南。Argus 需要 POSIX shell、Node.js 22+、npm 10+、网络与应用凭据；Blender 需要本地可运行的 Blender 和已有资料。`v2.0.0` 仅包含 Argus，Blender 使用当前仓库或本地 checkout。安全配置与上传授权见[使用指南](docs/zh-CN/usage.md#凭据与上传授权)。
+## 使用
 
-宿主细节见[安装总览](docs/zh-CN/install-guides.md)、[Claude Code](docs/zh-CN/claude-plugin.md) 与 [Codex](docs/zh-CN/codex.md)。
+### Argus：全景图 → 重建数据
 
-## 官方示例清单
+示例请求：
 
-每种 Argus Skill 安装方式都包含 `examples/manifest.json`，其中列出 CN 和 Global 两组第一方示例的 CDN URL、字节数和 SHA-256。当前发布树和所有生成的 Skill 分发包都不包含全景 JPEG。请把一组示例下载到 Skill 目录外一个尚不存在的绝对路径：
+> 使用 $argus，将 /data/living-room.jpg 和 /data/hall.jpg 上传到 Realsee 处理，启动任务并报告工作区路径。
 
-```bash
-node <skillDir>/scripts/download-examples.mjs \
-  --region cn \
-  --output /absolute/example-output
-```
+输入必须是 JPEG、PNG 或 WebP，RGB8，宽高比严格为 2:1。流程包含三个显式命令：`start`、`status`、`collect`。收集产物包含 `output.zip`、算法 manifest 和经过校验的本地 `result.json` 索引；部分成功时会列出缺失图片。
 
-请选择与 `REALSEE_REGION` 匹配的区域。只有每个文件都通过 manifest 校验后，下载器才会发布输出目录。之后运行 Argus 属于独立的远程上传，仍须取得用户同意。
+Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET`、`REALSEE_REGION`（`global` 或 `cn`）。在本地安全配置秘密，上传前取得用户同意。配置方法和 CLI 示例见[凭据与使用指南](docs/zh-CN/usage.md#凭据与上传授权)。
 
-## 直接使用 CLI
+[官方示例全景图](.agents/skills/argus/references/examples.zh-CN.md)需要单独下载，不随 skill 打包。下载示例不等于授权上传。
 
-从多张图片启动：
+### Blender：已有资料 → 可编辑场景
 
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs start \
-  --image /absolute/path/a.jpg \
-  --image /absolute/path/b.webp \
-  --workspace /absolute/workspace-root \
-  --yes --json
-```
+示例请求：
 
-或从一个现成 ZIP 启动：
+> 使用 $realsee-blender-reconstruction，读取 data/ 中的导出资料，重建有证据支持的可编辑 Blender 空间，保存 output/reconstruction_native.blend，并在重新打开后验证几何和材质编辑。
 
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs start \
-  --zip /absolute/path/input.zip \
-  --workspace /absolute/workspace-root \
-  --yes --json
-```
+优先完成布局、墙体、地面、顶面、开口与空间连接，再细化用户要求的家具、材质和光照。可按需增加漫游、物理导出和网页预览。
 
-记录返回的 `workspace_dir`。每次状态调用只查询一次：
+资料准备、运行要求和交付物见 [Blender 指南](.agents/skills/realsee-blender-reconstruction/README.zh-CN.md)。在 Claude Code 中使用上方带插件前缀的 skill 名称。
 
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs status \
-  --workspace /absolute/workspace-root/<run-dir> --json
-```
+## 文档导航
 
-成功后收集：
+### 用户指南
 
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs collect \
-  --workspace /absolute/workspace-root/<run-dir> --json
-```
-
-不再有 detached poller、`--async` 或 `--resume`。完成后的 collect 可幂等重复调用。
-
-## 输入与输出
-
-输入为 1–99 张 JPEG、PNG 或 WebP RGB8 全景图，严格满足 `width == 2 * height`。建议至少 2048×1024，更低分辨率只产生警告。`--image` 可重复，并与 `--zip` 互斥。ZIP 模式会先安全解压、校验、规范化为 Unicode NFC、排序并重新打包。
-
-远端 `task_status`（`queued`、`processing`、`succeeded`、`failed`）与算法 `result_status`（`success`、`partial`、`error`）相互独立。partial 退出码为 0，但包含醒目警告和非空 `missing_ids`；error 非零退出。
-
-收集器保留 `output.zip`，安全解压，并写入以下经过校验的本地产物矩阵：
-
-| 产物 | 可用性 |
+| 主题 | 文档 |
 | --- | --- |
-| `output.json` | 必需的算法 manifest。 |
-| `pointcloud/merged.glb` | 成功重建图片对应的一个合并点云，坐标系为 `right-handed, Y-up`。 |
-| `depth/*_depth.exr` | 每张成功图片一份米制浮点深度图。 |
-| `pose/*_pose.json` | 每张成功图片一份相机位姿。 |
-| `intrinsics/*_intrinsics.json` | 可选；不存在是合法结果。 |
-| `result.json` | 状态、路径、警告和 `missing_ids` 的本地索引。 |
+| 安装与宿主支持 | [安装总览](docs/zh-CN/install-guides.md) · [Claude Code](docs/zh-CN/claude-plugin.md) · [Codex](docs/zh-CN/codex.md) |
+| 工作流与凭据配置 | [使用指南](docs/zh-CN/usage.md) |
+| Argus 输入、输出与示例 | [Argus 指南](.agents/skills/argus/README.zh-CN.md) · [示例](.agents/skills/argus/references/examples.zh-CN.md) |
+| 原生场景重建与编辑 | [Blender 指南](.agents/skills/realsee-blender-reconstruction/README.zh-CN.md) |
+| 问题排查与能力开通 | [支持](SUPPORT.zh-CN.md) · [Argus 排错](.agents/skills/argus/references/troubleshooting.zh-CN.md) |
 
-真实 Argus 运行会把规范化输入 ZIP 上传到 Realsee 远程服务。上传前必须取得用户同意。不得提交或记录凭证、上传 token、私有结果 URL 或生成产物。
+### 集成与维护
 
-## 合同与迁移
+| 主题 | 文档 |
+| --- | --- |
+| Argus 接口 | [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json) · [算法输入输出](.agents/skills/argus/references/algorithm-io.zh-CN.md) · [输出 Schema](.agents/skills/argus/references/argus-output.schema.json) |
+| 仓库结构与 Agent 发现 | [架构](ARCHITECTURE.zh-CN.md) · [机器索引](llms.txt) · [Agent 指南](AGENTS.zh-CN.md) |
+| 开发与发布 | [开发指南](docs/zh-CN/development.md) · [贡献指南](CONTRIBUTING.zh-CN.md) · [发布指南](docs/zh-CN/release.md) · [分发清单](docs/zh-CN/public-distribution.md) |
+| 安全 | [安全策略](SECURITY.zh-CN.md) |
 
-- [Skill README](.agents/skills/argus/README.zh-CN.md)
-- [官方品牌素材 manifest](.agents/skills/argus/assets/brand/manifest.json)
-- [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json)
-- [算法输入输出合同](.agents/skills/argus/references/algorithm-io.zh-CN.md)
-- [`output.json` JSON Schema](.agents/skills/argus/references/argus-output.schema.json)
-- [从 1.x 迁移](.agents/skills/argus/references/migration-v2.zh-CN.md)
-- [机器可读索引](llms.txt)
+Argus 产品资料：[官网](https://argus.realsee.ai/) · [Demo](https://h5.realsee.ai/argus) · [研究](https://argus-paper.realsee.ai/) · [开发者平台](https://developer.realsee.ai/)。这些站点介绍完整产品能力，当前可安装的 Argus skill 提供上方全景处理流程。
 
-## 开发
+## 版本
 
-规范来源位于 `.agents/skills/`。Claude plugin 包含两个 skill 并检查字节一致性；CN-only Arkclaw 包仍从 Argus 生成，只对运行区域、示例下载和相应说明应用确定性的 overlay。
+| 来源 | 内容 |
+| --- | --- |
+| 当前 `main` | Argus 与 Blender 重建两项 skill，以及最新使用指导 |
+| 稳定版本 `v2.1.0` | 包含两项 skill；使用 `realsee-developer/skills@v2.1.0` 固定安装版本 |
+| 旧版 `v2.0.0` | 仅含 Argus，不含 Blender 重建 |
+| 历史版本 `v1.0.2` | 旧方图与单 GLB 工作流，见[迁移说明](.agents/skills/argus/references/migration-v2.zh-CN.md) |
+
+合并到 `main` 不会更新已有 Release 或下载附件。已发布标签与产物以 [GitHub Releases](https://github.com/realsee-developer/skills/releases) 为准；当前 Argus 发布元数据记录在 `release-channel.json`。
+
+## 开发维护
+
+规范源码在 `.agents/skills/`。修改源码后重新生成分发包，不直接编辑 `plugins/realsee-skills/` 或 `arkclaw/argus/` 中的副本。
 
 ```bash
-npm run doctor
-npm run test:skill
 npm run rebuild
 npm run ci
 ```
 
-详见[架构](ARCHITECTURE.zh-CN.md)、[维护](docs/zh-CN/development.md)、[发布](docs/zh-CN/release.md)和[公开分发](docs/zh-CN/public-distribution.md)。
+前置条件与专项检查见[开发指南](docs/zh-CN/development.md)。仓库 CI 验证打包和运行时合同，不执行远程 Argus 处理或 Blender 实际重建。
 
-## License
+## 许可
 
-本仓库采用 [Realsee SDK License Agreement](LICENSE) 以 source-available 方式发布，不使用 OSI 开源许可证。
+本仓库依据 [Realsee SDK License Agreement](LICENSE) 提供源码，不使用 OSI 认可的开源许可证。
