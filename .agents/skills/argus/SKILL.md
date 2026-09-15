@@ -3,7 +3,7 @@ name: argus
 description: Use this skill to process one to 99 local exact 2:1 equirectangular panorama images with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Trigger for Argus panorama reconstruction, Argus ZIP input, or explicit Argus start/status/collect lifecycle requests. Do not trigger for panorama editing or stitching, arbitrary-photo 3D generation, existing GLB inspection, or research-only questions.
 compatibility: Requires a POSIX shell, Node.js 22+, npm 10+, npm registry access, and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
   documentation: README.md
 ---
 

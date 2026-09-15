@@ -70,4 +70,4 @@ Start 前必须取得上传同意。`result_status: partial` 时，即使 CLI �
 
 ## 发布策略
 
-`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.1.0` 包含两项 skill，旧版 `v2.0.0` 标签仅包含 Argus。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。
+`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.2.0` 包含两项 skill，旧版 `v2.0.0` 标签仅包含 Argus。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。
