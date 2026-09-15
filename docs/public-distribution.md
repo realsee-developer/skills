@@ -2,7 +2,9 @@
 
 [English](public-distribution.md) | [简体中文](zh-CN/public-distribution.md)
 
-Use this checklist for a planned distribution or release change. Current Argus metadata is `2.0.0` / stable / passed; the first 2.0 promotion is historical. See the [release guide](release.md) for gate conditions. Argus-specific runtime and live checks below do not apply to the instruction-only Blender skill.
+Use this checklist for a planned distribution or release change. Current Argus metadata is `2.1.0` / stable / passed; the first 2.0 promotion is historical. See the [release guide](release.md) for gate conditions. Argus-specific runtime and live checks below do not apply to the instruction-only Blender skill.
+
+The real E2E promotion items apply when promoting an Argus preview to stable. Version 2.1.0 retains the existing stable remote contract and status; do not report inherited verification as a new run. Uploader release checks apply when releasing the uploader itself.
 
 ## Repository and versions
 
@@ -18,7 +20,7 @@ Use this checklist for a planned distribution or release change. Current Argus m
 - [ ] Claude plugin includes both `argus` and `realsee-blender-reconstruction`, with files byte-identical to their canonical directories under `.agents/skills/`.
 - [ ] Arkclaw files are canonical bytes except deterministic CN-only overlays for the runtime region, example downloader, and matching generated guidance.
 - [ ] The dedicated Codex installer and Arkclaw package support only Argus; `npx skills add . --skill argus` and `npx skills add . --skill realsee-blender-reconstruction` resolve their respective canonical skills.
-- [ ] Versioned installation examples only name tags containing the selected skill; `v2.0.0` does not contain Blender.
+- [ ] Versioned installation examples only name tags containing the selected skill; `v2.1.0` contains both skills, while `v2.0.0` does not contain Blender.
 - [ ] Plugin manifest has no `userConfig` and no MCP server.
 
 ## Argus contracts and docs

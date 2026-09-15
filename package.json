@@ -1,7 +1,7 @@
 {
   "name": "realsee-skills",
-  "version": "2.0.0",
-  "description": "Source-available Realsee agent skill capability distribution.",
+  "version": "2.1.0",
+  "description": "Agent skills for Realsee Argus panorama reconstruction and editable Blender spaces.",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",
   "type": "module",
@@ -20,7 +20,10 @@
     "argus",
     "panorama",
     "point-cloud",
-    "depth-map"
+    "depth-map",
+    "blender",
+    "3d-reconstruction",
+    "editable-space"
   ],
   "engines": {
     "node": ">=22",

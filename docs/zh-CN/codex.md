@@ -5,19 +5,15 @@
 按需要安装一项或两项 skill 到 Codex：
 
 ```bash
-npx skills add realsee-developer/skills --skill argus --agent codex
-npx skills add realsee-developer/skills --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.1.0 --skill realsee-blender-reconstruction --agent codex
 ```
 
 `$argus` 用于远程全景处理，`$realsee-blender-reconstruction` 用于已有本地资料的可编辑场景重建。Blender 需要本地可运行的 Blender，无需 Argus 凭据；运行要求见[安装总览](install-guides.md)。
 
 产品背景见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Codex 必须遵循已安装 Skill 的合同，不能从这些页面推断额外能力：Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
 
-固定 stable 2.0 版本：
-
-```bash
-npx skills add realsee-developer/skills@v2.0.0 --skill argus --agent codex
-```
+上述命令固定到 stable `v2.1.0`。
 
 只有旧 1:1 方图或旧单 GLB 行为才改用 `@v1.0.2`。
 
@@ -26,7 +22,6 @@ npx skills add realsee-developer/skills@v2.0.0 --skill argus --agent codex
 ```bash
 git clone https://github.com/realsee-developer/skills.git
 cd skills
-npm ci
 (cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
 CODEX_HOME=$HOME/.codex npm run install:codex-skills
 npx skills add . --skill realsee-blender-reconstruction --agent codex
@@ -78,4 +73,4 @@ node "${CODEX_HOME:-$HOME/.codex}/skills/argus/scripts/run-argus.mjs" collect \
 
 ## 发布策略
 
-`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.0.0` 包含 Argus，不包含 Blender skill；Blender 使用当前仓库或已核对的本地 checkout。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。
+`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.1.0` 包含两项 skill，旧版 `v2.0.0` 标签仅包含 Argus。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。

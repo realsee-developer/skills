@@ -74,12 +74,12 @@
     {
       "source": ".agents/skills/argus/README.md",
       "target": "plugins/realsee-skills/skills/argus/README.md",
-      "size": 6483
+      "size": 6485
     },
     {
       "source": ".agents/skills/argus/README.zh-CN.md",
       "target": "plugins/realsee-skills/skills/argus/README.zh-CN.md",
-      "size": 6205
+      "size": 6207
     },
     {
       "source": ".agents/skills/argus/references/algorithm-io.md",
@@ -339,7 +339,7 @@
     {
       "source": ".agents/skills/argus/test/release-gate.test.mjs",
       "target": "plugins/realsee-skills/skills/argus/test/release-gate.test.mjs",
-      "size": 7756
+      "size": 7887
     },
     {
       "source": ".agents/skills/argus/test/sanitizer.test.mjs",
