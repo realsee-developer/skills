@@ -46,11 +46,12 @@ body:
     id: environment
     attributes:
       label: Environment
-      description: Include OS, Node.js version, npm version, and relevant sanitized configuration names.
+      description: Include OS and agent host; for Argus include Node.js/npm versions and sanitized configuration names, or for local reconstruction include the Blender version.
       placeholder: |
         OS:
         Node:
-        npm:
+        npm (Argus):
+        Blender (local reconstruction):
         REALSEE_REGION:
     validations:
       required: true

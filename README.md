@@ -1,177 +1,125 @@
-<p align="center">
-  <a href="https://argus.realsee.ai/">
-    <img src=".agents/skills/argus/assets/brand/argus-logo-color.png" alt="Argus by Realsee" width="560">
-  </a>
-</p>
+# Realsee Skills
 
-# Realsee Skills — Argus and Blender Workflows
+Agent skills for **panorama reconstruction** and **editable Blender spaces**. Use them with Claude Code, Codex, or another host supported by `npx skills`.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
-[![Release gate](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/release-gate.yml?branch=main&label=release%20gate&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/release-gate.yml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/codeql.yml?branch=main&label=CodeQL&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/codeql.yml)
 [![Latest release](https://img.shields.io/github/v/release/realsee-developer/skills?display_name=tag&style=flat-square)](https://github.com/realsee-developer/skills/releases)
-![Node >=22](https://img.shields.io/badge/node-%3E%3D22-339933?style=flat-square)
 
 English | [简体中文](README.zh-CN.md)
 
-Realsee Argus is a world-leading 3D vision foundation model. From a photo, panorama, or sparse views, it reconstructs metric 3D structure in milliseconds: pose, depth, point clouds, and renderable geometry.
+[Choose a skill](#choose-a-skill) · [Install](#install) · [Use](#use) · [Documentation](#documentation) · [Versions](#versions) · [Development](#development)
 
-Realsee Skills provides the Argus agent and CLI workflow. The Argus Skill is `argus` 2.0: it processes 1–99 exact 2:1 panoramas and produces EXR depth maps, one merged GLB point cloud, per-image camera poses, optional intrinsics, and a validated local result index.
+## Choose a skill
 
-The Skill ID remains `argus`. Version 2.0 has no legacy single-image VGGT fallback. Pin `v1.0.2` when a workflow needs square 1:1 input, the old single-GLB-only result, or the old H5 preview behavior.
+| Category | Skill | Input → output | Requirements |
+| --- | --- | --- | --- |
+| Panorama reconstruction | [Argus](.agents/skills/argus/README.md) | 1–99 local 2:1 panoramas → EXR depth maps, merged GLB point cloud, camera poses, optional intrinsics, validated result index | Remote Realsee service; app credentials and upload consent; POSIX shell, Node.js 22+, npm 10+ |
+| Editable space modeling | [Blender reconstruction](.agents/skills/realsee-blender-reconstruction/README.md) | Existing scan exports, point clouds, CAD, or panoramas → editable native `.blend` scene | Local Blender and an agent that can read files and run commands; no Argus credentials for local modeling |
 
-[Argus](https://argus.realsee.ai/) · [Interactive demo](https://h5.realsee.ai/argus) · [Research](https://argus-paper.realsee.ai/) · [Developer Platform](https://developer.realsee.ai/)
-
-Official evidence includes a 1.31B-parameter model and the Realsee3D benchmark's 10K complete indoor scenes, 95,962 room units, and 299,073 panoramic viewpoints. These are model and benchmark figures, not the Skill input limit.
-
-The installable Skill 2.0 contract remains intentionally specific: **1–99 local RGB8 panoramas with exact 2:1 dimensions**. Capabilities shown for photos, sparse views, or other product surfaces are not exposed by this CLI.
-
-## Skills
-
-| Skill | What it does | Execution |
-| --- | --- | --- |
-| [argus](.agents/skills/argus/SKILL.md) | Panoramas → depth, point cloud, poses | Realsee remote processing |
-| [realsee-blender-reconstruction](.agents/skills/realsee-blender-reconstruction/README.md) | Existing exports → editable Blender space; optional walkthrough and physics export | Local Blender, no API credentials for local inputs |
-
-Install the Blender skill from this local checkout with `npx skills add . --skill realsee-blender-reconstruction --agent codex`. The Claude plugin includes both skills after `npm run rebuild`; Arkclaw remains the Argus-specific distribution. The Argus credential and CLI sections below apply to `argus`.
-
-## Credentials
-
-Every Argus install path uses the unchanged runtime contract:
-
-| Key | Purpose | Sensitive |
-| --- | --- | --- |
-| `REALSEE_APP_KEY` | Realsee Open Platform APP_KEY | yes |
-| `REALSEE_APP_SECRET` | Realsee Open Platform APP_SECRET | yes |
-| `REALSEE_REGION` | `global` (`app-gateway.realsee.ai`) or `cn` (`app-gateway.realsee.cn`) | no |
-
-Register at [my.realsee.ai](https://my.realsee.ai/?utm_source=github) or [my.realsee.cn](https://my.realsee.cn/?utm_source=github), then request the Argus Gateway capability through the support channel described in [SUPPORT.md](SUPPORT.md).
+Choose **Argus** to generate depth, point clouds, and poses from panoramas. Choose **Blender reconstruction** to build or refine an editable scene from existing evidence. Argus output can serve as reconstruction evidence; running one skill does not automatically run the other.
 
 ## Install
 
-Claude Code marketplace:
+### Claude Code — both skills
+
+Run in Claude Code:
 
 ```text
 /plugin marketplace add realsee-developer/skills
 /plugin install realsee-skills@realsee-developer-skills
 ```
 
-Codex:
+The current plugin exposes `realsee-skills:argus` and `realsee-skills:realsee-blender-reconstruction`. [Claude Code guide](docs/claude-plugin.md).
+
+### Codex — select a skill
+
+Install the skill you need, or run both commands:
 
 ```bash
 npx skills add realsee-developer/skills --skill argus --agent codex
+npx skills add realsee-developer/skills --skill realsee-blender-reconstruction --agent codex
 ```
 
-Any detected agent host:
+[Codex guide](docs/codex.md), including local-checkout installation.
 
-```bash
-npx skills add realsee-developer/skills --skill argus
-npx skills add realsee-developer/skills --skill argus --agent '*'
-```
+### Other installation options
 
-Install from a local checkout:
+- **Other agent hosts:** omit `--agent codex` to choose a host, or use `--agent '*'` for all detected hosts.
+- **Local checkout:** use `npx skills add . --skill <skill-id> --agent codex` from a checkout containing the selected skill.
+- **Arkclaw:** the release asset `argus.zip` contains only Argus and supports the CN region.
+- **Repository Codex installer:** `npm run install:codex-skills` installs only Argus; it replaces the existing Argus target directory.
 
-```bash
-git clone https://github.com/realsee-developer/skills.git
-cd skills
-npm install
-(cd .agents/skills/argus && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
-npm run rebuild
-```
+See the [installation guide](docs/install-guides.md) for dependencies, installation paths, and version pinning.
 
-See [the install overview](docs/install-guides.md), [Claude Code](docs/claude-plugin.md), and [Codex](docs/codex.md) for host-specific details.
+## Use
 
-## Official example manifest
+### Argus: panoramas → reconstruction data
 
-Every Argus Skill install includes `examples/manifest.json`, which lists the CDN URL, byte length, and SHA-256 for the CN and Global first-party sample sets. Panorama JPEGs are absent from the current release tree and every generated Skill distribution. Download one set to a new absolute directory outside the installed Skill:
+Example request:
 
-```bash
-node <skillDir>/scripts/download-examples.mjs \
-  --region cn \
-  --output /absolute/example-output
-```
+> Use $argus to upload /data/living-room.jpg and /data/hall.jpg to Realsee for processing. Start the task and report its workspace.
 
-Use the set matching `REALSEE_REGION`. The downloader publishes the output only after every file passes its manifest checks. Running Argus is a separate remote upload and still requires user consent.
+Inputs must be JPEG, PNG, or WebP, RGB8, and exactly 2:1. The workflow has three explicit commands: `start`, `status`, and `collect`. Collected outputs include `output.zip`, the algorithm manifest, and a validated local `result.json` index; partial results include a missing-image list.
 
-## Direct CLI
+Argus requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`). Configure secrets locally and obtain consent before upload. Follow the [credential and usage guide](docs/usage.md#credentials-and-upload-consent) for setup and CLI examples.
 
-Start from repeated images:
+[Official sample panoramas](.agents/skills/argus/references/examples.md) can be downloaded separately; they are not bundled with the skill. Downloading samples does not authorize uploading them.
 
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs start \
-  --image /absolute/path/a.jpg \
-  --image /absolute/path/b.webp \
-  --workspace /absolute/workspace-root \
-  --yes --json
-```
+### Blender: existing evidence → editable scene
 
-Or start from one existing ZIP:
+Example request:
 
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs start \
-  --zip /absolute/path/input.zip \
-  --workspace /absolute/workspace-root \
-  --yes --json
-```
+> Use $realsee-blender-reconstruction with the exports in data/. Rebuild the evidenced space as an editable Blender scene, save output/reconstruction_native.blend, and verify geometry and material edits after reopening.
 
-Capture the returned `workspace_dir`. Each status call makes one query:
+The skill prioritizes layout, walls, floors, ceilings, openings, and connections, then refines the requested furniture, materials, and lighting. Walkthroughs, physics exports, and web previews are available when requested.
 
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs status \
-  --workspace /absolute/workspace-root/<run-dir> --json
-```
+See the [Blender guide](.agents/skills/realsee-blender-reconstruction/README.md) for input preparation, local requirements, and deliverables. In Claude Code, use the plugin-qualified skill names shown above.
 
-Collect after success:
+## Documentation
 
-```bash
-node .agents/skills/argus/scripts/run-argus.mjs collect \
-  --workspace /absolute/workspace-root/<run-dir> --json
-```
+### Users
 
-There is no detached poller, `--async`, or `--resume`. Completed collection is idempotent.
-
-## Input and output
-
-Inputs are 1–99 JPEG, PNG, or WebP RGB8 panoramas with exact `width == 2 * height`. At least 2048×1024 is recommended; lower resolution is a warning. `--image` is repeatable and mutually exclusive with `--zip`. ZIP mode is safely extracted, validated, normalized to Unicode NFC, sorted, and repacked before upload.
-
-Remote `task_status` (`queued`, `processing`, `succeeded`, `failed`) is separate from algorithm `result_status` (`success`, `partial`, `error`). A partial result exits 0 but includes a prominent warning and non-empty `missing_ids`; an error exits non-zero.
-
-The collector retains `output.zip`, safely extracts it, and writes this validated local result matrix:
-
-| Artifact | Availability |
+| Topic | Guide |
 | --- | --- |
-| `output.json` | Required algorithm manifest. |
-| `pointcloud/merged.glb` | One merged `right-handed, Y-up` point cloud for successfully reconstructed images. |
-| `depth/*_depth.exr` | One meter-scale floating-point depth map per successful image. |
-| `pose/*_pose.json` | One camera pose per successful image. |
-| `intrinsics/*_intrinsics.json` | Optional; absence is valid. |
-| `result.json` | Local index for statuses, paths, warnings, and `missing_ids`. |
+| Installation and supported hosts | [Install overview](docs/install-guides.md) · [Claude Code](docs/claude-plugin.md) · [Codex](docs/codex.md) |
+| Workflows and credential setup | [Usage](docs/usage.md) |
+| Argus input, output, and examples | [Argus guide](.agents/skills/argus/README.md) · [Examples](.agents/skills/argus/references/examples.md) |
+| Native scene reconstruction and editing | [Blender guide](.agents/skills/realsee-blender-reconstruction/README.md) |
+| Troubleshooting and capability access | [Support](SUPPORT.md) · [Argus troubleshooting](.agents/skills/argus/references/troubleshooting.md) |
 
-Real Argus runs upload the normalized input ZIP to Realsee remote services. Obtain user consent before upload. Never commit or log credentials, upload tokens, private result URLs, or generated artifacts.
+### Integrators and maintainers
 
-## Contracts and migration
+| Topic | Reference |
+| --- | --- |
+| Argus interfaces | [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json) · [Algorithm I/O](.agents/skills/argus/references/algorithm-io.md) · [Output schema](.agents/skills/argus/references/argus-output.schema.json) |
+| Repository structure and agent discovery | [Architecture](ARCHITECTURE.md) · [Machine index](llms.txt) · [Agent guide](AGENTS.md) |
+| Changes and releases | [Development](docs/development.md) · [Contributing](CONTRIBUTING.md) · [Release guide](docs/release.md) · [Distribution checklist](docs/public-distribution.md) |
+| Security | [Security policy](SECURITY.md) |
 
-- [Skill README](.agents/skills/argus/README.md)
-- [Official brand asset manifest](.agents/skills/argus/assets/brand/manifest.json)
-- [Gateway OpenAPI](.agents/skills/argus/references/argus-gateway-openapi.json)
-- [Algorithm I/O contract](.agents/skills/argus/references/algorithm-io.md)
-- [`output.json` JSON Schema](.agents/skills/argus/references/argus-output.schema.json)
-- [Migration from 1.x](.agents/skills/argus/references/migration-v2.md)
-- [Machine-readable index](llms.txt)
+Argus product resources: [Product](https://argus.realsee.ai/) · [Demo](https://h5.realsee.ai/argus) · [Research](https://argus-paper.realsee.ai/) · [Developer platform](https://developer.realsee.ai/). These describe the broader product; the installable Argus skill supports the panorama workflow above.
+
+## Versions
+
+| Source | Contents |
+| --- | --- |
+| Current `main` | Both Argus and Blender reconstruction, including the latest guidance |
+| Stable release `v2.1.0` | Both skills; pin `realsee-developer/skills@v2.1.0` for a reproducible install |
+| Previous `v2.0.0` | Argus only; does not contain Blender reconstruction |
+| Legacy `v1.0.2` | Old square-image and single-GLB workflow; see [migration guidance](.agents/skills/argus/references/migration-v2.md) |
+
+A merge into `main` does not update an existing release or its downloadable assets. Check [GitHub Releases](https://github.com/realsee-developer/skills/releases) for published tags and artifacts. Current Argus release metadata is recorded in `release-channel.json`.
 
 ## Development
 
-Canonical sources live under `.agents/skills/`. The Claude plugin includes both skills and checks byte consistency. The CN-only Arkclaw package is generated from Argus with deterministic overlays for runtime region, example downloads, and matching guidance.
+Canonical skill sources live under `.agents/skills/`. Edit those sources and regenerate distributions; do not edit the copies in `plugins/realsee-skills/` or `arkclaw/argus/` directly.
 
 ```bash
-npm run doctor
-npm run test:skill
 npm run rebuild
 npm run ci
 ```
 
-See [Architecture](ARCHITECTURE.md), [development](docs/development.md), [release](docs/release.md), and [public distribution](docs/public-distribution.md).
+See the [development guide](docs/development.md) for prerequisites and focused checks. Repository CI checks packaging and runtime contracts; it does not perform remote Argus processing or a Blender reconstruction.
 
 ## License
 
-This repository is source-available under the [Realsee SDK License Agreement](LICENSE). It is not published under an OSI open source license.
+Source-available under the [Realsee SDK License Agreement](LICENSE). This is not an OSI-approved open source license.

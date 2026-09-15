@@ -16,7 +16,7 @@ npx skills add . --skill realsee-blender-reconstruction --agent codex
 
 > 使用 $realsee-blender-reconstruction 读取 data/，优先重建有证据的空间结构和连接，保存 output/reconstruction_native.blend，完成来源对照并在重开后实际验证编辑。
 
-该 skill 包含按需启用的漫游、物理/USDZ、图文生成资产与网页预览指导。`npm run install:codex-skills` 仍为 Argus 专用安装器。本文其余部分介绍 Argus 远程处理。
+先确认本地 Blender 可运行并检查其版本；输入、脚本与产物存放在建模项目中。该 skill 包含按需启用的漫游、物理/USDZ、图文生成资产与网页预览指导。`npm run install:codex-skills` 仍为 Argus 专用安装器。本文其余部分介绍 Argus 远程处理。
 
 官方资料：[Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。这些站点可能展示更广的照片和产品工作流；Argus Skill 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
 
@@ -34,6 +34,14 @@ npx skills add realsee-developer/skills --skill argus --agent '*'
 ```bash
 npx skills add . --skill argus
 ```
+
+## 凭据与上传授权
+
+仅 Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET` 和 `REALSEE_REGION`（`global` 或 `cn`；Arkclaw 固定为 `cn`）。Agent 先检查继承的 shell 环境；配置不足时加载已有 `~/.realsee/credentials`，仍有缺失时只请求缺失配置。秘密应由用户在本地 shell 或安全凭据界面配置，不在聊天中逐字段收集。
+
+不得回显凭据或把值放入会被记录的命令参数、环境变量前缀。仅在用户明确选择持久保存时，才可将应用凭据保存在仓库外的 `~/.realsee/credentials`，权限为 0600。上传 token 和签名 URL 不得持久化；运行状态不保存凭据。
+
+`start` 会把所选文件发送到 Realsee。文件选择和示例下载均不等于上传同意；用户明确要求上传这些文件即构成同意，同一输入和范围内复用已有授权，无需重复确认。示例中的 `--yes` 表示已取得同意，不能代替用户授权。
 
 ## 官方示例清单
 
@@ -126,4 +134,4 @@ Collect 会保留 `output.zip`，安全解压，校验 manifest 与产物，并�
 - 输出 Schema：[argus-output.schema.json](../../.agents/skills/argus/references/argus-output.schema.json)
 - 机器索引：[llms.txt](../../llms.txt)
 
-真实 Argus 运行属于远程上传，必须先取得用户同意，且不得持久化凭证、上传 token 或签名结果 URL。
+运行前遵循上方凭据与上传授权要求；仅将本地已校验产物作为持久交付。

@@ -86,7 +86,8 @@ test('branch and pull-request release checks derive channel and tag from release
   assert.match(workflow, /development\) RELEASE_CHANNEL=preview/u);
   assert.match(workflow, /next_release_candidate/);
   assert.match(workflow, /default: stable/u);
-  assert.match(workflow, /default: v2\.0\.0/u);
+  const metadata = JSON.parse(await readFile(join(repoRoot, 'release-channel.json'), 'utf8'));
+  assert.equal(workflow.match(/default: (v[^\s]+)/u)?.[1], `v${metadata.version}`);
   assert.doesNotMatch(workflow, /RELEASE_TAG:.*github\.ref_name/);
   assert.doesNotMatch(workflow, /startsWith\(github\.ref_name/u);
 });

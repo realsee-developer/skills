@@ -7,7 +7,7 @@
 # argus
 
 ![Skill argus](https://img.shields.io/badge/skill-realsee--argus-6f42c1?style=flat-square)
-![Version 2.0](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
+![Version 2.1.0](https://img.shields.io/badge/version-2.1.0-blue?style=flat-square)
 ![Upload consent](https://img.shields.io/badge/upload-consent%20required-brown?style=flat-square)
 
 [English](README.md) | 简体中文
@@ -30,7 +30,7 @@
 在本包目录运行：
 
 ```bash
-npm install
+npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 ```
 
 需要 Node.js 22 或更高版本。
@@ -116,7 +116,7 @@ node scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir
 - `REALSEE_APP_SECRET`
 - `REALSEE_REGION`（`global` 或 `cn`）
 
-真实运行会把规范化输入 ZIP 上传到 Realsee 远程服务。上传前必须取得用户同意。凭证、上传 token、provider 原始错误和签名结果 URL 不得写入 workspace state 或公开日志。
+真实运行会把规范化输入 ZIP 上传到 Realsee 远程服务。上传前必须取得用户对所选文件远程处理的同意；仅选择文件不等于同意上传，同一输入与范围的已有授权无需重复确认。凭据缺失时仅补齐缺失配置，通过本地 shell 或安全凭据界面设置，不在聊天中回显秘密。只有用户明确要求持久保存时，才使用仓库外权限为 0600 的 `~/.realsee/credentials`。凭证、上传 token、provider 原始错误和签名结果 URL 不得写入 workspace state 或公开日志。
 
 Arkclaw 构建仅支持 CN。Canonical、Claude plugin、Codex 与 `npx skills` 安装同时支持两个 Gateway region。
 

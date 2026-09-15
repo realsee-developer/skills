@@ -221,8 +221,9 @@ async function checkSkillSurface() {
       throw new Error(`skill package.json has unexpected script "${name}" (allowed: ${[...allowed].join(', ')})`);
     }
   }
-  if (pkg.version !== '2.0.0') {
-    throw new Error(`argus package version must be 2.0.0 (got: ${pkg.version})`);
+  const releaseMetadata = JSON.parse(await readFile(join(root, 'release-channel.json'), 'utf8'));
+  if (pkg.version !== releaseMetadata.version) {
+    throw new Error(`argus package version must match release metadata ${releaseMetadata.version} (got: ${pkg.version})`);
   }
   for (const dependency of [
     '@realsee/universal-uploader',
@@ -364,13 +365,13 @@ async function checkArkclawIgnoredFixture() {
       'README.md',
       'README.zh-CN.md',
       'references/examples.md',
-      'references/examples.zh-CN.md'
+      'references/examples.zh-CN.md',
+      'package.json'
     ]) {
       const target = join(sourceRoot, relativePath);
       await mkdir(dirname(target), { recursive: true });
       await cp(join(root, '.agents', 'skills', 'argus', relativePath), target);
     }
-    await writeFile(join(sourceRoot, 'package.json'), '{"name":"argus","version":"2.0.0"}\n');
     await writeFile(
       join(sourceRoot, 'scripts', 'run-argus.mjs'),
       'const options = { env: process.env, };\n'
