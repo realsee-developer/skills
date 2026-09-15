@@ -18,6 +18,14 @@ English | [简体中文](README.zh-CN.md)
 
 Choose **Argus** to generate depth, point clouds, and poses from panoramas. Choose **Blender reconstruction** to build or refine an editable scene from existing evidence. Argus output can serve as reconstruction evidence; running one skill does not automatically run the other.
 
+## AI agent entry
+
+Start with [llms.txt](llms.txt) to select a skill and read its `SKILL.md` directly. Ask your agent:
+
+> Read this repository’s llms.txt, select the skill for my task, install it for my host, check its prerequisites, and follow its instructions. Resolve missing configuration locally and obtain upload consent before sending files.
+
+The [installation guide](docs/install-guides.md#agent-preflight) describes structured local diagnostics.
+
 ## Install
 
 ### Claude Code — both skills
@@ -103,7 +111,7 @@ Argus product resources: [Product](https://argus.realsee.ai/) · [Demo](https://
 | Source | Contents |
 | --- | --- |
 | Current `main` | Both Argus and Blender reconstruction, including the latest guidance |
-| Stable release `v2.1.0` | Both skills; pin `realsee-developer/skills@v2.1.0` for a reproducible install |
+| Stable release `v2.2.0` | Both skills; pin `realsee-developer/skills@v2.2.0` for a reproducible install |
 | Previous `v2.0.0` | Argus only; does not contain Blender reconstruction |
 | Legacy `v1.0.2` | Old square-image and single-GLB workflow; see [migration guidance](.agents/skills/argus/references/migration-v2.md) |
 

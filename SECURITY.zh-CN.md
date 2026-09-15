@@ -35,4 +35,4 @@ Argus 上传须获得针对所选输入和范围的授权；仅选择文件不�
 
 ## 支持版本
 
-当前发布状态记录在 `release-channel.json`（Argus 2.1.0 为 stable）。除非维护者另行记录稳定分支策略，安全修复面向当前 `main` 分支。
+当前发布状态记录在 `release-channel.json`（Argus 2.2.0 为 stable）。除非维护者另行记录稳定分支策略，安全修复面向当前 `main` 分支。

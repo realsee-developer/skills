@@ -22,7 +22,7 @@ on:
       tag:
         description: Release tag to validate
         required: true
-        default: v2.1.0
+        default: v2.2.0
         type: string
 
 permissions:
