@@ -9,15 +9,15 @@ This repository provides two skills: `argus` uploads panoramas to Realsee for re
 | Host | Install | Skill handle | Guide |
 | --- | --- | --- | --- |
 | Claude Code | `/plugin marketplace add realsee-developer/skills`, then `/plugin install realsee-skills@realsee-developer-skills` | `realsee-skills:argus`, `realsee-skills:realsee-blender-reconstruction` | [Claude Code](claude-plugin.md) |
-| Codex | `npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent codex` | `$argus`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
-| Any detected host | `npx skills add realsee-developer/skills@v2.1.0 --skill argus --agent '*'` | Host-specific | This guide |
+| Codex | `npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent codex` | `$argus`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
+| Any detected host | `npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent '*'` | Host-specific | This guide |
 | Arkclaw | Published Arkclaw ZIP | `argus` | CN-only |
 
 For the active host only:
 
 ```bash
-npx skills add realsee-developer/skills@v2.1.0 --skill argus
-npx skills add realsee-developer/skills@v2.1.0 --skill realsee-blender-reconstruction
+npx skills add realsee-developer/skills@v2.2.0 --skill argus
+npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstruction
 ```
 
 The `npx skills` commands in the table install Argus; replace `--skill argus` with `--skill realsee-blender-reconstruction` to install Blender. The current Claude plugin includes both skills; Arkclaw and `npm run install:codex-skills` install only Argus.
@@ -28,7 +28,7 @@ Argus requires a POSIX shell, Node.js 22+, npm 10+, npm registry and regional Ga
 
 ## Reproducible versions
 
-Pin `v2.1.0` for either skill. The older `v2.0.0` tag contains only Argus.
+Pin `v2.2.0` for either skill. The older `v2.0.0` tag contains only Argus.
 
 Pin `v1.0.2` only for legacy square 1:1 input, the old single-GLB output, or legacy preview behavior:
 
@@ -51,3 +51,20 @@ node <skillDir>/scripts/run-argus.mjs collect --workspace /absolute/workspace/<r
 ```
 
 There is no detached background poller. Durable output is local `output.zip`, its validated extraction, and `result.json`.
+
+## Agent preflight
+
+Use [llms.txt](../llms.txt) to choose the skill, then read only its `SKILL.md` and task-relevant references. Use the selected skill’s installation command for your host; repository setup is for maintainers.
+
+In a local checkout containing these scripts, run:
+
+```bash
+node scripts/doctor-local.mjs --skill argus --json
+node scripts/doctor-local.mjs --skill realsee-blender-reconstruction --json
+```
+
+Select the command for your task. For Blender outside PATH, add `--blender /path/to/blender`. Installed skills without repository scripts use the prerequisites in their own `SKILL.md`.
+
+The JSON object contains `schema_version: 1`, `skill`, `status`, and `checks`. Each check has `id`, `status` (`pass`, `warn`, or `fail`), `message`, and an actionable `next_step` when incomplete. Overall `ready` means local checks passed; `needs_configuration` means Argus environment values are missing; `blocked` means a prerequisite or argument failed. Only `blocked` exits with code 1. Inspect `status` even when the exit code is 0. Use Node directly for machine output; npm adds its own logging.
+
+The diagnostic does not install, upload, read credential file contents, or prove remote service access, input validity, or modeling quality. An existing credentials file is reported for local resolution. Argus checks Node, npm, runtime dependencies, and environment configuration; Blender checks its executable independently of Argus. Follow [usage](usage.md) for credential resolution and reusable upload consent.

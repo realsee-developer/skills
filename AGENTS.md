@@ -35,3 +35,5 @@ npm run ci
 
 - Use [`llms.txt`](llms.txt) for the compact machine-readable repository map.
 - Use [`docs/usage.md`](docs/usage.md) for the user-facing skill usage guide.
+
+For installation or execution, select a skill in `llms.txt` and read its `SKILL.md` directly; load references as needed. This guide governs repository changes. Structured local checks are documented in [agent preflight](docs/install-guides.md#agent-preflight).

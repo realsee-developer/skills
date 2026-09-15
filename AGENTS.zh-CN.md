@@ -35,3 +35,5 @@ npm run ci
 
 - 使用 [`llms.txt`](llms.txt) 查看紧凑的机器可读仓库地图。
 - 使用 [`docs/zh-CN/usage.md`](docs/zh-CN/usage.md) 查看面向用户的 skill 使用指南。
+
+安装或执行时，通过 `llms.txt` 选择 skill 并直接读取其 `SKILL.md`，按需加载参考资料。本指南约束仓库修改。结构化本地检查见 [Agent 预检](docs/zh-CN/install-guides.md#agent-预检)。
