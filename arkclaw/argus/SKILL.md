@@ -13,7 +13,7 @@ Use this Skill to submit 1–99 exact 2:1 equirectangular panoramas to Realsee A
 
 Treat the official product, demo, research, and developer sites as background only. Do not infer arbitrary-photo input or other product workflows from them; follow the narrower Skill 2.0 contract in this file.
 
-Argus is a remote upload. Do not upload until the user has selected the input and consented. Never print, log, or persist credentials, upload tokens, presigned URLs, or raw provider errors. Do not open output files unless the user asks.
+Argus is a remote upload. Do not upload until the user has selected the input and consented. Never print or log credentials, upload tokens, presigned URLs, or raw provider errors. Keep tokens and signed URLs out of persistent state; store app credentials only with explicit user authorization as described below. Do not open output files unless the user asks.
 
 ## 1. Ensure runtime dependencies
 
@@ -38,8 +38,8 @@ Resolve values in the existing order:
 1. Probe the current shell environment without printing values:
 
    ```bash
-   printenv REALSEE_APP_KEY REALSEE_APP_SECRET REALSEE_REGION >/dev/null \
-     && echo present || echo missing
+   [ -n "${REALSEE_APP_KEY:-}" ] && [ -n "${REALSEE_APP_SECRET:-}" ] \
+     && [ -n "${REALSEE_REGION:-}" ] && echo present || echo missing
    ```
 
 2. If `~/.realsee/credentials` already exists, load it into the shell and probe presence. Never display the file:
@@ -50,7 +50,7 @@ Resolve values in the existing order:
      && echo present || echo missing
    ```
 
-3. Otherwise ask for region, APP_KEY, and APP_SECRET one field per turn. Never repeat a supplied value. If the user explicitly chooses to persist them, retain the existing mode-0600 `~/.realsee/credentials` flow. Never place credential values in a CLI argument or environment prefix recorded by the host.
+3. If values are still missing, ask only for the missing configuration. Have the user configure secrets through their local shell or a secure credential interface without echoing them into chat. Never repeat a supplied value. If the user explicitly chooses persistent storage, use `~/.realsee/credentials` with mode 0600 outside the repository. Never place credential values in a CLI argument or environment prefix recorded by the host.
 
 ## 3. Select the input
 
@@ -75,7 +75,7 @@ The downloader publishes the directory only after every file passes its manifest
 
 ## 4. Start once
 
-The user selecting files for an Argus request is upload consent. If the user has not selected files, ask one question that also states the files will leave the machine for remote processing. Do not ask a redundant second confirmation.
+Before starting, ensure the user has selected the files and consented to sending them to Realsee for remote processing. An explicit request to upload those files is sufficient; file selection alone is not consent. If either is missing, ask one question stating that the selected files will leave the machine. Reuse existing consent for the same input and scope. Do not ask a redundant second confirmation.
 
 For repeated images:
 
@@ -141,10 +141,10 @@ For `partial`, the CLI exits 0. Still show a prominent warning and the complete 
 - [Interactive demo](https://h5.realsee.ai/argus)
 - [Research](https://argus-paper.realsee.ai/)
 - [Realsee Developer Platform](https://developer.realsee.ai/)
-- [Gateway workflow](references/api-workflow.md)
-- [Gateway OpenAPI](references/argus-gateway-openapi.json)
-- [Algorithm I/O contract](references/algorithm-io.md) / [中文](references/algorithm-io.zh-CN.md)
+- For lifecycle implementation details: [Gateway workflow](references/api-workflow.md)
+- When checking request/response fields: [Gateway OpenAPI](references/argus-gateway-openapi.json)
+- When interpreting or validating artifacts: [Algorithm I/O contract](references/algorithm-io.md) / [中文](references/algorithm-io.zh-CN.md)
 - [Official example panoramas](references/examples.md) / [中文](references/examples.zh-CN.md)
 - [`output.json` JSON Schema](references/argus-output.schema.json)
-- [2.0 migration guide](references/migration-v2.md) / [中文](references/migration-v2.zh-CN.md)
-- [Troubleshooting](references/troubleshooting.md)
+- For older inputs or integrations: [2.0 migration guide](references/migration-v2.md) / [中文](references/migration-v2.zh-CN.md)
+- When a command fails: [Troubleshooting](references/troubleshooting.md)
