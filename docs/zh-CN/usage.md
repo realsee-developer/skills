@@ -18,7 +18,7 @@ npx skills add . --skill realsee-blender-reconstruction --agent codex
 
 先确认本地 Blender 可运行并检查其版本；输入、脚本与产物存放在建模项目中。该 skill 包含按需启用的漫游、物理/USDZ、图文生成资产与网页预览指导。`npm run install:codex-skills` 仍为 Argus 专用安装器。本文其余部分介绍 Argus 远程处理。
 
-官方资料：[Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。这些站点可能展示更广的照片和产品工作流；Argus Skill 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
+官方资料：[Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。这些站点可能展示更广的照片和产品工作流；当前 Argus Skill 源码接受同批 1–99 张本地 RGB8 图片，全部为严格 2:1 全景图或严格 1:1 针孔图。
 
 ## 安装
 
@@ -117,10 +117,10 @@ Collect 会保留 `output.zip`，安全解压，校验 manifest 与产物，并�
 ## 输入规则
 
 - 1–99 张根目录 JPEG、PNG 或 WebP。
-- RGB、8-bit、严格 2:1。
-- 低于 2048×1024 只警告，不硬失败。
+- RGB、8-bit；同批全部为严格 2:1 全景图或严格 1:1 针孔图。
+- 全景图低于 2048×1024 只产生警告，不作为硬失败。
 - ZIP 路径必须安全且平铺；Skill 拒绝重复 stem 和 Unicode/case-fold 冲突。
-- 单张 2:1 全景图有效。方图无效；旧方图工作流请固定 `v1.0.2`。
+- 单张图片也是有效批次。上传前拒绝全景图与针孔图混合批次；请分别提交任务。已发布标签保留原有输入合同。
 
 ## Skill 文件
 

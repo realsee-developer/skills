@@ -11,9 +11,9 @@ npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstru
 
 `$argus` runs remote panorama processing; `$realsee-blender-reconstruction` builds editable scenes from existing local inputs. Blender requires a working local Blender installation and no Argus credentials; see [installation requirements](install-guides.md).
 
-For product context, see [Argus](https://argus.realsee.ai/), its [interactive demo](https://h5.realsee.ai/argus), [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). Codex must follow the installed Skill contract rather than infer broader capabilities from those pages: Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+For product context, see [Argus](https://argus.realsee.ai/), its [interactive demo](https://h5.realsee.ai/argus), [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). Codex must follow the installed Skill contract rather than infer broader capabilities from those pages: Current source accepts 1–99 local RGB8 images, all exact 2:1 panoramas or all exact 1:1 pinhole images per batch. Mixed batches are rejected before upload.
 
-The commands above pin stable `v2.2.0`. Use `@v1.0.2` instead only for legacy square 1:1 or single-GLB behavior.
+The commands above pin stable `v2.2.0`, which retains its panorama-only input contract. For current panorama/pinhole batch support, install `npx skills add realsee-developer/skills@main --skill argus --agent codex`. Frozen tags and their downloadable assets are unchanged.
 
 ## Local checkout
 
@@ -71,4 +71,4 @@ There is no detached poller or resume flag. A completed collect is idempotent. C
 
 ## Release policy
 
-`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.2.0` includes both skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.
+`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.2.0` includes both skills; the older `v2.0.0` tag contains only Argus. The legacy `v1.0.2` tag records the old single-GLB workflow; current pinhole batches use the ZIP lifecycle.

@@ -10,7 +10,7 @@ Before any network request, the Skill:
 
 - resolves `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION`;
 - confirms upload consent;
-- validates 1–99 JPEG, PNG, or WebP RGB8 panoramas with exact 2:1 dimensions;
+- validates 1–99 JPEG, PNG, or WebP RGB8 images: all exact 2:1 panoramas or all exact 1:1 pinhole images, rejecting mixed batches before upload;
 - safely expands a supplied ZIP when necessary, then normalizes and repacks all input into one deterministic ZIP;
 - records only non-secret input metadata in schema-v2 `state.json`.
 

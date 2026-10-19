@@ -12,13 +12,13 @@
 
 [English](README.md) | 简体中文
 
-`argus` 把 1–99 张本地 2:1 全景图规范化打包成一个 ZIP，提交 Realsee Argus 任务，并收集经过校验的 `output.zip`。产物包含 EXR 深度图、一个合并 GLB 点云、逐图位姿、可选内参和 `output.json`。
+`argus` 把 1–99 张本地 2:1 全景图或 1:1 针孔图按同一类型规范化打包成一个 ZIP，提交 Realsee Argus 任务，并收集经过校验的 `output.zip`。产物包含 EXR 深度图、一个合并 GLB 点云、逐图位姿、可选内参和 `output.json`。
 
-2.0 保持 Skill ID 为 `argus`，但不包含旧版单图 VGGT fallback。1:1 方图、旧版仅单 GLB 输出或旧 preview 行为请固定到 `v1.0.2`。详见[迁移指南](references/migration-v2.zh-CN.md)。
+2.0 保持 Skill ID 为 `argus`，但不包含旧版单图 VGGT fallback。当前源码已通过 ZIP 工作流支持 1:1 针孔图批次。已发布标签保留原有输入规则；旧版单 GLB 和 preview 行为见迁移指南。详见[迁移指南](references/migration-v2.zh-CN.md)。
 
 [Argus 官网](https://argus.realsee.ai/) · [交互 Demo](https://h5.realsee.ai/argus) · [研究主页](https://argus-paper.realsee.ai/) · [Realsee Developer Platform](https://developer.realsee.ai/)
 
-产品与研究页面展示的是更完整的 Argus 生态。本 Skill 2.0 有意保持更窄的真实合同：**1–99 张本地 RGB8 且严格 2:1 的全景图**。它不接受任意普通照片，也不代表官网展示的全部产品工作流。
+产品与研究页面展示的是更完整的 Argus 生态。当前 Skill 源码支持 **1–99 张本地 RGB8 图片，同批全部为严格 2:1 全景图或严格 1:1 针孔图**。混合类型和其他宽高比会在上传前被拒绝。已发布标签保留原有合同。
 
 <p align="center">
   <a href="https://argus-paper.realsee.ai/"><img src="assets/brand/argus-paper-teaser.png" alt="Argus 研究：从全景图重建米制三维空间" width="560"></a>
@@ -83,8 +83,9 @@ node scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir
 ## 输入合同
 
 - 1–99 张 JPEG、PNG 或 WebP。
-- RGB、8-bit，严格满足 `width == 2 * height`。
-- 建议至少 2048×1024；更小只产生警告。
+- RGB、8-bit；同批全部为严格 2:1 全景图（`width == 2 * height`）或严格 1:1 针孔图（`width == height`）。
+- 不混合全景图和针孔图；两种输入分别提交任务。
+- 全景图建议至少 2048×1024，较小全景图只警告不失败。暂不定义针孔图的推荐分辨率。
 - `--image` 可重复，并与 `--zip` 互斥。
 - ZIP 根目录只能有图片；Skill 会安全校验并确定性重新打包。
 
@@ -103,7 +104,7 @@ node scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir
 | `depth/*_depth.exr` | 每张成功重建图片一份 32-bit 浮点、米制深度图。 |
 | `pointcloud/merged.glb` | 成功图片集合对应的一个合并点云，坐标系固定为 `right-handed, Y-up`。 |
 | `pose/*_pose.json` | 每张成功重建图片一份相机位姿。 |
-| `intrinsics/*_intrinsics.json` | 可选；可能对部分或全部成功图片缺省。 |
+| `intrinsics/*_intrinsics.json` | 可选；保留返回的相机元数据，不根据全景字段推导针孔内参。 |
 | `result.json` | 本地结果索引，记录产物路径、状态、警告与 `missing_ids`。 |
 
 `partial` 退出码为 0，但一定带醒目警告和非空缺失 ID 列表；`error` 非零退出。

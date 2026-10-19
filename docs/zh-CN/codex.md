@@ -9,13 +9,13 @@ npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent codex
 npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstruction --agent codex
 ```
 
-`$argus` 用于远程全景处理，`$realsee-blender-reconstruction` 用于已有本地资料的可编辑场景重建。Blender 需要本地可运行的 Blender，无需 Argus 凭据；运行要求见[安装总览](install-guides.md)。
+`$argus` 用于远程全景图或针孔图处理，`$realsee-blender-reconstruction` 用于已有本地资料的可编辑场景重建。Blender 需要本地可运行的 Blender，无需 Argus 凭据；运行要求见[安装总览](install-guides.md)。
 
-产品背景见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Codex 必须遵循已安装 Skill 的合同，不能从这些页面推断额外能力：Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
+产品背景见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Codex 必须遵循已安装 Skill 的合同，不能从这些页面推断额外能力：当前 Skill 源码接受同批 1–99 张本地 RGB8 图片，全部为严格 2:1 全景图或严格 1:1 针孔图；上传前拒绝混合批次。
 
 上述命令固定到 stable `v2.2.0`。
 
-只有旧 1:1 方图或旧单 GLB 行为才改用 `@v1.0.2`。
+以上命令固定的 `v2.2.0` 保留原有仅全景图合同。当前全景图或针孔图批次支持请安装 `npx skills add realsee-developer/skills@main --skill argus --agent codex`。冻结标签及下载附件不变。
 
 ## 本地 checkout
 

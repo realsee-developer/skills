@@ -2,7 +2,7 @@ import { open } from 'node:fs/promises';
 import { basename, extname } from 'node:path';
 import { unicodeFullCaseFold } from './unicode-case-fold.mjs';
 
-const SUPPORTED_PANORAMA_EXTENSIONS = new Map([
+const SUPPORTED_IMAGE_EXTENSIONS = new Map([
   ['.jpg', 'jpeg'],
   ['.jpeg', 'jpeg'],
   ['.png', 'png'],
@@ -19,10 +19,10 @@ const CONTROL_CHARACTER = /[\u0000-\u001f\u007f]/u;
 export async function inspectPanoramaImage(path, options = {}) {
   const archiveName = normalizeArchiveFileName(options.archiveName ?? options.name ?? basename(path));
   const extension = extname(archiveName).toLowerCase();
-  const expectedFormat = SUPPORTED_PANORAMA_EXTENSIONS.get(extension);
+  const expectedFormat = SUPPORTED_IMAGE_EXTENSIONS.get(extension);
   if (!expectedFormat) {
     throw new Error(
-      `Unsupported panorama image extension for "${archiveName}". Expected JPEG, PNG, or WebP.`
+      `Unsupported Argus image extension for "${archiveName}". Expected JPEG, PNG, or WebP.`
     );
   }
 
@@ -32,7 +32,7 @@ export async function inspectPanoramaImage(path, options = {}) {
   try {
     stat = await handle.stat();
     if (!stat.isFile()) {
-      throw new Error(`Expected panorama image but path is not a regular file: ${path}`);
+      throw new Error(`Expected Argus image but path is not a regular file: ${path}`);
     }
     prefix = Buffer.alloc(Math.min(32, stat.size));
     const { bytesRead } = await handle.read(prefix, 0, prefix.length, 0);
@@ -62,33 +62,29 @@ export async function inspectPanoramaImage(path, options = {}) {
 
   if (metadata.bitDepth !== 8) {
     throw new Error(
-      `Argus panorama images must be 8-bit; "${archiveName}" is ${metadata.bitDepth}-bit.`
+      `Argus images must be 8-bit; "${archiveName}" is ${metadata.bitDepth}-bit.`
     );
   }
   if (metadata.channels !== 3) {
     throw new Error(
-      `Argus panorama images must have exactly 3 RGB channels; "${archiveName}" has ${metadata.channels}.`
+      `Argus images must have exactly 3 RGB channels; "${archiveName}" has ${metadata.channels}.`
     );
   }
-  if (metadata.width === metadata.height) {
+  const isPanorama = metadata.width === metadata.height * 2;
+  const isPinhole = metadata.width === metadata.height;
+  if (!isPanorama && !isPinhole) {
     throw new Error(
-      `Square 1:1 image "${archiveName}" belongs to the legacy single-image Argus v1.0.2 flow; ` +
-        'the multi-panorama input requires a strict 2:1 image.'
-    );
-  }
-  if (metadata.width !== metadata.height * 2) {
-    throw new Error(
-      `Argus panorama images require a strict 2:1 aspect ratio; "${archiveName}" is ` +
+      `Argus images require an exact 2:1 panorama or 1:1 pinhole aspect ratio; "${archiveName}" is ` +
         `${metadata.width}x${metadata.height}.`
     );
   }
 
   const stem = archiveName.slice(0, archiveName.length - extension.length);
   if (!stem) {
-    throw new Error(`Panorama image filename must have a non-empty stem: "${archiveName}".`);
+    throw new Error(`Argus image filename must have a non-empty stem: "${archiveName}".`);
   }
   const warnings = [];
-  if (metadata.width < 2048 || metadata.height < 1024) {
+  if (isPanorama && (metadata.width < 2048 || metadata.height < 1024)) {
     warnings.push({
       code: 'LOW_RESOLUTION',
       filename: archiveName,
@@ -121,11 +117,11 @@ export async function validateImageFiles(files, options = {}) {
   const minImages = options.minImages ?? 1;
   const maxImages = options.maxImages ?? 99;
   if (!Array.isArray(files)) {
-    throw new Error('Argus panorama input files must be an array.');
+    throw new Error('Argus input files must be an array.');
   }
   if (files.length < minImages || files.length > maxImages) {
     throw new Error(
-      `Argus panorama input requires ${minImages}..${maxImages} images; got ${files.length}.`
+      `Argus input requires ${minImages}..${maxImages} images; got ${files.length}.`
     );
   }
 
@@ -136,11 +132,19 @@ export async function validateImageFiles(files, options = {}) {
       continue;
     }
     if (!item || typeof item !== 'object' || typeof item.path !== 'string') {
-      throw new Error('Each Argus panorama input must be a path or { path, archiveName } object.');
+      throw new Error('Each Argus input must be a path or { path, archiveName } object.');
     }
     images.push(await inspectPanoramaImage(item.path, {
       archiveName: item.archiveName ?? item.name
     }));
+  }
+
+  const isPinholeBatch = images[0].width === images[0].height;
+  if (images.some((image) => (image.width === image.height) !== isPinholeBatch)) {
+    throw new Error(
+      'Argus input batches must contain only 2:1 panoramas or only 1:1 pinhole images. ' +
+      'Submit mixed image types as separate batches.'
+    );
   }
 
   const exactStems = new Map();
@@ -149,7 +153,7 @@ export async function validateImageFiles(files, options = {}) {
     const priorExact = exactStems.get(image.stem);
     if (priorExact) {
       throw new Error(
-        `Duplicate panorama filename stem "${image.stem}" in "${priorExact}" and "${image.filename}".`
+        `Duplicate image filename stem "${image.stem}" in "${priorExact}" and "${image.filename}".`
       );
     }
     exactStems.set(image.stem, image.filename);
@@ -173,17 +177,17 @@ export async function validateImageFiles(files, options = {}) {
 
 function normalizeArchiveFileName(value) {
   if (typeof value !== 'string' || value.length === 0) {
-    throw new Error('Panorama image archive name must be a non-empty string.');
+    throw new Error('Argus image archive name must be a non-empty string.');
   }
   if (value === '.' || value === '..' || value.includes('/') || value.includes('\\')) {
-    throw new Error(`Panorama image must be a root-level file with a safe name: "${value}".`);
+    throw new Error(`Argus image must be a root-level file with a safe name: "${value}".`);
   }
   if (CONTROL_CHARACTER.test(value)) {
-    throw new Error(`Panorama image filename contains a control character: ${JSON.stringify(value)}.`);
+    throw new Error(`Argus image filename contains a control character: ${JSON.stringify(value)}.`);
   }
   const normalized = value.normalize('NFC');
   if (Buffer.byteLength(normalized, 'utf8') > 0xffff) {
-    throw new Error(`Panorama image filename is too long for ZIP: "${value}".`);
+    throw new Error(`Argus image filename is too long for ZIP: "${value}".`);
   }
   return normalized;
 }

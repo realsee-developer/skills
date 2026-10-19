@@ -2,7 +2,7 @@
 
 [English](install-guides.md) | [简体中文](zh-CN/install-guides.md)
 
-This repository provides two skills: `argus` uploads panoramas to Realsee for remote processing; `realsee-blender-reconstruction` reconstructs existing local exports as editable Blender scenes. Canonical sources live under `.agents/skills/`.
+This repository provides two skills: `argus` uploads panorama or pinhole-image batches to Realsee for remote processing; `realsee-blender-reconstruction` reconstructs existing local exports as editable Blender scenes. Canonical sources live under `.agents/skills/`.
 
 ## Host matrix
 
@@ -30,7 +30,7 @@ Argus requires a POSIX shell, Node.js 22+, npm 10+, npm registry and regional Ga
 
 Pin `v2.2.0` for either skill. The older `v2.0.0` tag contains only Argus.
 
-Pin `v1.0.2` only for legacy square 1:1 input, the old single-GLB output, or legacy preview behavior:
+Current source supports same-type 2:1 panorama or 1:1 pinhole batches. Published `v2.2.0` retains its original panorama-only contract; install `realsee-developer/skills@main` for current input support. The following pin records the legacy single-GLB and preview workflow:
 
 ```bash
 npx skills add realsee-developer/skills@v1.0.2 --skill argus

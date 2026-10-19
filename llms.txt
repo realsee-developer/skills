@@ -1,10 +1,10 @@
 # Realsee Skills
 
-Agent skills for panorama reconstruction and editable Blender spaces. Read the selected SKILL.md directly; load its references only for the current task.
+Agent skills for panorama/pinhole spatial reconstruction and editable Blender spaces. Read the selected SKILL.md directly; load its references only for the current task.
 
 ## Select a skill
 
-- [argus](.agents/skills/argus/SKILL.md): Submit 1–99 local RGB8 JPEG/PNG/WebP panoramas with exact 2:1 dimensions to Realsee. Returns depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated result index. Requires Node.js 22+, npm 10+, app credentials, and consent to remote upload.
+- [argus](.agents/skills/argus/SKILL.md): Submit 1–99 local RGB8 JPEG/PNG/WebP images to Realsee: all exact 2:1 panoramas or all exact 1:1 pinhole images per batch; mixed batches are rejected. Returns depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated result index. Requires Node.js 22+, npm 10+, app credentials, and consent to remote upload.
 - [realsee-blender-reconstruction](.agents/skills/realsee-blender-reconstruction/SKILL.md): Build or refine an editable native Blender scene from existing scan exports, point clouds, CAD, or panoramas. Requires local Blender and file/command access; local modeling needs no Argus credentials. Argus generation is a separate task.
 
 ## Install the selected skill

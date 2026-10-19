@@ -52,7 +52,7 @@ collect -> 查询一次 -> 原子下载 -> 校验/解压 -> 写结果索引
 
 ## 输入边界
 
-`--image` 与 `--zip` 最终进入同一个规范化输入 pipeline。调用者给的 ZIP 不会被直接信任或原样上传。Pipeline 安全展开根条目，校验 1–99 张 JPEG/PNG/WebP RGB8 严格 2:1 全景图，把文件名规范化为 UTF-8 NFC，拒绝 stem/case-fold 冲突，按 NFC UTF-8 字节排序，再写出一个确定性的流式 ZIP。
+`--image` 与 `--zip` 最终进入同一个规范化输入 pipeline。调用者给的 ZIP 不会被直接信任或原样上传。Pipeline 安全展开根条目，校验同批 1–99 张 JPEG/PNG/WebP RGB8 严格 2:1 全景图或严格 1:1 针孔图，在上传前拒绝混合批次，把文件名规范化为 UTF-8 NFC，拒绝 stem/case-fold 冲突，按 NFC UTF-8 字节排序，再写出一个确定性的流式 ZIP。
 
 产品容量继续由 Gateway 控制。本地只实施结构和资源保护：条目数、安全路径、实际展开字节、压缩行为与磁盘剩余空间。
 

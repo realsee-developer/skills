@@ -52,7 +52,7 @@ Production adapters implement Gateway plus AWS Node or Tencent COS Node. Tests u
 
 ## Input boundary
 
-Both `--image` and `--zip` converge on the same normalized-input pipeline. A supplied ZIP is never trusted or uploaded verbatim. The pipeline safely expands root entries, validates 1–99 JPEG/PNG/WebP RGB8 panoramas with exact 2:1 dimensions, normalizes names to UTF-8 NFC, rejects stem/case-fold collisions, sorts by NFC UTF-8 bytes, and writes one deterministic streaming ZIP.
+Both `--image` and `--zip` converge on the same normalized-input pipeline. A supplied ZIP is never trusted or uploaded verbatim. The pipeline safely expands root entries, validates 1–99 JPEG/PNG/WebP RGB8 images as an all-2:1 panorama or all-1:1 pinhole batch, rejects mixed batches before upload, normalizes names to UTF-8 NFC, rejects stem/case-fold collisions, sorts by NFC UTF-8 bytes, and writes one deterministic streaming ZIP.
 
 Product capacity remains Gateway-controlled. Local controls are structural and resource-based: entry count, safe paths, actual expanded bytes, compression behavior, and disk free-space checks.
 

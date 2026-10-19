@@ -352,16 +352,25 @@ async function validateIntrinsics(root, value, successfulIds, expectedFiles) {
     }
     const absolutePath = await assertRegularFile(root, item.path, `intrinsics ${item.image_id}`);
     const intrinsics = await readJsonObject(absolutePath, item.path);
-    assertOnlyKeys(
-      intrinsics,
-      ['image_id', 'width', 'height', 'focal_x', 'focal_y', 'principal_x', 'principal_y', 'model'],
-      item.path
-    );
     if (intrinsics.image_id !== item.image_id) {
       throw new Error(`${item.path}.image_id must equal "${item.image_id}".`);
     }
+    if (intrinsics.model !== undefined &&
+        (typeof intrinsics.model !== 'string' || intrinsics.model.trim().length === 0)) {
+      throw new Error(`${item.path}.model must be a non-empty string when present.`);
+    }
+    // Validate the documented panorama model; retain other camera metadata
+    // without inventing a calibration layout or interpreting its parameters.
+    if (intrinsics.model === 'equirectangular') {
+      assertOnlyKeys(
+        intrinsics,
+        ['image_id', 'width', 'height', 'focal_x', 'focal_y', 'principal_x', 'principal_y', 'model'],
+        item.path
+      );
+    }
     for (const field of ['width', 'height']) {
-      if (!Number.isInteger(intrinsics[field]) || intrinsics[field] <= 0) {
+      if ((intrinsics.model === 'equirectangular' || intrinsics[field] !== undefined) &&
+          (!Number.isInteger(intrinsics[field]) || intrinsics[field] <= 0)) {
         throw new Error(`${item.path}.${field} must be a positive integer.`);
       }
     }
@@ -370,11 +379,8 @@ async function validateIntrinsics(root, value, successfulIds, expectedFiles) {
         throw new Error(`${item.path}.${field} must be a finite number.`);
       }
     }
-    if (intrinsics.model !== 'equirectangular') {
-      throw new Error(`${item.path}.model must be "equirectangular".`);
-    }
     expectedFiles.add(item.path);
-    byId[item.image_id] = { path: item.path, absolutePath, ...intrinsics };
+    byId[item.image_id] = { ...intrinsics, path: item.path, absolutePath };
   }
   return byId;
 }
