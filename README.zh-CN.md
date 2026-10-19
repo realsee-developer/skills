@@ -1,6 +1,6 @@
 # Realsee Skills
 
-面向 **全景重建** 与 **Blender 可编辑空间建模** 的 Agent Skills，支持 Claude Code、Codex，以及 `npx skills` 支持的其他宿主。
+面向 **图像空间重建** 与 **Blender 可编辑空间建模** 的 Agent Skills，支持 Claude Code、Codex，以及 `npx skills` 支持的其他宿主。
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/realsee-developer/skills?display_name=tag&style=flat-square)](https://github.com/realsee-developer/skills/releases)
@@ -13,10 +13,10 @@
 
 | 分类 | Skill | 输入 → 输出 | 运行要求 |
 | --- | --- | --- | --- |
-| 全景重建 | [Argus](.agents/skills/argus/README.zh-CN.md) | 1–99 张本地 2:1 全景图 → EXR 深度图、合并 GLB 点云、相机位姿、可选内参与校验后的结果索引 | Realsee 远程服务；应用凭据与上传授权；POSIX shell、Node.js 22+、npm 10+ |
+| 空间重建 | [Argus](.agents/skills/argus/README.zh-CN.md) | 同批 1–99 张本地 2:1 全景图或 1:1 针孔图 → EXR 深度图、合并 GLB 点云、相机位姿、可选内参与校验后的结果索引 | Realsee 远程服务；应用凭据与上传授权；POSIX shell、Node.js 22+、npm 10+ |
 | 可编辑空间建模 | [Blender 重建](.agents/skills/realsee-blender-reconstruction/README.zh-CN.md) | 已有扫描导出、点云、CAD 或全景图 → 原生可编辑 `.blend` 场景 | 本地 Blender，以及可读取文件、执行命令的 Agent；本地建模无需 Argus 凭据 |
 
-需要从全景图生成深度、点云和位姿时，选择 **Argus**；需要基于已有资料创建或修改可编辑场景时，选择 **Blender 重建**。Argus 产物可以作为重建资料，但运行一项 skill 不会自动运行另一项。
+需要从全景图或方形针孔图生成深度、点云和位姿时，选择 **Argus**；需要基于已有资料创建或修改可编辑场景时，选择 **Blender 重建**。Argus 产物可以作为重建资料，但运行一项 skill 不会自动运行另一项。
 
 ## AI Agent 入口
 
@@ -61,13 +61,13 @@ npx skills add realsee-developer/skills --skill realsee-blender-reconstruction -
 
 ## 使用
 
-### Argus：全景图 → 重建数据
+### Argus：图像 → 重建数据
 
 示例请求：
 
 > 使用 $argus，将 /data/living-room.jpg 和 /data/hall.jpg 上传到 Realsee 处理，启动任务并报告工作区路径。
 
-输入必须是 JPEG、PNG 或 WebP，RGB8，宽高比严格为 2:1。流程包含三个显式命令：`start`、`status`、`collect`。收集产物包含 `output.zip`、算法 manifest 和经过校验的本地 `result.json` 索引；部分成功时会列出缺失图片。
+输入必须是 JPEG、PNG 或 WebP RGB8 图片。同批全部为严格 2:1 全景图或严格 1:1 针孔图；上传前会拒绝混合批次和其他宽高比。流程包含三个显式命令：`start`、`status`、`collect`。收集产物包含 `output.zip`、算法 manifest 和经过校验的本地 `result.json` 索引；部分成功时会列出缺失图片。
 
 Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET`、`REALSEE_REGION`（`global` 或 `cn`）。在本地安全配置秘密，上传前取得用户同意。配置方法和 CLI 示例见[凭据与使用指南](docs/zh-CN/usage.md#凭据与上传授权)。
 
@@ -104,13 +104,13 @@ Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET`、`REALSEE_REGION`（`glob
 | 开发与发布 | [开发指南](docs/zh-CN/development.md) · [贡献指南](CONTRIBUTING.zh-CN.md) · [发布指南](docs/zh-CN/release.md) · [分发清单](docs/zh-CN/public-distribution.md) |
 | 安全 | [安全策略](SECURITY.zh-CN.md) |
 
-Argus 产品资料：[官网](https://argus.realsee.ai/) · [Demo](https://h5.realsee.ai/argus) · [研究](https://argus-paper.realsee.ai/) · [开发者平台](https://developer.realsee.ai/)。这些站点介绍完整产品能力，当前可安装的 Argus skill 提供上方全景处理流程。
+Argus 产品资料：[官网](https://argus.realsee.ai/) · [Demo](https://h5.realsee.ai/argus) · [研究](https://argus-paper.realsee.ai/) · [开发者平台](https://developer.realsee.ai/)。这些站点介绍完整产品能力，当前源码中的 Argus skill 提供上方同类型批量图像处理流程。
 
 ## 版本
 
 | 来源 | 内容 |
 | --- | --- |
-| 当前 `main` | Argus 与 Blender 重建两项 skill，以及最新使用指导 |
+| 当前 `main` | 支持全景图或针孔图批次的 Argus，以及 Blender 重建与最新使用指导 |
 | 稳定版本 `v2.2.0` | 包含两项 skill；使用 `realsee-developer/skills@v2.2.0` 固定安装版本 |
 | 旧版 `v2.0.0` | 仅含 Argus，不含 Blender 重建 |
 | 历史版本 `v1.0.2` | 旧方图与单 GLB 工作流，见[迁移说明](.agents/skills/argus/references/migration-v2.zh-CN.md) |

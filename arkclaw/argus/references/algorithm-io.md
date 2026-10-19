@@ -15,7 +15,7 @@ input.zip
 └── terrace.webp
 ```
 
-Each archive must contain 1–99 images. Every image must be JPEG, PNG, or WebP; RGB; 8-bit per channel; and an exact 2:1 equirectangular panorama (`width == 2 * height`). A resolution below 2048×1024 is accepted with a quality warning. Square images and other aspect ratios are not part of this contract.
+Each archive must contain 1–99 JPEG, PNG, or WebP RGB8 images. A batch contains either only exact 2:1 equirectangular panoramas (`width == 2 * height`) or only exact 1:1 pinhole images (`width == height`). The Skill rejects mixed batches before upload; submit the two image types as separate tasks. Other aspect ratios are rejected. Panorama resolution below 2048×1024 is accepted with a quality warning. No pinhole-specific resolution recommendation is defined.
 
 The Skill rejects directories, non-image entries, path traversal, control characters, duplicate stems, and filename collisions after Unicode NFC normalization and case folding. It normalizes filenames to UTF-8 NFC, sorts them by NFC UTF-8 byte order, and writes a new deterministic ZIP even when the caller supplies an existing archive.
 
@@ -66,7 +66,7 @@ Each successful image has one pose document:
 
 ### Camera intrinsics
 
-Intrinsics are optional. When present, an entry uses the equirectangular model:
+Intrinsics are optional and model-specific. Preserve the returned JSON and its image-ID mapping; do not invent pinhole calibration fields or infer them from panorama metadata. The documented equirectangular panorama example is:
 
 ```json
 {
@@ -81,7 +81,7 @@ Intrinsics are optional. When present, an entry uses the equirectangular model:
 }
 ```
 
-Focal values are descriptive for equirectangular panoramas.
+Focal values in this example are descriptive for equirectangular panoramas. For other returned camera models, the collector validates identity, safe artifact paths, and known numeric fields when present, while preserving model-specific metadata without interpreting it.
 
 ## 3. `output.json`
 

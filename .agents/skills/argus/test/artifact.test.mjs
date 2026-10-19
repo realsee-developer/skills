@@ -137,6 +137,34 @@ test('accepts optional intrinsics and verifies its embedded image ID', async () 
   }
 });
 
+test('retains returned camera metadata without inferring pinhole calibration or overriding local paths', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-camera-metadata-'));
+  try {
+    await writeOutputDirectory(root, {
+      manifest: validManifest({ includeIntrinsics: true }),
+      overrides: {
+        intrinsics: {
+          image_id: '000000',
+          model: 'provider-specific-camera',
+          provider_metadata: { revision: 'example' },
+          path: '../../untrusted.json',
+          absolutePath: '/untrusted.json'
+        }
+      }
+    });
+    const result = await validateArgusOutput(root);
+    assert.equal(result.intrinsics.length, 1);
+    assert.equal(result.intrinsics[0].model, 'provider-specific-camera');
+    assert.deepEqual(result.intrinsics[0].provider_metadata, { revision: 'example' });
+    assert.equal(result.intrinsics[0].width, undefined);
+    assert.equal(result.intrinsics[0].focal_x, undefined);
+    assert.equal(result.intrinsics[0].path, 'intrinsics/000000_intrinsics.json');
+    assert.equal(result.intrinsics[0].absolutePath, join(root, 'intrinsics', '000000_intrinsics.json'));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('rejects Unicode full case-fold collisions in name_mapping stems', async () => {
   const root = await mkdtemp(join(tmpdir(), 'argus-name-mapping-fold-'));
   try {

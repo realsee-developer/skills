@@ -4,11 +4,12 @@
 
 Argus Skill 2.0 keeps the Skill ID `argus` but replaces the 1.x VGGT workflow. Existing `v1.0.2` remains the frozen legacy release; no `v1.0` alias is introduced.
 
+Current source also accepts same-type batches of 1–99 exact 1:1 pinhole images through the ZIP lifecycle. Mixed panorama/pinhole batches are rejected before upload. The tables below record the original 2.0 release; frozen tags keep their original contracts. Square input alone no longer requires a legacy workflow.
+
 ## Pin 1.x when you need legacy behavior
 
 Continue using `v1.0.2` if your workflow requires any of the following:
 
-- one square 1:1 image;
 - the legacy single-image VGGT endpoints;
 - a single downloaded GLB as the complete output;
 - the legacy H5 preview URL;

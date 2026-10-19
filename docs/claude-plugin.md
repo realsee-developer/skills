@@ -11,7 +11,7 @@ Install the `realsee-skills` plugin from a Claude Code session:
 
 The generated plugin exposes `realsee-skills:argus` and `realsee-skills:realsee-blender-reconstruction`, with no install-time configuration or MCP server. Argus resolves credentials at runtime; local Blender modeling needs no Realsee credentials. See the [Blender workflow](../.agents/skills/realsee-blender-reconstruction/README.md). The Argus setup below remains specific to Argus.
 
-Official context is available at [Argus](https://argus.realsee.ai/), the [interactive demo](https://h5.realsee.ai/argus), the [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). The agent must not infer broader photo support from those pages: this Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+Official context is available at [Argus](https://argus.realsee.ai/), the [interactive demo](https://h5.realsee.ai/argus), the [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). The agent must not infer broader photo support from those pages: current Skill source accepts 1–99 local RGB8 images, all exact 2:1 panoramas or all exact 1:1 pinhole images per batch. Mixed batches are rejected before upload.
 
 It carries `examples/manifest.json`, but no panorama JPEGs. To use official samples, choose the region matching `REALSEE_REGION` and a new absolute directory outside the installed Skill, then run `node <skillDir>/scripts/download-examples.mjs --region <cn|global> --output <absolute-dir>`. The command verifies each manifest byte length and SHA-256 before publishing the directory. Running the downloaded files still requires separate upload consent and uses the corresponding regional Gateway.
 
@@ -70,4 +70,4 @@ The agent must obtain upload consent before start. For `result_status: partial`,
 
 ## Release policy
 
-`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.2.0` includes both skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.
+`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.2.0` includes both skills; the older `v2.0.0` tag contains only Argus. The legacy `v1.0.2` tag records the old single-GLB workflow; current pinhole batches use the ZIP lifecycle.

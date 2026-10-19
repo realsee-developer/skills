@@ -28,7 +28,7 @@ The real E2E promotion items apply when promoting an Argus preview to stable. Ve
 - [ ] Gateway OpenAPI contains exactly the four public methods and both bases.
 - [ ] Bilingual algorithm I/O docs agree on auto IDs, `missing_ids`, `error`, optional normals, fixed `right-handed, Y-up`, and EXR-only stable depth.
 - [ ] JSON Schema 2020-12 discriminates success/partial/error and requires non-empty unique `missing_ids` for partial.
-- [ ] English/Chinese usage and migration docs explain that square/single-GLB users pin `v1.0.2`.
+- [ ] English/Chinese docs distinguish current same-type panorama/pinhole batches from unchanged frozen release contracts.
 - [ ] No document mentions detached polling, `--async`, `--resume`, or a 2.0 H5 preview as supported behavior.
 
 ## Argus runtime verification

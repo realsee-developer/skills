@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "realsee-skills",
-      "description": "Realsee skills for Claude Code: Argus panorama reconstruction and local editable Blender space modeling.",
+      "description": "Realsee skills for Claude Code: Argus panorama and pinhole reconstruction and local editable Blender space modeling.",
       "author": {
         "name": "Realsee",
         "url": "https://github.com/realsee-developer"
@@ -23,6 +23,7 @@
         "argus",
         "skill",
         "panorama",
+        "pinhole",
         "metric-3d",
         "glb",
         "depth-map",
