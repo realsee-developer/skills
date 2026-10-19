@@ -10,21 +10,24 @@ import { inspectPanoramaImage, validateImageFiles } from '../src/input.mjs';
 import { buildJpegFrame, buildPngHeader, buildWebpVp8x } from './helpers/images.mjs';
 import { writeStoredZip } from './helpers/zip.mjs';
 
-test('accepts one JPEG, PNG, and WebP strict 2:1 RGB8 panorama', async () => {
+test('accepts JPEG, PNG, and WebP RGB8 panoramas and pinhole images', async () => {
   const root = await mkdtemp(join(tmpdir(), 'argus-formats-'));
   try {
     const fixtures = [
-      ['one.jpg', buildJpegFrame(4096, 2048), 'jpeg'],
-      ['two.png', buildPngHeader(4096, 2048), 'png'],
-      ['three.webp', buildWebpVp8x(4096, 2048), 'webp']
+      ['one.jpg', buildJpegFrame(4096, 2048), 'jpeg', 4096, 2048],
+      ['two.png', buildPngHeader(4096, 2048), 'png', 4096, 2048],
+      ['three.webp', buildWebpVp8x(4096, 2048), 'webp', 4096, 2048],
+      ['square.jpg', buildJpegFrame(1024, 1024), 'jpeg', 1024, 1024],
+      ['square.png', buildPngHeader(2048, 2048), 'png', 2048, 2048],
+      ['square.webp', buildWebpVp8x(1536, 1536), 'webp', 1536, 1536]
     ];
-    for (const [name, bytes, format] of fixtures) {
+    for (const [name, bytes, format, width, height] of fixtures) {
       const path = join(root, name);
       await writeFile(path, bytes);
       const image = await inspectPanoramaImage(path);
       assert.equal(image.format, format);
-      assert.equal(image.width, 4096);
-      assert.equal(image.height, 2048);
+      assert.equal(image.width, width);
+      assert.equal(image.height, height);
       assert.equal(image.channels, 3);
       assert.equal(image.bitDepth, 8);
     }
@@ -55,15 +58,63 @@ test('accepts 99 images, rejects 100 before reading files, and sorts by NFC UTF-
   }
 });
 
-test('strictly rejects square and non-2:1 images, non-RGB channels, alpha, and non-8-bit', async () => {
+test('accepts a homogeneous pinhole batch without applying panorama resolution warnings', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-pinhole-batch-'));
+  try {
+    const files = [
+      ['c.webp', buildWebpVp8x(1536, 1536)],
+      ['a.jpg', buildJpegFrame(1024, 1024)],
+      ['b.png', buildPngHeader(2048, 2048)]
+    ];
+    for (const [name, bytes] of files) await writeFile(join(root, name), bytes);
+    const result = await validateImageFiles(files.map(([name]) => join(root, name)));
+    assert.deepEqual(result.images.map((image) => image.filename), ['a.jpg', 'b.png', 'c.webp']);
+    assert.ok(result.images.every((image) => image.width === image.height));
+    assert.deepEqual(result.warnings, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('rejects mixed panorama/pinhole batches for loose files and ZIP inputs', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-mixed-batch-'));
+  try {
+    const pano = join(root, 'pano.jpg');
+    const pinhole = join(root, 'pinhole.png');
+    await writeFile(pano, buildJpegFrame(2048, 1024));
+    await writeFile(pinhole, buildPngHeader(1024, 1024));
+    for (const files of [[pano, pinhole], [pinhole, pano]]) {
+      await assert.rejects(() => validateImageFiles(files), /Submit mixed image types as separate batches/);
+    }
+    const input = join(root, 'mixed.zip');
+    const normalized = join(root, 'normalized.zip');
+    await writeStoredZip(input, [
+      { name: 'pano.jpg', data: await readFile(pano) },
+      { name: 'pinhole.png', data: await readFile(pinhole) }
+    ]);
+    await assert.rejects(
+      () => normalizeInputZip(input, join(root, 'stage'), normalized),
+      /Submit mixed image types as separate batches/
+    );
+    await assert.rejects(() => readFile(normalized), { code: 'ENOENT' });
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('rejects unsupported aspect ratios, non-RGB channels, alpha, and non-8-bit', async () => {
   const root = await mkdtemp(join(tmpdir(), 'argus-invalid-'));
   const cases = [
-    ['square.jpg', buildJpegFrame(1024, 1024), /v1\.0\.2/],
-    ['ratio.jpg', buildJpegFrame(4096, 2050), /strict 2:1/],
+    ['near-pano.jpg', buildJpegFrame(4096, 2050), /exact 2:1 panorama or 1:1 pinhole/],
+    ['near-square.jpg', buildJpegFrame(1024, 1023), /exact 2:1 panorama or 1:1 pinhole/],
+    ['portrait.jpg', buildJpegFrame(1024, 2048), /exact 2:1 panorama or 1:1 pinhole/],
     ['gray.jpg', buildJpegFrame(4096, 2048, { channels: 1 }), /exactly 3 RGB channels/],
     ['rgba.png', buildPngHeader(4096, 2048, { colorType: 6 }), /exactly 3 RGB channels/],
     ['deep.png', buildPngHeader(4096, 2048, { bitDepth: 16 }), /must be 8-bit/],
-    ['alpha.webp', buildWebpVp8x(4096, 2048, { alpha: true }), /exactly 3 RGB channels/]
+    ['alpha.webp', buildWebpVp8x(4096, 2048, { alpha: true }), /exactly 3 RGB channels/],
+    ['square-gray.jpg', buildJpegFrame(1024, 1024, { channels: 1 }), /exactly 3 RGB channels/],
+    ['square-rgba.png', buildPngHeader(1024, 1024, { colorType: 6 }), /exactly 3 RGB channels/],
+    ['square-deep.png', buildPngHeader(1024, 1024, { bitDepth: 16 }), /must be 8-bit/]
   ];
   try {
     for (const [name, bytes, pattern] of cases) {
@@ -102,9 +153,9 @@ test('rejects duplicate stems and NFC/case-fold filename collisions', async () =
     await writeFile(folded, buildWebpVp8x(2048, 1024));
     await writeFile(decomposed, buildJpegFrame(2048, 1024));
     await writeFile(composed, buildPngHeader(2048, 1024));
-    await assert.rejects(() => validateImageFiles([jpg, png]), /Duplicate panorama filename stem/);
+    await assert.rejects(() => validateImageFiles([jpg, png]), /Duplicate image filename stem/);
     await assert.rejects(() => validateImageFiles([jpg, folded]), /Case-folding filename collision/);
-    await assert.rejects(() => validateImageFiles([decomposed, composed]), /Duplicate panorama filename stem/);
+    await assert.rejects(() => validateImageFiles([decomposed, composed]), /Duplicate image filename stem/);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -193,6 +244,28 @@ test('ZIP input is safely normalized and repacked byte-for-byte deterministicall
     assert.equal(one.sha256, two.sha256);
     assert.deepEqual(await readFile(first), await readFile(second));
     assert.equal(createHash('sha256').update(await readFile(first)).digest('hex'), one.sha256);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('normalizes a multi-pinhole ZIP without changing image contents', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-pinhole-zip-'));
+  try {
+    const input = join(root, 'input.zip');
+    const firstImage = buildJpegFrame(1024, 1024);
+    const secondImage = buildWebpVp8x(2048, 2048);
+    await writeStoredZip(input, [
+      { name: 'z.webp', data: secondImage },
+      { name: 'a.jpg', data: firstImage }
+    ]);
+    const first = await normalizeInputZip(input, join(root, 'stage-one'), join(root, 'first.zip'));
+    const second = await normalizeInputZip(input, join(root, 'stage-two'), join(root, 'second.zip'));
+    assert.deepEqual(first.images.map((image) => image.filename), ['a.jpg', 'z.webp']);
+    assert.ok(first.images.every((image) => image.width === image.height));
+    assert.deepEqual(await readFile(first.images[0].path), firstImage);
+    assert.deepEqual(await readFile(first.images[1].path), secondImage);
+    assert.equal(first.sha256, second.sha256);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

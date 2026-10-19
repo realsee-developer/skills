@@ -1,6 +1,6 @@
 ---
 name: argus
-description: Use this skill to process one to 99 local exact 2:1 equirectangular panorama images with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Trigger for Argus panorama reconstruction, Argus ZIP input, or explicit Argus start/status/collect lifecycle requests. Do not trigger for panorama editing or stitching, arbitrary-photo 3D generation, existing GLB inspection, or research-only questions.
+description: Use this skill to process one to 99 local 2:1 equirectangular panoramas or 1:1 pinhole images in a same-type batch with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Trigger for Argus panorama or pinhole reconstruction, Argus ZIP input, or explicit Argus start/status/collect requests. Do not trigger for panorama editing or stitching, unrestricted photo-to-3D generation, existing GLB inspection, or research-only questions.
 compatibility: Requires a POSIX shell, Node.js 22+, npm 10+, npm registry access, and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
 metadata:
   version: "2.2.0"
@@ -9,9 +9,9 @@ metadata:
 
 # argus
 
-Use this Skill to submit 1–99 exact 2:1 equirectangular panoramas to Realsee Argus and collect a validated `output.zip`. The public entrypoint is `scripts/run-argus.mjs`; `<skillDir>` below means the directory containing this file.
+Use this Skill to submit a batch of 1–99 exact 2:1 equirectangular panoramas or 1:1 pinhole images to Realsee Argus and collect a validated `output.zip`. Keep the two image types in separate batches. The public entrypoint is `scripts/run-argus.mjs`; `<skillDir>` below means the directory containing this file.
 
-Treat the official product, demo, research, and developer sites as background only. Do not infer arbitrary-photo input or other product workflows from them; follow the narrower Skill 2.0 contract in this file.
+Treat the official product, demo, research, and developer sites as background only. Follow the supported image types and workflow in this file rather than inferring unrestricted photo input or other product workflows from those sites.
 
 Argus is a remote upload. Do not upload until the user has selected the input and consented. Never print or log credentials, upload tokens, presigned URLs, or raw provider errors. Keep tokens and signed URLs out of persistent state; store app credentials only with explicit user authorization as described below. Do not open output files unless the user asks.
 
@@ -59,7 +59,7 @@ Two mutually exclusive modes are supported:
 - repeat `--image <absolute-path>` for 1–99 local images; or
 - pass one `--zip <absolute-path>` containing root-level images.
 
-The CLI performs authoritative validation and deterministic packaging. Inputs must be JPEG, PNG, or WebP, RGB, 8-bit, and exactly `width == 2 * height`. A resolution below 2048×1024 emits a warning. Square 1:1 images are rejected; users who require the old square/single-GLB workflow must pin `v1.0.2`.
+The CLI validates and deterministically packages JPEG, PNG, or WebP RGB8 images. A batch must contain either only exact 2:1 equirectangular panoramas (`width == 2 * height`) or only exact 1:1 pinhole images (`width == height`). Mixed batches and other aspect ratios are rejected before upload; submit the two image types as separate tasks. Panorama resolution below 2048×1024 emits a warning. No pinhole resolution recommendation is defined here; do not crop or resize user input without permission.
 
 ZIP mode is not a validation bypass. The CLI safely extracts, validates, Unicode-normalizes, sorts, and repacks it before upload. Do not manually rename output IDs: consumers trust the algorithm's `name_mapping`.
 

@@ -11,7 +11,7 @@
 
 生成的 Plugin 暴露 `realsee-skills:argus` 和 `realsee-skills:realsee-blender-reconstruction`，没有安装期配置或 MCP server。Argus 在运行时解析凭证，本地 Blender 建模无需 Realsee 凭据，使用方式见 [Blender 工作流](../../.agents/skills/realsee-blender-reconstruction/README.zh-CN.md)。下文配置仍仅适用于 Argus。
 
-官方背景资料见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Agent 不能据此推断更广的照片能力：本 Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
+官方背景资料见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Agent 不能据此推断更广的照片能力：当前 Skill 源码接受同批 1–99 张本地 RGB8 图片，全部为严格 2:1 全景图或严格 1:1 针孔图；上传前拒绝混合批次。
 
 Plugin 包含 `examples/manifest.json`，但不包含全景 JPEG。需要官方示例时，请选择与 `REALSEE_REGION` 一致的区域和 Skill 目录外一个尚不存在的绝对路径，再运行 `node <skillDir>/scripts/download-examples.mjs --region <cn|global> --output <absolute-dir>`。命令校验每个 manifest 字节数与 SHA-256 后才发布目录。运行已下载文件仍须另行取得上传同意，并使用对应区域的 Gateway。
 

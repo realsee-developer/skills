@@ -72,6 +72,61 @@ test('start validates, streams one canonical ZIP upload, submits once, and retur
   }
 });
 
+test('start accepts a multi-pinhole batch and submits its ZIP once', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-start-pinhole-'));
+  const images = [join(root, 'second.jpg'), join(root, 'first.jpg')];
+  const calls = { allocate: 0, upload: 0, submit: 0 };
+  try {
+    for (const path of images) await writeFile(path, buildJpegWithDimensions(1024, 1024));
+    const lifecycle = new ArgusTaskLifecycle({
+      taskPort: {
+        async allocateUpload() { calls.allocate += 1; return fakeLease(); },
+        async submit() { calls.submit += 1; return { task_code: 'pinhole-task' }; }
+      },
+      transferPort: {
+        async upload({ filePath, objectName }) {
+          calls.upload += 1;
+          assert.equal(objectName, 'input.zip');
+          assert.equal((await readFile(filePath)).readUInt32LE(0), 0x04034b50);
+          return { provider: 'aws', object_path: 'prefix/input.zip', key: objectName };
+        }
+      },
+      now: fixedNow
+    });
+    const state = await lifecycle.start({ images, workspaceRoot: join(root, 'runs'), yes: true, region: 'global' });
+    assert.deepEqual(calls, { allocate: 1, upload: 1, submit: 1 });
+    assert.equal(state.task_code, 'pinhole-task');
+    assert.equal(state.input.image_count, 2);
+    assert.deepEqual(state.input.images.map((image) => image.name), ['first.jpg', 'second.jpg']);
+    assert.ok(state.input.images.every((image) => image.width === 1024 && image.height === 1024));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('start rejects mixed panorama/pinhole input before allocating an upload lease', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-start-mixed-'));
+  let remoteCalls = 0;
+  try {
+    const pano = join(root, 'pano.jpg');
+    const pinhole = join(root, 'pinhole.jpg');
+    await writeFile(pano, buildJpegWithDimensions(2048, 1024));
+    await writeFile(pinhole, buildJpegWithDimensions(1024, 1024));
+    const lifecycle = new ArgusTaskLifecycle({
+      taskPort: { async allocateUpload() { remoteCalls += 1; throw new Error('unexpected network stage'); } },
+      transferPort: { async upload() { remoteCalls += 1; throw new Error('unexpected upload'); } },
+      now: fixedNow
+    });
+    await assert.rejects(
+      () => lifecycle.start({ images: [pano, pinhole], workspaceRoot: join(root, 'runs'), yes: true, region: 'global' }),
+      /Submit mixed image types as separate batches/
+    );
+    assert.equal(remoteCalls, 0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('lost submit response is checkpointed as submission_unknown and never retried', async () => {
   const root = await mkdtemp(join(tmpdir(), 'argus-unknown-'));
   const imagePath = join(root, 'room.jpg');

@@ -37,7 +37,7 @@ const pluginPackage = {
 const pluginMetadata = {
   $schema: 'https://json.schemastore.org/claude-code-plugin-manifest.json',
   name: 'realsee-skills',
-  description: 'Realsee skills for Claude Code: Argus panorama reconstruction and local editable Blender space modeling.',
+  description: 'Realsee skills for Claude Code: Argus panorama and pinhole reconstruction and local editable Blender space modeling.',
   author: {
     name: 'Realsee',
     url: 'https://github.com/realsee-developer'
@@ -45,7 +45,7 @@ const pluginMetadata = {
   homepage: 'https://argus.realsee.ai/',
   repository: 'https://github.com/realsee-developer/skills',
   license: pluginLicense,
-  keywords: ['realsee', 'argus', 'panorama', 'metric-3d', 'point-cloud', 'depth-map']
+  keywords: ['realsee', 'argus', 'panorama', 'pinhole', 'metric-3d', 'point-cloud', 'depth-map']
 };
 
 const validatePluginScript = String.raw`import { createReadStream } from 'node:fs';

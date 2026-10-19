@@ -18,7 +18,7 @@ Then open the modeling project and ask:
 
 Verify that local Blender runs and inspect its version; keep inputs, scripts, and outputs in the modeling project. The skill includes optional walkthrough, physics/USDZ, image-and-text asset generation, and web-preview guidance when requested. `npm run install:codex-skills` remains the Argus-specific installer. The rest of this guide describes Argus remote processing.
 
-Official resources: [Argus](https://argus.realsee.ai/), [interactive demo](https://h5.realsee.ai/argus), [research](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). These sites may show broader photo and product workflows; the Argus Skill accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
+Official resources: [Argus](https://argus.realsee.ai/), [interactive demo](https://h5.realsee.ai/argus), [research](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). These sites may show broader photo and product workflows; the current Argus Skill source accepts same-type batches of 1–99 local RGB8 images: exact 2:1 panoramas or exact 1:1 pinhole images.
 
 ## Install
 
@@ -117,10 +117,10 @@ Collection retains `output.zip`, safely extracts it, validates the manifest and 
 ## Input rules
 
 - 1–99 root-level JPEG, PNG, or WebP images.
-- RGB, 8-bit, exact 2:1 dimensions.
-- Below 2048×1024 is a warning, not a hard failure.
+- RGB, 8-bit; all exact 2:1 panoramas or all exact 1:1 pinhole images per batch.
+- Panorama resolution below 2048×1024 is a warning, not a hard failure.
 - ZIP paths must be safe and flat; the Skill rejects duplicate stems and Unicode/case-fold collisions.
-- A single 2:1 panorama is valid. A square image is not; pin `v1.0.2` for the legacy square workflow.
+- One image is a valid batch. Mixed panorama/pinhole batches are rejected before upload; submit separate tasks. Released tags retain their original input contracts.
 
 ## Skill files
 

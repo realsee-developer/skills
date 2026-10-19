@@ -10,7 +10,7 @@
 
 - 读取 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET` 和 `REALSEE_REGION`；
 - 确认上传授权；
-- 校验 1–99 张严格 2:1 的 JPEG、PNG 或 WebP RGB8 全景图；
+- 校验 1–99 张 JPEG、PNG 或 WebP RGB8 图片：同批全部为严格 2:1 全景图或严格 1:1 针孔图，上传前拒绝混合批次；
 - 必要时安全解压输入 ZIP，再将所有输入规范化并重新打包为一个确定性 ZIP；
 - 仅将不含敏感信息的输入元数据写入 schema v2 `state.json`。
 

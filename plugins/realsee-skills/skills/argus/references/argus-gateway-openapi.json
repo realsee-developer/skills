@@ -3,7 +3,7 @@
   "info": {
     "title": "Realsee Argus Gateway API",
     "version": "2.0.0",
-    "description": "Public Gateway contract used by Argus Skill 2.x. The same paths are available on the global and China Gateway bases. Upload credentials and temporary result URLs must not be persisted or logged."
+    "description": "Public Gateway contract used by Argus Skill 2.x. The same paths are available on the global and China Gateway bases. Upload credentials and temporary result URLs must not be persisted or logged. Current Skill input supports same-type batches of 2:1 equirectangular panoramas or 1:1 pinhole images in a ZIP; mixed batches are rejected locally before upload."
   },
   "servers": [
     {
@@ -72,7 +72,7 @@
       "post": {
         "operationId": "submitArgusTask",
         "summary": "Submit one Argus task",
-        "description": "This operation is not idempotent. Clients must not retry automatically when the response outcome is unknown.",
+        "description": "This operation is not idempotent. Clients must not retry automatically when the response outcome is unknown. Upload one ZIP containing the selected same-type panorama or pinhole batch before submitting. The request fields remain private_cos_keys and title; input geometry does not add a type parameter.",
         "security": [
           {
             "gatewayAccessToken": []

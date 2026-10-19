@@ -28,7 +28,7 @@
 - [ ] Gateway OpenAPI 恰好包含四个公开 method 和两个基础地址。
 - [ ] 双语算法 I/O 对 auto ID、`missing_ids`、`error`、可选法线、固定 `right-handed, Y-up`、stable EXR-only 深度描述一致。
 - [ ] JSON Schema 2020-12 判别 success/partial/error，并要求 partial 的 `missing_ids` 非空且唯一。
-- [ ] 双语使用与迁移文档说明方图/单 GLB 用户固定 `v1.0.2`。
+- [ ] 双语文档区分当前同类型全景图或针孔图批次，以及未改变的冻结版本合同。
 - [ ] 文档不再把 detached polling、`--async`、`--resume` 或 2.0 H5 preview 描述成支持能力。
 
 ## Argus runtime 验证

@@ -12,13 +12,13 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-`argus` packages 1–99 local 2:1 panoramas into one normalized ZIP, submits a Realsee Argus task, and collects a validated `output.zip` containing EXR depth maps, one merged GLB point cloud, per-image poses, optional intrinsics, and `output.json`.
+`argus` packages 1–99 local 2:1 panoramas or 1:1 pinhole images of the same type into one normalized ZIP, submits a Realsee Argus task, and collects a validated `output.zip` containing EXR depth maps, one merged GLB point cloud, per-image poses, optional intrinsics, and `output.json`.
 
-Version 2.0 keeps the Skill ID `argus` but does not include the old single-image VGGT fallback. Pin `v1.0.2` for square 1:1 input, the old single-GLB-only output, or legacy preview behavior. See the [migration guide](references/migration-v2.md).
+Version 2.0 keeps the Skill ID `argus` but does not include the old single-image VGGT fallback. Current source supports square 1:1 pinhole batches through the ZIP workflow. Frozen release tags retain their original input rules. For legacy single-GLB and preview behavior, see the [migration guide](references/migration-v2.md).
 
 [Argus](https://argus.realsee.ai/) · [Interactive demo](https://h5.realsee.ai/argus) · [Research](https://argus-paper.realsee.ai/) · [Realsee Developer Platform](https://developer.realsee.ai/)
 
-The product and research pages show the wider Argus ecosystem. This Skill 2.0 exposes a deliberately narrower contract: **1–99 local RGB8 panoramas with exact 2:1 dimensions**. It does not accept arbitrary photos or expose every workflow shown on those sites.
+The product and research pages show the wider Argus ecosystem. The current Skill source accepts **1–99 local RGB8 images: all exact 2:1 panoramas or all exact 1:1 pinhole images in one batch**. Mixed batches and other aspect ratios are rejected before upload. Released tags keep their original contracts.
 
 <p align="center">
   <a href="https://argus-paper.realsee.ai/"><img src="assets/brand/argus-paper-teaser.png" alt="Argus research: panoramas reconstructed at metric scale" width="560"></a>
@@ -83,8 +83,9 @@ There is no detached poller, `--async`, or `--resume`. `start`, `status`, and `c
 ## Input contract
 
 - 1–99 JPEG, PNG, or WebP images.
-- RGB, 8-bit, exact `width == 2 * height`.
-- At least 2048×1024 is recommended; smaller images produce a warning.
+- RGB, 8-bit; all images in a batch must be exact 2:1 panoramas (`width == 2 * height`) or exact 1:1 pinhole images (`width == height`).
+- Mixed panorama/pinhole batches are rejected; submit separate tasks.
+- Panorama resolution of at least 2048×1024 is recommended; smaller panoramas produce a warning. No pinhole-specific resolution recommendation is defined.
 - `--image` is repeatable and mutually exclusive with `--zip`.
 - ZIPs may contain only images at the root. The Skill safely validates and deterministically repacks them.
 
@@ -103,7 +104,7 @@ The collector validates and indexes this artifact matrix:
 | `depth/*_depth.exr` | One 32-bit floating-point, meter-scale depth map per successfully reconstructed image. |
 | `pointcloud/merged.glb` | One merged, `right-handed, Y-up` point cloud for the successful image set. |
 | `pose/*_pose.json` | One camera pose per successfully reconstructed image. |
-| `intrinsics/*_intrinsics.json` | Optional and may be absent for some or all successful images. |
+| `intrinsics/*_intrinsics.json` | Optional and may be absent. Preserve returned camera metadata; do not infer pinhole calibration from panorama fields. |
 | `result.json` | Local index of artifact paths, statuses, warnings, and `missing_ids`. |
 
 `partial` exits 0 but always carries an explicit warning and a non-empty missing-ID list. `error` exits non-zero.

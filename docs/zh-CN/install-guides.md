@@ -2,7 +2,7 @@
 
 [English](../install-guides.md) | 简体中文
 
-本仓库提供两项 skill：`argus` 将全景图上传到 Realsee 进行远程处理；`realsee-blender-reconstruction` 将已有本地导出重建为可编辑 Blender 场景。规范源码位于 `.agents/skills/`。
+本仓库提供两项 skill：`argus` 将全景图或针孔图批次上传到 Realsee 进行远程处理；`realsee-blender-reconstruction` 将已有本地导出重建为可编辑 Blender 场景。规范源码位于 `.agents/skills/`。
 
 ## 宿主对照
 
@@ -30,7 +30,7 @@ Argus 需要 POSIX shell、Node.js 22+、npm 10+、npm registry 与区域 Gatewa
 
 两项 skill 均可固定到 `v2.2.0`。旧版 `v2.0.0` 标签仅包含 Argus。
 
-只有旧 1:1 方图、旧版单 GLB 输出或旧 preview 行为才固定 `v1.0.2`：
+当前源码支持同类型的 2:1 全景图或 1:1 针孔图批次。已发布的 `v2.2.0` 保留原有仅全景图合同；当前输入支持请安装 `realsee-developer/skills@main`。以下固定版本记录旧单 GLB 与 preview 工作流：
 
 ```bash
 npx skills add realsee-developer/skills@v1.0.2 --skill argus

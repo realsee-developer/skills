@@ -8,9 +8,9 @@ Argus requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`g
 
 ## Input rejected before upload
 
-Provide either repeated `--image` arguments or one `--zip`, never both. The batch must contain 1–99 root-level JPEG, PNG, or WebP RGB8 images with exact 2:1 dimensions. A 1:1 square image belongs to the legacy workflow; pin the Skill to `v1.0.2` if that behavior is required.
+Provide either repeated `--image` arguments or one `--zip`, never both. The batch must contain 1–99 root-level JPEG, PNG, or WebP RGB8 images, all exact 2:1 panoramas or all exact 1:1 pinhole images. Submit mixed image types as separate tasks. Other aspect ratios are rejected. Frozen tags retain their original input rules; current square-image support uses the ZIP workflow.
 
-Nested paths, path traversal, control characters, duplicate stems, and Unicode/case-fold filename collisions are rejected. A resolution below 2048×1024 produces a warning but is still accepted.
+Nested paths, path traversal, control characters, duplicate stems, and Unicode/case-fold filename collisions are rejected. Panorama resolution below 2048×1024 produces a warning but is still accepted.
 
 ## `submission_unknown`
 

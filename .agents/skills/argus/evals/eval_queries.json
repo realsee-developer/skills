@@ -4,7 +4,7 @@
     "should_trigger": true
   },
   {
-    "query": "I have twelve 8000x4000 equirectangular JPGs in ~/Downloads/lobby-scan; turn them into per-view metric depth, one merged point cloud GLB, and poses.",
+    "query": "I have twelve square 1024x1024 pinhole JPGs in ~/Downloads/lobby-photos; turn them into per-view depth, one merged point cloud GLB, and camera poses.",
     "should_trigger": true
   },
   {
@@ -24,7 +24,7 @@
     "should_trigger": true
   },
   {
-    "query": "Start an Argus reconstruction from three exact 2:1 WebP panoramas, return immediately after submission, and tell me the workspace handle.",
+    "query": "请将 /data/pinhole 里的多张严格 1:1 针孔图上传到 Argus 重建，提交一次后立即返回工作区，稍后再收集深度图、点云和位姿。",
     "should_trigger": true
   },
   {

@@ -1,6 +1,6 @@
 # Realsee Skills
 
-Agent skills for **panorama reconstruction** and **editable Blender spaces**. Use them with Claude Code, Codex, or another host supported by `npx skills`.
+Agent skills for **image-based spatial reconstruction** and **editable Blender spaces**. Use them with Claude Code, Codex, or another host supported by `npx skills`.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/realsee-developer/skills/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/realsee-developer/skills/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/realsee-developer/skills?display_name=tag&style=flat-square)](https://github.com/realsee-developer/skills/releases)
@@ -13,10 +13,10 @@ English | [简体中文](README.zh-CN.md)
 
 | Category | Skill | Input → output | Requirements |
 | --- | --- | --- | --- |
-| Panorama reconstruction | [Argus](.agents/skills/argus/README.md) | 1–99 local 2:1 panoramas → EXR depth maps, merged GLB point cloud, camera poses, optional intrinsics, validated result index | Remote Realsee service; app credentials and upload consent; POSIX shell, Node.js 22+, npm 10+ |
+| Spatial reconstruction | [Argus](.agents/skills/argus/README.md) | 1–99 local images, all 2:1 panoramas or all 1:1 pinhole images → EXR depth maps, merged GLB point cloud, camera poses, optional intrinsics, validated result index | Remote Realsee service; app credentials and upload consent; POSIX shell, Node.js 22+, npm 10+ |
 | Editable space modeling | [Blender reconstruction](.agents/skills/realsee-blender-reconstruction/README.md) | Existing scan exports, point clouds, CAD, or panoramas → editable native `.blend` scene | Local Blender and an agent that can read files and run commands; no Argus credentials for local modeling |
 
-Choose **Argus** to generate depth, point clouds, and poses from panoramas. Choose **Blender reconstruction** to build or refine an editable scene from existing evidence. Argus output can serve as reconstruction evidence; running one skill does not automatically run the other.
+Choose **Argus** to generate depth, point clouds, and poses from panoramas or square pinhole images. Choose **Blender reconstruction** to build or refine an editable scene from existing evidence. Argus output can serve as reconstruction evidence; running one skill does not automatically run the other.
 
 ## AI agent entry
 
@@ -61,13 +61,13 @@ See the [installation guide](docs/install-guides.md) for dependencies, installat
 
 ## Use
 
-### Argus: panoramas → reconstruction data
+### Argus: images → reconstruction data
 
 Example request:
 
 > Use $argus to upload /data/living-room.jpg and /data/hall.jpg to Realsee for processing. Start the task and report its workspace.
 
-Inputs must be JPEG, PNG, or WebP, RGB8, and exactly 2:1. The workflow has three explicit commands: `start`, `status`, and `collect`. Collected outputs include `output.zip`, the algorithm manifest, and a validated local `result.json` index; partial results include a missing-image list.
+Inputs must be JPEG, PNG, or WebP, RGB8. Each batch contains only exact 2:1 panoramas or only exact 1:1 pinhole images; mixed batches and other aspect ratios are rejected before upload. The workflow has three explicit commands: `start`, `status`, and `collect`. Collected outputs include `output.zip`, the algorithm manifest, and a validated local `result.json` index; partial results include a missing-image list.
 
 Argus requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`). Configure secrets locally and obtain consent before upload. Follow the [credential and usage guide](docs/usage.md#credentials-and-upload-consent) for setup and CLI examples.
 
@@ -110,7 +110,7 @@ Argus product resources: [Product](https://argus.realsee.ai/) · [Demo](https://
 
 | Source | Contents |
 | --- | --- |
-| Current `main` | Both Argus and Blender reconstruction, including the latest guidance |
+| Current `main` | Argus panorama/pinhole batches and Blender reconstruction, with current usage guidance |
 | Stable release `v2.2.0` | Both skills; pin `realsee-developer/skills@v2.2.0` for a reproducible install |
 | Previous `v2.0.0` | Argus only; does not contain Blender reconstruction |
 | Legacy `v1.0.2` | Old square-image and single-GLB workflow; see [migration guidance](.agents/skills/argus/references/migration-v2.md) |
