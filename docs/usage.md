@@ -2,7 +2,9 @@
 
 [English](usage.md) | [简体中文](zh-CN/usage.md)
 
-This repository provides `argus` and `realsee-blender-reconstruction` for Claude Code, Codex, and other hosts supported by `npx skills`.
+This checkout adds [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install locally with `npx skills add . --skill panotovr --agent codex`; historical `v2.2.0` does not contain it. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+
+This repository provides `argus`, `panotovr` (PanoToVR), and `realsee-blender-reconstruction` for Claude Code, Codex, and other hosts supported by `npx skills`.
 
 ## Local Blender space reconstruction
 
@@ -37,7 +39,7 @@ npx skills add . --skill argus
 
 ## Credentials and upload consent
 
-Only Argus requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`; Arkclaw fixes it to `cn`). The agent first checks the inherited shell environment; if configuration is incomplete, it loads an existing `~/.realsee/credentials`, then requests only what is still missing. Have the user configure secrets in their local shell or a secure credential interface, rather than collecting them field by field in chat.
+For Argus, configure `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`; Arkclaw fixes it to `cn`). The agent first checks the inherited shell environment; if configuration is incomplete, it loads an existing `~/.realsee/credentials`, then requests only what is still missing. Have the user configure secrets in their local shell or a secure credential interface, rather than collecting them field by field in chat.
 
 Never echo credentials or put values in recorded command arguments or environment prefixes. Only when the user explicitly chooses persistent storage may app credentials be saved outside the repository in `~/.realsee/credentials` with mode 0600. Upload tokens and signed URLs must never be persisted; run state contains no credentials.
 

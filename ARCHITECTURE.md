@@ -2,6 +2,8 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
+This checkout adds [PanoToVR](.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install locally with `npx skills add . --skill panotovr --agent codex`; historical `v2.2.0` does not contain it. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+
 Realsee Skills keeps canonical skill sources under `.agents/skills/` and generates host-specific distribution packages. Argus provides a Node.js remote-processing runtime; Blender reconstruction is a local instruction skill.
 
 The additional instruction skill `.agents/skills/realsee-blender-reconstruction/` handles existing exports in local Blender. Claude packaging discovers canonical skill directories and checks byte consistency for all of them; it does not require an npm runtime for instruction-only skills. The Argus lifecycle and Arkclaw overlays below remain Argus-specific.
@@ -26,6 +28,11 @@ The additional instruction skill `.agents/skills/realsee-blender-reconstruction/
 ├── SKILL.md / SKILL.zh-CN.md         Agent workflow
 ├── README.md / README.zh-CN.md       User documentation
 └── references/                      Registration, modeling, performance, acceptance, extensions
+
+.agents/skills/panotovr/              Canonical PanoToVR runtime and bilingual instructions
+├── scripts/run-panorama-to-vr.mjs    Image/manifest submission and polling resume
+├── assets/manifest.example.json     Synthetic input template
+└── references/                      Input modes, API contract, hosts, recovery
 
 plugins/realsee-skills/               Generated Claude plugin copy
 arkclaw/argus/                        Generated Arkclaw copy with deterministic CN-only overlays

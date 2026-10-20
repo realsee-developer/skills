@@ -37,7 +37,7 @@ const pluginPackage = {
 const pluginMetadata = {
   $schema: 'https://json.schemastore.org/claude-code-plugin-manifest.json',
   name: 'realsee-skills',
-  description: 'Realsee skills for Claude Code: Argus panorama reconstruction and local editable Blender space modeling.',
+  description: 'Realsee skills for Claude Code: Argus panorama reconstruction, PanoToVR VR space creation, and local editable Blender space modeling.',
   author: {
     name: 'Realsee',
     url: 'https://github.com/realsee-developer'

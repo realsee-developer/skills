@@ -3,6 +3,7 @@
   "target": "plugins/realsee-skills/skills/argus",
   "skills": [
     "argus",
+    "panotovr",
     "realsee-blender-reconstruction"
   ],
   "files": [
@@ -350,6 +351,136 @@
       "source": ".agents/skills/argus/test/skill-description-contract.test.mjs",
       "target": "plugins/realsee-skills/skills/argus/test/skill-description-contract.test.mjs",
       "size": 2564
+    },
+    {
+      "source": ".agents/skills/panotovr/assets/manifest.example.json",
+      "target": "plugins/realsee-skills/skills/panotovr/assets/manifest.example.json",
+      "size": 259
+    },
+    {
+      "source": ".agents/skills/panotovr/LICENSE",
+      "target": "plugins/realsee-skills/skills/panotovr/LICENSE",
+      "size": 17396
+    },
+    {
+      "source": ".agents/skills/panotovr/package-lock.json",
+      "target": "plugins/realsee-skills/skills/panotovr/package-lock.json",
+      "size": 111985
+    },
+    {
+      "source": ".agents/skills/panotovr/package.json",
+      "target": "plugins/realsee-skills/skills/panotovr/package.json",
+      "size": 493
+    },
+    {
+      "source": ".agents/skills/panotovr/README.md",
+      "target": "plugins/realsee-skills/skills/panotovr/README.md",
+      "size": 1064
+    },
+    {
+      "source": ".agents/skills/panotovr/README.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/panotovr/README.zh-CN.md",
+      "size": 961
+    },
+    {
+      "source": ".agents/skills/panotovr/references/api-workflow.md",
+      "target": "plugins/realsee-skills/skills/panotovr/references/api-workflow.md",
+      "size": 1061
+    },
+    {
+      "source": ".agents/skills/panotovr/references/api-workflow.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/panotovr/references/api-workflow.zh-CN.md",
+      "size": 997
+    },
+    {
+      "source": ".agents/skills/panotovr/references/host-differences.md",
+      "target": "plugins/realsee-skills/skills/panotovr/references/host-differences.md",
+      "size": 927
+    },
+    {
+      "source": ".agents/skills/panotovr/references/host-differences.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/panotovr/references/host-differences.zh-CN.md",
+      "size": 780
+    },
+    {
+      "source": ".agents/skills/panotovr/references/input-modes.md",
+      "target": "plugins/realsee-skills/skills/panotovr/references/input-modes.md",
+      "size": 1400
+    },
+    {
+      "source": ".agents/skills/panotovr/references/input-modes.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/panotovr/references/input-modes.zh-CN.md",
+      "size": 889
+    },
+    {
+      "source": ".agents/skills/panotovr/references/pano-to-vr.openapi.json",
+      "target": "plugins/realsee-skills/skills/panotovr/references/pano-to-vr.openapi.json",
+      "size": 14399
+    },
+    {
+      "source": ".agents/skills/panotovr/references/troubleshooting.md",
+      "target": "plugins/realsee-skills/skills/panotovr/references/troubleshooting.md",
+      "size": 2066
+    },
+    {
+      "source": ".agents/skills/panotovr/references/troubleshooting.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/panotovr/references/troubleshooting.zh-CN.md",
+      "size": 1242
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/lib/api.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/lib/api.mjs",
+      "size": 8060
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/lib/archive.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/lib/archive.mjs",
+      "size": 2284
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/lib/args.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/lib/args.mjs",
+      "size": 4021
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/lib/config.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/lib/config.mjs",
+      "size": 2774
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/lib/constants.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/lib/constants.mjs",
+      "size": 825
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/lib/input.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/lib/input.mjs",
+      "size": 4868
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/lib/logger.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/lib/logger.mjs",
+      "size": 755
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/lib/state.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/lib/state.mjs",
+      "size": 1398
+    },
+    {
+      "source": ".agents/skills/panotovr/scripts/run-panorama-to-vr.mjs",
+      "target": "plugins/realsee-skills/skills/panotovr/scripts/run-panorama-to-vr.mjs",
+      "size": 6283
+    },
+    {
+      "source": ".agents/skills/panotovr/SKILL.md",
+      "target": "plugins/realsee-skills/skills/panotovr/SKILL.md",
+      "size": 3806
+    },
+    {
+      "source": ".agents/skills/panotovr/SKILL.zh-CN.md",
+      "target": "plugins/realsee-skills/skills/panotovr/SKILL.zh-CN.md",
+      "size": 3344
     },
     {
       "source": ".agents/skills/realsee-blender-reconstruction/LICENSE",

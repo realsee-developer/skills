@@ -2,7 +2,9 @@
 
 [English](install-guides.md) | [简体中文](zh-CN/install-guides.md)
 
-This repository provides two skills: `argus` uploads panoramas to Realsee for remote processing; `realsee-blender-reconstruction` reconstructs existing local exports as editable Blender scenes. Canonical sources live under `.agents/skills/`.
+This checkout adds [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install locally with `npx skills add . --skill panotovr --agent codex`; historical `v2.2.0` does not contain it. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+
+The original two skills are: `argus` uploads panoramas to Realsee for remote processing; `realsee-blender-reconstruction` reconstructs existing local exports as editable Blender scenes. Canonical sources live under `.agents/skills/`.
 
 ## Host matrix
 
@@ -20,7 +22,7 @@ npx skills add realsee-developer/skills@v2.2.0 --skill argus
 npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstruction
 ```
 
-The `npx skills` commands in the table install Argus; replace `--skill argus` with `--skill realsee-blender-reconstruction` to install Blender. The current Claude plugin includes both skills; Arkclaw and `npm run install:codex-skills` install only Argus.
+The `npx skills` commands in the table install Argus; replace `--skill argus` with `--skill realsee-blender-reconstruction` to install Blender. The generated local Claude plugin also includes PanoToVR; Arkclaw and `npm run install:codex-skills` install only Argus.
 
 ## Runtime requirements
 
@@ -38,7 +40,7 @@ npx skills add realsee-developer/skills@v1.0.2 --skill argus
 
 ## Credentials
 
-Only Argus needs app credentials; Arkclaw fixes the region to `cn`. See the [usage guide](usage.md#credentials-and-upload-consent) for environment variables, existing credential files, secure setup, and upload consent. See [SUPPORT.md](../SUPPORT.md) if the account lacks Argus capability.
+Argus requires app credentials; Arkclaw fixes the region to `cn`. See the [usage guide](usage.md#credentials-and-upload-consent) for environment variables, existing credential files, secure setup, and upload consent. See [SUPPORT.md](../SUPPORT.md) if the account lacks Argus capability.
 
 ## After install
 
