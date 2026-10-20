@@ -2,7 +2,7 @@
 
 [English](install-guides.md) | [简体中文](zh-CN/install-guides.md)
 
-This checkout adds [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install locally with `npx skills add . --skill panotovr --agent codex`; historical `v2.2.0` does not contain it. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+Version 2.3.0 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
 
 The original two skills are: `argus` uploads panoramas to Realsee for remote processing; `realsee-blender-reconstruction` reconstructs existing local exports as editable Blender scenes. Canonical sources live under `.agents/skills/`.
 
@@ -10,16 +10,17 @@ The original two skills are: `argus` uploads panoramas to Realsee for remote pro
 
 | Host | Install | Skill handle | Guide |
 | --- | --- | --- | --- |
-| Claude Code | `/plugin marketplace add realsee-developer/skills`, then `/plugin install realsee-skills@realsee-developer-skills` | `realsee-skills:argus`, `realsee-skills:realsee-blender-reconstruction` | [Claude Code](claude-plugin.md) |
-| Codex | `npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent codex` | `$argus`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
-| Any detected host | `npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent '*'` | Host-specific | This guide |
+| Claude Code | `/plugin marketplace add realsee-developer/skills`, then `/plugin install realsee-skills@realsee-developer-skills` | `realsee-skills:argus`, `realsee-skills:panotovr`, `realsee-skills:realsee-blender-reconstruction` | [Claude Code](claude-plugin.md) |
+| Codex | `npx skills add realsee-developer/skills@v2.3.0 --skill argus --agent codex` | `$argus`, `$panotovr`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
+| Any detected host | `npx skills add realsee-developer/skills@v2.3.0 --skill argus --agent '*'` | Host-specific | This guide |
 | Arkclaw | Published Arkclaw ZIP | `argus` | CN-only |
 
 For the active host only:
 
 ```bash
-npx skills add realsee-developer/skills@v2.2.0 --skill argus
-npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstruction
+npx skills add realsee-developer/skills@v2.3.0 --skill argus
+npx skills add realsee-developer/skills@v2.3.0 --skill realsee-blender-reconstruction
+npx skills add realsee-developer/skills@v2.3.0 --skill panotovr
 ```
 
 The `npx skills` commands in the table install Argus; replace `--skill argus` with `--skill realsee-blender-reconstruction` to install Blender. The generated local Claude plugin also includes PanoToVR; Arkclaw and `npm run install:codex-skills` install only Argus.
@@ -30,7 +31,7 @@ Argus requires a POSIX shell, Node.js 22+, npm 10+, npm registry and regional Ga
 
 ## Reproducible versions
 
-Pin `v2.2.0` for either skill. The older `v2.0.0` tag contains only Argus.
+Pin `v2.3.0` for any of the three skills. The older `v2.0.0` tag contains only Argus.
 
 Pin `v1.0.2` only for legacy square 1:1 input, the old single-GLB output, or legacy preview behavior:
 

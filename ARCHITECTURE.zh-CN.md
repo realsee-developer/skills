@@ -2,7 +2,7 @@
 
 [English](ARCHITECTURE.md) | 简体中文
 
-此检出新增 [PanoToVR](.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add . --skill panotovr --agent codex` 从本地检出安装；历史 `v2.2.0` 不含此 skill。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
+2.3.0 包含 [PanoToVR](.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
 
 Realsee Skills 将所有规范 skill 源码保存在 `.agents/skills/`，并生成面向各宿主的分发包。Argus 提供 Node.js 远程处理运行时；Blender 重建是本地指令型 skill。
 
@@ -107,7 +107,7 @@ Gateway 基础地址与凭证/region 合同不变，只替换 Argus 接口：
 
 `npm run ci` 依次运行 secret 扫描、双语文档、AI 索引、仓库边界、Skill 校验、分发生成与一致性检查、发布元数据校验、仓库测试（`test:repo`）和 Argus 运行时测试（`test:skill`）。这些检查验证打包与合同，不执行 Blender 重建或真实 Argus 任务。
 
-`release-channel.json` 当前记录 Argus 2.2.0 为 stable，stable gate 为 passed；它记录 Argus 发布就绪状态，不代表 Blender 验收。`v1.0.2` 保持为冻结旧版本，`v2.2.0` 打包两项 skill，`v2.0.0` 标签仅包含 Argus。当前门禁要求与首次 2.0 发布历史见[发布指南](docs/zh-CN/release.md)。
+`release-channel.json` 当前记录 Argus 2.3.0 为 stable，stable gate 为 passed；它记录 Argus 发布就绪状态，不代表 Blender 验收。`v1.0.2` 保持为冻结旧版本，`v2.3.0` 打包三项 skill，`v2.0.0` 标签仅包含 Argus。当前门禁要求与首次 2.0 发布历史见[发布指南](docs/zh-CN/release.md)。
 
 ## 生成文件
 

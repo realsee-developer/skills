@@ -2,7 +2,7 @@
 
 [English](claude-plugin.md) | [简体中文](zh-CN/claude-plugin.md)
 
-This checkout adds [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install locally with `npx skills add . --skill panotovr --agent codex`; historical `v2.2.0` does not contain it. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+Version 2.3.0 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
 
 Install the `realsee-skills` plugin from a Claude Code session:
 
@@ -11,7 +11,7 @@ Install the `realsee-skills` plugin from a Claude Code session:
 /plugin install realsee-skills@realsee-developer-skills
 ```
 
-The generated plugin exposes `realsee-skills:argus` and `realsee-skills:realsee-blender-reconstruction`, with no install-time configuration or MCP server. Argus resolves credentials at runtime; local Blender modeling needs no Realsee credentials. See the [Blender workflow](../.agents/skills/realsee-blender-reconstruction/README.md). The Argus setup below remains specific to Argus.
+The generated plugin exposes `realsee-skills:panotovr`, `realsee-skills:argus` and `realsee-skills:realsee-blender-reconstruction`, with no install-time configuration or MCP server. Argus resolves credentials at runtime; local Blender modeling needs no Realsee credentials. See the [Blender workflow](../.agents/skills/realsee-blender-reconstruction/README.md). The Argus setup below remains specific to Argus.
 
 Official context is available at [Argus](https://argus.realsee.ai/), the [interactive demo](https://h5.realsee.ai/argus), the [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). The agent must not infer broader photo support from those pages: this Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
 
@@ -72,4 +72,4 @@ The agent must obtain upload consent before start. For `result_status: partial`,
 
 ## Release policy
 
-`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.2.0` includes both skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.
+`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.3.0` includes all three skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.
