@@ -10,12 +10,12 @@ Agent skills for panorama reconstruction, VR space creation, and editable Blende
 
 ## Install the selected skill
 
-Current stable distribution: v2.3.0. Select one command; install only the capabilities needed.
+Current stable distribution: v2.3.1. Select one command; install only the capabilities needed.
 
 ```bash
-npx skills add realsee-developer/skills@v2.3.0 --skill argus --agent codex
-npx skills add realsee-developer/skills@v2.3.0 --skill realsee-blender-reconstruction --agent codex
-npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex
+npx skills add realsee-developer/skills@v2.3.1 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.3.1 --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex
 ```
 
 For another host, use the [installation guide](docs/install-guides.md). The generated local Claude plugin includes all three skills. The dedicated repository Codex installer and Arkclaw ZIP contain only Argus. From a local checkout, replace the repository source with `.` to install the checked-out skill.
