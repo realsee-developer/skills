@@ -2,9 +2,9 @@
 
 [English](../public-distribution.md) | 简体中文
 
-计划变更分发或发布时使用此清单。当前 Argus 元数据为 `2.3.0` / stable / passed；首次 2.0 推进属于历史。门禁条件见[发布指南](release.md)。下列 Argus 专属运行时和真实运行检查不适用于纯指令型 Blender skill。
+计划变更分发或发布时使用此清单。当前 Argus 元数据为 `2.3.1` / stable / passed；首次 2.0 推进属于历史。门禁条件见[发布指南](release.md)。下列 Argus 专属运行时和真实运行检查不适用于纯指令型 Blender skill。
 
-真实 E2E 推进项适用于将 Argus preview 推进为 stable。2.3.0 沿用已有稳定远程合同与状态，不得将继承的验证记录报告为本次新运行。Uploader 发布检查适用于发布 uploader 本身。
+真实 E2E 推进项适用于将 Argus preview 推进为 stable。2.3.1 沿用已有稳定远程合同与状态，不得将继承的验证记录报告为本次新运行。Uploader 发布检查适用于发布 uploader 本身。
 
 ## 仓库与版本
 

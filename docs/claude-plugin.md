@@ -2,7 +2,7 @@
 
 [English](claude-plugin.md) | [简体中文](zh-CN/claude-plugin.md)
 
-Version 2.3.0 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+Version 2.3.1 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
 
 Install the `realsee-skills` plugin from a Claude Code session:
 

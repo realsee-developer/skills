@@ -1,6 +1,6 @@
 {
   "name": "realsee-skills",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Agent skills for Realsee Argus panorama reconstruction, PanoToVR VR space creation, and editable Blender spaces.",
   "private": true,
   "license": "SEE LICENSE IN LICENSE",

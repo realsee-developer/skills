@@ -86,7 +86,7 @@ See the [Blender guide](.agents/skills/realsee-blender-reconstruction/README.md)
 
 ## PanoToVR: panoramas → VR space
 
-Install with `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex`, or use `.` for a local checkout. Ask the agent to use PanoToVR to upload the selected panorama directory and create a VR space. See the [PanoToVR guide](.agents/skills/panotovr/README.md) for dependencies, credentials, commands, and polling recovery. It uses a separate API from Argus.
+Install with `npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex`, or use `.` for a local checkout. Ask the agent to use PanoToVR to upload the selected panorama directory and create a VR space. See the [PanoToVR guide](.agents/skills/panotovr/README.md) for dependencies, credentials, commands, and polling recovery. It uses a separate API from Argus.
 
 ## Documentation
 
@@ -116,7 +116,8 @@ Argus product resources: [Product](https://argus.realsee.ai/) · [Demo](https://
 | Source | Contents |
 | --- | --- |
 | Current `main` | Argus, PanoToVR, and Blender reconstruction |
-| Stable release `v2.3.0` | All three skills; pin `realsee-developer/skills@v2.3.0` for a reproducible install |
+| Stable release `v2.3.1` | All three skills with the fast-uri advisory fixed; pin `realsee-developer/skills@v2.3.1` |
+| Previous `v2.3.0` | First version containing PanoToVR; use v2.3.1 for the dependency fix |
 | Previous `v2.2.0` | Argus and Blender; does not contain PanoToVR |
 | Previous `v2.0.0` | Argus only; does not contain Blender reconstruction |
 | Legacy `v1.0.2` | Old square-image and single-GLB workflow; see [migration guidance](.agents/skills/argus/references/migration-v2.md) |
