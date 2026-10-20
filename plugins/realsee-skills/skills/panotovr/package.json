@@ -1,6 +1,6 @@
 {
   "name": "panotovr-runtime",
-  "version": "1.0.3",
+  "version": "2.3.0",
   "private": true,
   "type": "module",
   "description": "PanoToVR runtime for creating Realsee VR spaces from local panoramas.",

@@ -52,7 +52,7 @@ Use focused commands while editing:
 
 ## Skill Workflow
 
-The source of truth for all skills is `.agents/skills/`. Claude includes both canonical skills; Arkclaw includes only Argus. The Claude plugin is generated into `plugins/realsee-skills/`; the Arkclaw package is generated into `arkclaw/argus/` with deterministic CN-only overlays for runtime region, example downloads, and matching guidance.
+The source of truth for all skills is `.agents/skills/`. Claude includes all three canonical skills; Arkclaw includes only Argus. The Claude plugin is generated into `plugins/realsee-skills/`; the Arkclaw package is generated into `arkclaw/argus/` with deterministic CN-only overlays for runtime region, example downloads, and matching guidance.
 
 When changing `argus`:
 
@@ -74,3 +74,5 @@ Argus configuration uses these environment variables:
 - `REALSEE_REGION`
 
 Follow the [Argus credential setup](usage.md#credentials-and-upload-consent) for inherited environment values, an existing `~/.realsee/credentials`, and secure local configuration of missing values. Persist app credentials only with explicit user authorization, outside the repository with mode 0600. Never persist temporary upload tokens or signed URLs. Do not commit real values, account identifiers, internal URLs, generated credentials, `output.zip`, extracted artifacts, or temporary workspaces.
+
+For PanoToVR packaging changes, edit `.agents/skills/panotovr/`, rebuild, and run the release gate. The smoke check installs copied PanoToVR skills and runs offline help from another working directory; it does not submit a remote VR task.

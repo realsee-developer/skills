@@ -326,6 +326,40 @@ async function checkNpxSkillsCopyInstall() {
   }
 }
 
+async function checkPanoToVrInstall() {
+  const tmpRoot = mkdtempSync(join(tmpdir(), 'panotovr-install-smoke-'));
+  const sourceRoot = join(tmpRoot, 'source');
+  const consumerRoot = join(tmpRoot, 'consumer');
+  try {
+    await mkdir(join(sourceRoot, '.agents', 'skills'), { recursive: true });
+    await mkdir(consumerRoot, { recursive: true });
+    await copyFresh(join(root, '.agents', 'skills', 'panotovr'), join(sourceRoot, '.agents', 'skills', 'panotovr'));
+    runChild('PanoToVR consumer git init', 'git', ['init', '-q'], { cwd: consumerRoot });
+    runChild('PanoToVR copy install', process.platform === 'win32' ? 'npx.cmd' : 'npx', [
+      '--yes', `skills@${SKILLS_CLI_VERSION}`, 'add', sourceRoot,
+      '--skill', 'panotovr', '--agent', 'codex', '--copy', '--yes'
+    ], { cwd: consumerRoot, env: { ...process.env, NO_COLOR: '1' }, timeout: 180_000 });
+    const installed = join(consumerRoot, '.agents', 'skills', 'panotovr');
+    const pluginCopy = join(tmpRoot, 'plugin', 'panotovr');
+    await copyFresh(join(root, 'plugins', 'realsee-skills', 'skills', 'panotovr'), pluginCopy);
+    rmSync(sourceRoot, { recursive: true, force: true });
+    for (const skillDir of [installed, pluginCopy]) {
+      await assertTreeHasNoSymlinks(skillDir, 'PanoToVR installed copy');
+      runChild('PanoToVR locked dependency install', process.platform === 'win32' ? 'npm.cmd' : 'npm', [
+        'ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'
+      ], { cwd: skillDir, timeout: 180_000 });
+      const help = runChild('PanoToVR offline help', process.execPath, [
+        join(skillDir, 'scripts', 'run-panorama-to-vr.mjs'), '--help'
+      ], { cwd: tmpRoot, timeout: 30_000 });
+      if (!help.startsWith('Usage:') || !help.includes('--task-code')) {
+        throw new Error('PanoToVR installed copy must expose its CLI without caller-directory dependencies');
+      }
+    }
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
+}
+
 async function checkArkclawInstall() {
   const zipPath = await buildArkclawZip();
   const zipStat = await lstat(zipPath);
@@ -560,6 +594,7 @@ async function main() {
     ['SKILL.md describes the full agent flow', checkSkillMdDescribesFlow],
     ['codex fresh install (sandboxed)', checkCodexInstall],
     [`npx skills@${SKILLS_CLI_VERSION} copy fresh install`, checkNpxSkillsCopyInstall],
+    ['PanoToVR copied Codex and Claude installs (offline help)', checkPanoToVrInstall],
     ['Arkclaw ignored-file fixture', checkArkclawIgnoredFixture],
     ['CN-only Arkclaw ZIP fresh install', checkArkclawInstall]
   ];

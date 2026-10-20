@@ -52,7 +52,7 @@ npm run test:skill
 
 ## Skill 工作流
 
-所有 skill 的规范源码在 `.agents/skills/`。Claude 包含两项 skill，Arkclaw 仅包含 Argus。Claude plugin 生成到 `plugins/realsee-skills/`；Arkclaw 包生成到 `arkclaw/argus/`，对运行区域、示例下载和相应说明应用确定性的 CN-only overlay。
+所有 skill 的规范源码在 `.agents/skills/`。Claude 包含三项 skill，Arkclaw 仅包含 Argus。Claude plugin 生成到 `plugins/realsee-skills/`；Arkclaw 包生成到 `arkclaw/argus/`，对运行区域、示例下载和相应说明应用确定性的 CN-only overlay。
 
 修改 `argus` 时：
 
@@ -74,3 +74,5 @@ Argus 配置使用以下环境变量：
 - `REALSEE_REGION`
 
 继承环境变量、已有 `~/.realsee/credentials` 和缺失配置的本地安全设置方式见 [Argus 凭据配置](usage.md)。只有用户明确授权才可在仓库外以 0600 权限保存应用凭据，临时上传令牌和签名 URL 不得持久化。不要提交真实值、账号标识、内部 URL、生成凭证、`output.zip`、解压产物或临时 workspace。
+
+PanoToVR 打包变更应编辑 `.agents/skills/panotovr/`，重建后运行发布门禁。烟测会安装 PanoToVR 副本，并从其他工作目录运行离线帮助命令，不会提交远程 VR 任务。

@@ -375,12 +375,12 @@
     {
       "source": ".agents/skills/panotovr/README.md",
       "target": "plugins/realsee-skills/skills/panotovr/README.md",
-      "size": 1064
+      "size": 1125
     },
     {
       "source": ".agents/skills/panotovr/README.zh-CN.md",
       "target": "plugins/realsee-skills/skills/panotovr/README.zh-CN.md",
-      "size": 961
+      "size": 1019
     },
     {
       "source": ".agents/skills/panotovr/references/api-workflow.md",
@@ -395,12 +395,12 @@
     {
       "source": ".agents/skills/panotovr/references/host-differences.md",
       "target": "plugins/realsee-skills/skills/panotovr/references/host-differences.md",
-      "size": 927
+      "size": 986
     },
     {
       "source": ".agents/skills/panotovr/references/host-differences.zh-CN.md",
       "target": "plugins/realsee-skills/skills/panotovr/references/host-differences.zh-CN.md",
-      "size": 780
+      "size": 855
     },
     {
       "source": ".agents/skills/panotovr/references/input-modes.md",

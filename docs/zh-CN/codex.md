@@ -2,20 +2,21 @@
 
 [English](../codex.md) | 简体中文
 
-此检出新增 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add . --skill panotovr --agent codex` 从本地检出安装；历史 `v2.2.0` 不含此 skill。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
+2.3.0 包含 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。PanoToVR 从 `v2.3.0` 起提供。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
 
-按需要安装 v2.2.0 包含的 skill 到 Codex：
+按需要安装 v2.3.0 包含的 skill 到 Codex：
 
 ```bash
-npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent codex
-npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex
 ```
 
 `$argus` 用于远程全景处理，`$realsee-blender-reconstruction` 用于已有本地资料的可编辑场景重建。Blender 需要本地可运行的 Blender，无需 Argus 凭据；运行要求见[安装总览](install-guides.md)。
 
 产品背景见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Codex 必须遵循已安装 Skill 的合同，不能从这些页面推断额外能力：Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
 
-上述命令固定到 stable `v2.2.0`。
+上述命令固定到 stable `v2.3.0`。
 
 只有旧 1:1 方图或旧单 GLB 行为才改用 `@v1.0.2`。
 
@@ -75,4 +76,4 @@ node "${CODEX_HOME:-$HOME/.codex}/skills/argus/scripts/run-argus.mjs" collect \
 
 ## 发布策略
 
-`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.2.0` 包含两项 skill，旧版 `v2.0.0` 标签仅包含 Argus。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。
+`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.3.0` 包含三项 skill，旧版 `v2.0.0` 标签仅包含 Argus。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。

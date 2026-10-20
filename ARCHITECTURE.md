@@ -2,7 +2,7 @@
 
 [English](ARCHITECTURE.md) | [简体中文](ARCHITECTURE.zh-CN.md)
 
-This checkout adds [PanoToVR](.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install locally with `npx skills add . --skill panotovr --agent codex`; historical `v2.2.0` does not contain it. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+Version 2.3.0 includes [PanoToVR](.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex`, or use `.` for a local checkout. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
 
 Realsee Skills keeps canonical skill sources under `.agents/skills/` and generates host-specific distribution packages. Argus provides a Node.js remote-processing runtime; Blender reconstruction is a local instruction skill.
 
@@ -107,7 +107,7 @@ The file-token response is an in-memory upload lease. `bucket + region + prefix`
 
 `npm run ci` runs secret scanning, bilingual-doc checks, AI-index checks, repository-boundary checks, Skill validation, distribution regeneration and consistency checks, release metadata validation, repository tests (`test:repo`), and Argus runtime tests (`test:skill`). These checks validate packaging and contracts; they do not execute a Blender reconstruction or a live Argus task.
 
-`release-channel.json` currently records Argus 2.2.0 as stable with a passed stable gate. It records Argus release readiness, not Blender acceptance. `v1.0.2` remains the frozen legacy line; `v2.2.0` packages both skills, while the `v2.0.0` tag contains Argus only. See the [release guide](docs/release.md) for current gate requirements and the historical 2.0 promotion sequence.
+`release-channel.json` currently records Argus 2.3.0 as stable with a passed stable gate. It records Argus release readiness, not Blender acceptance. `v1.0.2` remains the frozen legacy line; `v2.3.0` packages all three skills, while the `v2.0.0` tag contains Argus only. See the [release guide](docs/release.md) for current gate requirements and the historical 2.0 promotion sequence.
 
 ## Generated files
 

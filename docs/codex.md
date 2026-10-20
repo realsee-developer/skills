@@ -2,20 +2,21 @@
 
 [English](codex.md) | [简体中文](zh-CN/codex.md)
 
-This checkout adds [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install locally with `npx skills add . --skill panotovr --agent codex`; historical `v2.2.0` does not contain it. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+Version 2.3.0 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
 
-Install the selected v2.2.0 skills into Codex as needed:
+Install the selected v2.3.0 skills into Codex as needed:
 
 ```bash
-npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent codex
-npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex
 ```
 
 `$argus` runs remote panorama processing; `$realsee-blender-reconstruction` builds editable scenes from existing local inputs. Blender requires a working local Blender installation and no Argus credentials; see [installation requirements](install-guides.md).
 
 For product context, see [Argus](https://argus.realsee.ai/), its [interactive demo](https://h5.realsee.ai/argus), [research site](https://argus-paper.realsee.ai/), and the [Realsee Developer Platform](https://developer.realsee.ai/). Codex must follow the installed Skill contract rather than infer broader capabilities from those pages: Skill 2.0 accepts only 1–99 local RGB8 panoramas with exact 2:1 dimensions.
 
-The commands above pin stable `v2.2.0`. Use `@v1.0.2` instead only for legacy square 1:1 or single-GLB behavior.
+The commands above pin stable `v2.3.0`. Use `@v1.0.2` instead only for legacy square 1:1 or single-GLB behavior.
 
 ## Local checkout
 
@@ -73,4 +74,4 @@ There is no detached poller or resume flag. A completed collect is idempotent. C
 
 ## Release policy
 
-`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.2.0` includes both skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.
+`main` is the integration branch. `release-channel.json` defines the current channel; see the [release guide](release.md) for gates. `v2.3.0` includes all three skills; the older `v2.0.0` tag contains only Argus. Pin `v1.0.2` for the legacy square or single-GLB workflow.
