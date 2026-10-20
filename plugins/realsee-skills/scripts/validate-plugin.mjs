@@ -11,7 +11,7 @@ const skillPath = join(pluginRoot, 'skills', 'argus');
 const skillFile = join(skillPath, 'SKILL.md');
 const skillLicense = join(skillPath, 'LICENSE');
 const brandManifest = join(skillPath, 'assets', 'brand', 'manifest.json');
-const requiredSkillNames = ["argus","realsee-blender-reconstruction"];
+const requiredSkillNames = ["argus","panotovr","realsee-blender-reconstruction"];
 const forbiddenLocalPath = ['', 'Users', ''].join('/');
 
 async function exists(path) {

@@ -2,7 +2,9 @@
 
 [English](../usage.md) | 简体中文
 
-本仓库提供可安装到 Claude Code、Codex 和其他 `npx skills` 支持宿主的 `argus` 与 `realsee-blender-reconstruction`。
+此检出新增 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add . --skill panotovr --agent codex` 从本地检出安装；历史 `v2.2.0` 不含此 skill。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
+
+本仓库提供可安装到 Claude Code、Codex 和其他 `npx skills` 支持宿主的 `argus`、`panotovr`（PanoToVR）与 `realsee-blender-reconstruction`。
 
 ## 本地 Blender 空间重建
 
@@ -37,7 +39,7 @@ npx skills add . --skill argus
 
 ## 凭据与上传授权
 
-仅 Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET` 和 `REALSEE_REGION`（`global` 或 `cn`；Arkclaw 固定为 `cn`）。Agent 先检查继承的 shell 环境；配置不足时加载已有 `~/.realsee/credentials`，仍有缺失时只请求缺失配置。秘密应由用户在本地 shell 或安全凭据界面配置，不在聊天中逐字段收集。
+Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET` 和 `REALSEE_REGION`（`global` 或 `cn`；Arkclaw 固定为 `cn`）。Agent 先检查继承的 shell 环境；配置不足时加载已有 `~/.realsee/credentials`，仍有缺失时只请求缺失配置。秘密应由用户在本地 shell 或安全凭据界面配置，不在聊天中逐字段收集。
 
 不得回显凭据或把值放入会被记录的命令参数、环境变量前缀。仅在用户明确选择持久保存时，才可将应用凭据保存在仓库外的 `~/.realsee/credentials`，权限为 0600。上传 token 和签名 URL 不得持久化；运行状态不保存凭据。
 

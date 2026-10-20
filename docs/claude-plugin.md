@@ -2,6 +2,8 @@
 
 [English](claude-plugin.md) | [简体中文](zh-CN/claude-plugin.md)
 
+This checkout adds [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install locally with `npx skills add . --skill panotovr --agent codex`; historical `v2.2.0` does not contain it. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+
 Install the `realsee-skills` plugin from a Claude Code session:
 
 ```text
@@ -34,7 +36,7 @@ npm run check:claude-sync
 
 ## Credentials and consent
 
-Only Argus needs credentials. Follow the [usage guide](usage.md#credentials-and-upload-consent) to check environment variables, load an existing credential file, and configure missing values through a local shell or secure interface. Persist app credentials outside the repository with mode 0600 only when explicitly authorized; never persist upload tokens or signed URLs. File selection is not upload consent; reuse consent for the same input and scope.
+Argus credentials: Follow the [usage guide](usage.md#credentials-and-upload-consent) to check environment variables, load an existing credential file, and configure missing values through a local shell or secure interface. Persist app credentials outside the repository with mode 0600 only when explicitly authorized; never persist upload tokens or signed URLs. File selection is not upload consent; reuse consent for the same input and scope.
 
 ## Prompt examples
 
