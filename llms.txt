@@ -6,20 +6,21 @@ Agent skills for panorama reconstruction, VR space creation, and editable Blende
 
 - [argus](.agents/skills/argus/SKILL.md): Submit 1–99 local RGB8 JPEG/PNG/WebP panoramas with exact 2:1 dimensions to Realsee. Returns depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated result index. Requires Node.js 22+, npm 10+, app credentials, and consent to remote upload.
 - [realsee-blender-reconstruction](.agents/skills/realsee-blender-reconstruction/SKILL.md): Build or refine an editable native Blender scene from existing scan exports, point clouds, CAD, or panoramas. Requires local Blender and file/command access; local modeling needs no Argus credentials. Argus generation is a separate task.
-- [PanoToVR](.agents/skills/panotovr/SKILL.md): Local panoramas and optional manifest → remote Realsee VR space and URL. Uses the pano task API, not Argus reconstruction. Requires Node.js 22+, npm 10+, regional app credentials, API access, and upload consent. Available in this checkout; not in historical v2.2.0.
+- [PanoToVR](.agents/skills/panotovr/SKILL.md): Local panoramas and optional manifest → remote Realsee VR space and URL. Uses the pano task API, not Argus reconstruction. Requires Node.js 22+, npm 10+, regional app credentials, API access, and upload consent. Available from v2.3.0; not in historical v2.2.0.
 
 ## Install the selected skill
 
-Current stable distribution: v2.2.0. Select one command; install only the capabilities needed.
+Current stable distribution: v2.3.0. Select one command; install only the capabilities needed.
 
 ```bash
-npx skills add realsee-developer/skills@v2.2.0 --skill argus --agent codex
-npx skills add realsee-developer/skills@v2.2.0 --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex
 ```
 
 For another host, use the [installation guide](docs/install-guides.md). The generated local Claude plugin includes all three skills. The dedicated repository Codex installer and Arkclaw ZIP contain only Argus. From a local checkout, replace the repository source with `.` to install the checked-out skill.
 
-Install PanoToVR from this checkout: `npx skills add . --skill panotovr --agent codex`. Install dependencies in its installed directory with `npm ci --omit=dev --ignore-scripts --no-audit --no-fund`. Follow its SKILL.md for local prerequisites; the repository doctor currently supports only Argus and Blender.
+PanoToVR first ships in v2.3.0. Use the versioned command above or replace the repository source with `.` for a local checkout. Install dependencies in its installed directory with `npm ci --omit=dev --ignore-scripts --no-audit --no-fund`. Follow its SKILL.md for local prerequisites; the repository doctor currently supports only Argus and Blender.
 
 ## Check a local checkout
 

@@ -2,7 +2,7 @@
 
 [English](../release.md) | 简体中文
 
-发布就绪状态记录在 `release-channel.json`，由 `scripts/release-gate.mjs` 强制检查。当前元数据记录版本 `2.2.0`、通道 `stable`，以及 Argus 的 `state: stable` / `stable_gate: passed`；未单独声明 Blender 的发布状态。
+发布就绪状态记录在 `release-channel.json`，由 `scripts/release-gate.mjs` 强制检查。当前元数据记录版本 `2.3.0`、通道 `stable`，以及 Argus 的 `state: stable` / `stable_gate: passed`；PanoToVR 记录为 `packaged`，仅声明本地打包检查。本版本是稳定分发版本，不代表新增 PanoToVR 线上验证或 Blender 验收。
 
 ## 版本线
 
@@ -10,7 +10,13 @@
 - `v2.0.0` 保持 Skill ID 为 `argus`，使用多全景 ZIP 接口，不提供 1.x 回退。该 tag 不含 `realsee-blender-reconstruction`。
 - `v2.2.0` 打包两项 skill，沿用 Argus 2.0 API 与产物合同，并继承已有 Argus stable 状态；本次打包与指南发布不宣称新增远程 E2E 运行或实际 Blender 重建验收。
 
-## 2.2.0 更新
+## 2.3.0 更新
+
+新增 PanoToVR（`panotovr`），支持全景图目录或 manifest 提交、已有任务续查和 VR 链接获取。包含运行时、依赖锁文件、双语说明、合成 manifest 模板、脱敏 API 契约、入口索引和生成的 Claude 分发。三项 skill 均可固定到 `v2.3.0`；专用 Codex 安装器与 Arkclaw ZIP 仍只包含 Argus。[中文发布说明](releases/v2.3.0.md) · [English release notes](../releases/v2.3.0.md)。
+
+本次打包发布不运行新的远程任务。Argus 沿用已有稳定 API、产物合同与验证状态；PanoToVR 保留迁入的运行时行为。
+
+## 历史 2.2.0 更新
 
 新增 skill 直接发现、按 skill 输出 JSON 的本地诊断、可执行的前置条件修复建议、锁定依赖的维护者初始化，以及同步的双语接入说明。Argus 远程 API 不变。`v2.1.0` 仍是首个包含两项 skill 的稳定分发版本。
 
@@ -19,7 +25,7 @@
 检查当前记录的稳定版本：
 
 ```bash
-npm run release:gate -- --channel stable --tag v2.2.0
+npm run release:gate -- --channel stable --tag v2.3.0
 ```
 
 Preview 门禁要求预发布 tag 的基础版本与元数据版本相同，完整 tag 等于 `skills.argus.next_release_candidate`；元数据还须为 `channel: development`、`state: preview`、`stable_gate: pending`。当前 stable 元数据没有待发布候选，因此不能通过 preview 门禁。仅在获得授权的发布变更中选择并记录下一候选版本。
@@ -36,6 +42,6 @@ Stable 还要求公开 Gateway OpenAPI 合同（四项必需操作、必需 sche
 
 ## 真实验证与发布
 
-不要把凭证、签名 URL、私有任务定位信息或生成产物作为证据提交。只在公开仓库之外记录脱敏通过/失败结果。将 Argus preview 推进为 stable 要求真实 AWS/global 与腾讯 COS/CN 验证；本地模拟不能替代。v2.2.0 是打包与指南发布，沿用已稳定的远程合同并继承已有状态，不是新一轮 preview 到 stable 的推进。运行前须取得上传授权。
+不要把凭证、签名 URL、私有任务定位信息或生成产物作为证据提交。只在公开仓库之外记录脱敏通过/失败结果。将 Argus preview 推进为 stable 要求真实 AWS/global 与腾讯 COS/CN 验证；本地模拟不能替代。v2.3.0 是打包发布，沿用已稳定的远程合同并继承已有状态，不是新一轮 preview 到 stable 的推进。运行前须取得上传授权。
 
 发布需要明确授权和新的已批准 tag；保留既有 tag。Release workflow 会分类推送的 tag，执行对应 preview 或 stable 门禁，然后从全新检出重建、检查生成文件已提交、构建并验证 Arkclaw ZIP，最后创建 GitHub release。

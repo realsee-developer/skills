@@ -6,4 +6,4 @@ From a local checkout, run `npx skills add . --skill panotovr --agent codex`, or
 
 For Claude Code, run the repository's `npm run rebuild`, then `claude --plugin-dir ./plugins/realsee-skills`. Invoke `realsee-skills:panotovr`. The plugin has no credential userConfig; configure the subprocess environment or a private current-directory `.env`. Legacy `CLAUDE_PLUGIN_OPTION_REALSEE_*` variables remain supported.
 
-Install runtime dependencies in the installed skill directory using the SKILL.md command. Installing root repository dependencies alone does not install PanoToVR dependencies. The repository Codex installer and Arkclaw ZIP are Argus-only. PanoToVR is not in historical v2.2.0 releases.
+Install runtime dependencies in the installed skill directory using the SKILL.md command. Installing root repository dependencies alone does not install PanoToVR dependencies. The repository Codex installer and Arkclaw ZIP are Argus-only. PanoToVR ships from v2.3.0; use `realsee-developer/skills@v2.3.0` instead of `.` for a versioned install.
