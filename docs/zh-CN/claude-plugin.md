@@ -2,7 +2,7 @@
 
 [English](../claude-plugin.md) | 简体中文
 
-此检出新增 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add . --skill panotovr --agent codex` 从本地检出安装；历史 `v2.2.0` 不含此 skill。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
+2.3.0 包含 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add realsee-developer/skills@v2.3.0 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。PanoToVR 从 `v2.3.0` 起提供。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
 
 在 Claude Code 会话内安装 `realsee-skills` plugin：
 
@@ -11,7 +11,7 @@
 /plugin install realsee-skills@realsee-developer-skills
 ```
 
-生成的 Plugin 暴露 `realsee-skills:argus` 和 `realsee-skills:realsee-blender-reconstruction`，没有安装期配置或 MCP server。Argus 在运行时解析凭证，本地 Blender 建模无需 Realsee 凭据，使用方式见 [Blender 工作流](../../.agents/skills/realsee-blender-reconstruction/README.zh-CN.md)。下文配置仍仅适用于 Argus。
+生成的 Plugin 暴露 `realsee-skills:panotovr`、`realsee-skills:argus` 和 `realsee-skills:realsee-blender-reconstruction`，没有安装期配置或 MCP server。Argus 在运行时解析凭证，本地 Blender 建模无需 Realsee 凭据，使用方式见 [Blender 工作流](../../.agents/skills/realsee-blender-reconstruction/README.zh-CN.md)。下文配置仍仅适用于 Argus。
 
 官方背景资料见 [Argus 官网](https://argus.realsee.ai/)、[交互 Demo](https://h5.realsee.ai/argus)、[研究主页](https://argus-paper.realsee.ai/)和 [Realsee Developer Platform](https://developer.realsee.ai/)。Agent 不能据此推断更广的照片能力：本 Skill 2.0 只接受 1–99 张本地 RGB8 且严格 2:1 的全景图。
 
@@ -72,4 +72,4 @@ Start 前必须取得上传同意。`result_status: partial` 时，即使 CLI �
 
 ## 发布策略
 
-`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.2.0` 包含两项 skill，旧版 `v2.0.0` 标签仅包含 Argus。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。
+`main` 为集成分支，当前发布通道以 `release-channel.json` 为准，门禁见[发布指南](release.md)。`v2.3.0` 包含三项 skill，旧版 `v2.0.0` 标签仅包含 Argus。需要 1.x 方图或单 GLB 工作流时固定 `v1.0.2`。

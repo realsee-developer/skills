@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "repo": "realsee-skills",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "channel": "stable",
   "build_source": "main",
   "skills": {
@@ -10,10 +10,24 @@
       "codex_skill_id": "argus",
       "claude_plugin": "realsee-skills",
       "claude_skill_id": "argus",
-      "regions": ["global", "cn"],
+      "regions": [
+        "global",
+        "cn"
+      ],
       "required_capability": "Argus Gateway capability",
       "stable_gate": "passed",
       "legacy_release": "v1.0.2"
+    },
+    "panotovr": {
+      "state": "packaged",
+      "codex_skill_id": "panotovr",
+      "claude_plugin": "realsee-skills",
+      "claude_skill_id": "panotovr",
+      "regions": [
+        "global",
+        "cn"
+      ],
+      "required_capability": "Panorama-to-VR API capability"
     }
   }
 }
