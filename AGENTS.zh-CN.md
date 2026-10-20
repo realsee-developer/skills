@@ -10,6 +10,7 @@
 - 主要能力：`argus`，把 1–99 张本地 2:1 全景图处理成深度图、合并 GLB 点云、相机位姿、可选内参与经过校验的结果索引。
 - 本地建模能力：`realsee-blender-reconstruction`，从已有导出建立可编辑 Blender 空间，无需 Argus 凭据。
 - 分发模型：source-available 能力打包。
+- VR 空间能力：`panotovr`（PanoToVR），通过 pano task API 将本地全景图生成 VR 空间和链接，独立于 Argus；上传同样需要用户授权。
 
 ## 安全操作规则
 
