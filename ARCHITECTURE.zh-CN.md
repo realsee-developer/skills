@@ -2,6 +2,8 @@
 
 [English](ARCHITECTURE.md) | 简体中文
 
+此检出新增 [PanoToVR](.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add . --skill panotovr --agent codex` 从本地检出安装；历史 `v2.2.0` 不含此 skill。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
+
 Realsee Skills 将所有规范 skill 源码保存在 `.agents/skills/`，并生成面向各宿主的分发包。Argus 提供 Node.js 远程处理运行时；Blender 重建是本地指令型 skill。
 
 新增的指令 skill `.agents/skills/realsee-blender-reconstruction/` 在本地 Blender 中处理已有导出。Claude 打包发现规范 skill 目录，并逐个检查字节一致性；纯指令 skill 不要求 npm 运行时。下文 Argus 生命周期和 Arkclaw overlay 仍仅适用于 Argus。
@@ -26,6 +28,11 @@ Realsee Skills 将所有规范 skill 源码保存在 `.agents/skills/`，并生�
 ├── SKILL.md / SKILL.zh-CN.md         Agent 工作流
 ├── README.md / README.zh-CN.md       用户文档
 └── references/                      配准、建模、性能、验收与按需扩展
+
+.agents/skills/panotovr/              PanoToVR 规范运行时与双语说明
+├── scripts/run-panorama-to-vr.mjs    图片或 manifest 提交与轮询续查
+├── assets/manifest.example.json     合成输入模板
+└── references/                      输入方式、API 契约、宿主与恢复
 
 plugins/realsee-skills/               生成的 Claude plugin copy
 arkclaw/argus/                        带确定性 CN-only overlay 的 Arkclaw copy

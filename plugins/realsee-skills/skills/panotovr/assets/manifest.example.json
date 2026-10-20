@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "project_name": "panotovr-{{timestamp}}",
+  "floor_map": {
+    "0": 0
+  },
+  "scan_list": [
+    {
+      "id": "IMG_20260121_160323_723",
+      "floor": 0
+    },
+    {
+      "id": "IMG_20260121_160328_267",
+      "floor": 0
+    }
+  ]
+}

@@ -1,0 +1,459 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PanoToVR API",
+    "description": "",
+    "version": "1.0.0"
+  },
+  "tags": [],
+  "paths": {
+    "/auth/access_token": {
+      "post": {
+        "summary": "获取 access_token",
+        "deprecated": false,
+        "description": "",
+        "tags": [],
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "app_key": {
+                    "description": "开放平台的 AppKey",
+                    "type": "string"
+                  },
+                  "app_secret": {
+                    "description": "开放平台的 AppSecret",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "app_key",
+                  "app_secret"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponse",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/AccessTokenData"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/open/v1/pano/file/token": {
+      "get": {
+        "summary": "获取上传对象存储使用的临时凭据",
+        "deprecated": false,
+        "description": "返回用于上传文件到对象存储（S3/COS/OSS）的临时密钥凭证，凭证包含 bucket、region、临时 AK/SK 及下载配置。",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "由 /auth/access_token 获取的 access_token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/UploadToken"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/open/v1/pano/task/submit": {
+      "post": {
+        "summary": "提交处理任务",
+        "deprecated": false,
+        "description": "提交全景图处理任务，返回 task_code 用于后续状态查询。zip_cos_url 与 private_cos_key 二选一：若上传凭证的 download_host 为空（私有桶，download_type=presign），则使用 private_cos_key（值为上传结果的 path 字段，即 token.prefix + uploadKey）；否则使用 zip_cos_url（上传结果的 download_url）。",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "由 /auth/access_token 获取的 access_token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "project_name": {
+                    "type": "string",
+                    "title": "项目名称",
+                    "description": "项目名称，用于创建 project"
+                  },
+                  "zip_cos_url": {
+                    "type": "string",
+                    "title": "全景图 ZIP 包公网地址",
+                    "description": "全景图 ZIP 包的 HTTP 公网下载地址（支持预签名 URL），与 private_cos_key 二选一"
+                  },
+                  "private_cos_key": {
+                    "type": "string",
+                    "title": "全景图 ZIP 包私有桶路径",
+                    "description": "全景图 ZIP 包在私有桶中的 S3 对象路径，值为上传结果的 path 字段（= token.prefix + uploadKey），例如 vrfile/xxx/pano/xxx/test.zip。当上传凭证 download_host 为空时（私有桶）使用此字段代替 zip_cos_url。"
+                  }
+                },
+                "required": [
+                  "project_name"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/TaskSubmitData"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/open/v1/pano/task/status": {
+      "get": {
+        "summary": "查询任务状态",
+        "deprecated": false,
+        "description": "使用提交处理任务接口返回的 task_code 进行任务状态查询，任务完成后返回 VR 链接。",
+        "tags": [],
+        "parameters": [
+          {
+            "name": "task_code",
+            "in": "query",
+            "description": "任务 code，由 /open/v1/pano/task/submit 返回",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "由 /auth/access_token 获取的 access_token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/ApiResponse"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/TaskStatusData"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "webhooks": {},
+  "components": {
+    "schemas": {
+      "ApiResponse": {
+        "type": "object",
+        "description": "所有接口通用响应信封",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "请求唯一 ID"
+          },
+          "trace_id": {
+            "type": "string",
+            "description": "链路追踪 ID"
+          },
+          "business_code": {
+            "type": "string",
+            "description": "业务错误码字符串。鉴权成功时为空字符串 \"\"，有业务结果时为 \"0\"（字符串），失败时为具体错误码（如 \"10001\"）"
+          },
+          "osi_request_id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "integer",
+            "description": "响应码。0 = 成功；-1 = 业务失败；-3 = access_token 已过期（需重新调用 /auth/access_token 续期）"
+          },
+          "status": {
+            "type": "string",
+            "description": "状态描述。成功时为 \"success\"，失败时为具体错误说明，如 \"access_token expired\" / \"illegal app\""
+          },
+          "data": {
+            "description": "业务数据，失败时为 null"
+          },
+          "cost": {
+            "type": "integer",
+            "description": "服务端处理耗时（ms）"
+          }
+        },
+        "required": [
+          "request_id",
+          "trace_id",
+          "business_code",
+          "osi_request_id",
+          "code",
+          "status",
+          "cost"
+        ]
+      },
+      "AccessTokenData": {
+        "type": "object",
+        "description": "access_token 数据",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "访问令牌，用于后续接口的 Authorization 头"
+          },
+          "expire_at": {
+            "type": "integer",
+            "description": "过期时间（Unix 时间戳，秒）"
+          }
+        },
+        "required": [
+          "access_token",
+          "expire_at"
+        ]
+      },
+      "UploadToken": {
+        "type": "object",
+        "description": "对象存储临时上传凭证（实测字段，与 @realsee/universal-uploader UploadToken 接口对应）",
+        "properties": {
+          "tmpSecretId": {
+            "type": "string",
+            "description": "临时 AccessKeyId（AWS STS）"
+          },
+          "tmpSecretKey": {
+            "type": "string",
+            "description": "临时 SecretAccessKey（AWS STS）"
+          },
+          "sessionToken": {
+            "type": "string",
+            "description": "临时会话 Token（AWS STS）"
+          },
+          "ttl": {
+            "type": "integer",
+            "description": "凭证有效期（秒）。实测值：3600"
+          },
+          "expire": {
+            "type": "integer",
+            "description": "凭证有效期（秒，与 ttl 相同）。注意：这是 TTL 秒数，不是 Unix 时间戳。实测值：3600"
+          },
+          "prefix": {
+            "type": "string",
+            "description": "上传路径前缀，上传 key 须拼接在此之后。格式：vrfile/release/open_task_original/{tenant}/{type}/{timestamp}/"
+          },
+          "app_id": {
+            "type": "string",
+            "description": "AWS 账号 ID"
+          },
+          "backup": {
+            "description": "备用字段，通常为 null",
+            "nullable": true
+          },
+          "bucket": {
+            "type": "string",
+            "description": "S3 存储桶名称"
+          },
+          "region": {
+            "type": "string",
+            "description": "S3 存储桶区域"
+          },
+          "host": {
+            "type": "string",
+            "description": "S3 endpoint（含协议）。开启加速时为 https://s3-accelerate.amazonaws.com"
+          },
+          "is_accelerate": {
+            "type": "string",
+            "description": "是否开启 S3 Transfer Acceleration：\"1\" 开启，\"0\" 关闭",
+            "enum": [
+              "0",
+              "1"
+            ]
+          },
+          "custom_domain": {
+            "type": "string",
+            "description": "自定义上传域名（开启加速时使用）。例如 vrlab-private.s3-accelerate.amazonaws.com"
+          },
+          "custom_scheme": {
+            "type": "string",
+            "description": "自定义域名的 URL scheme"
+          },
+          "download_type": {
+            "type": "string",
+            "enum": [
+              "presign",
+              "direct"
+            ],
+            "description": "下载链接生成方式。presign = 预签名（私有桶），direct = 直链（公开桶）"
+          },
+          "download_host": {
+            "type": "string",
+            "description": "下载专用 host。私有桶场景下为空字符串，此时应以 private_cos_key 提交任务"
+          },
+          "force_path_style": {
+            "type": "boolean",
+            "description": "是否强制 path-style URL。通常不返回此字段"
+          }
+        },
+        "required": [
+          "tmpSecretId",
+          "tmpSecretKey",
+          "sessionToken",
+          "ttl",
+          "expire",
+          "prefix",
+          "app_id",
+          "bucket",
+          "region",
+          "host",
+          "is_accelerate",
+          "custom_domain",
+          "custom_scheme",
+          "download_type",
+          "download_host"
+        ]
+      },
+      "TaskSubmitData": {
+        "type": "object",
+        "description": "提交任务成功后的响应数据（实测字段）",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "创建的项目 ID"
+          },
+          "task_code": {
+            "type": "string",
+            "description": "任务唯一标识，用于 /open/v1/pano/task/status 查询"
+          }
+        },
+        "required": [
+          "project_id",
+          "task_code"
+        ]
+      },
+      "TaskStatusData": {
+        "type": "object",
+        "description": "任务状态数据（实测字段）",
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "description": "关联的项目 ID"
+          },
+          "status": {
+            "type": "string",
+            "description": "任务状态",
+            "enum": [
+              "pending",
+              "processing",
+              "success",
+              "failed"
+            ]
+          },
+          "vr_url": {
+            "type": "string",
+            "description": "VR 链接。处理中时为空字符串 \"\"，完成后为完整 URL"
+          }
+        },
+        "required": [
+          "project_id",
+          "status",
+          "vr_url"
+        ]
+      }
+    },
+    "responses": {},
+    "securitySchemes": {}
+  },
+  "servers": [
+    {
+      "url": "https://app-gateway.realsee.ai",
+      "description": "海外公网生产环境"
+    }
+  ],
+  "security": []
+}

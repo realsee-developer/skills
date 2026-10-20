@@ -1,0 +1,21 @@
+{
+  "name": "panotovr-runtime",
+  "version": "1.0.3",
+  "private": true,
+  "type": "module",
+  "description": "PanoToVR runtime for creating Realsee VR spaces from local panoramas.",
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "run": "node ./scripts/run-panorama-to-vr.mjs"
+  },
+  "dependencies": {
+    "@realsee/universal-uploader": "^0.0.11",
+    "dotenv": "^17.4.2",
+    "fflate": "^0.8.2",
+    "jimp": "^1.6.0"
+  },
+  "license": "SEE LICENSE IN LICENSE"
+}
