@@ -2,9 +2,9 @@
 
 [English](public-distribution.md) | [简体中文](zh-CN/public-distribution.md)
 
-Use this checklist for a planned distribution or release change. Current Argus metadata is `2.3.0` / stable / passed; the first 2.0 promotion is historical. See the [release guide](release.md) for gate conditions. Argus-specific runtime and live checks below do not apply to the instruction-only Blender skill.
+Use this checklist for a planned distribution or release change. Current Argus metadata is `2.3.1` / stable / passed; the first 2.0 promotion is historical. See the [release guide](release.md) for gate conditions. Argus-specific runtime and live checks below do not apply to the instruction-only Blender skill.
 
-The real E2E promotion items apply when promoting an Argus preview to stable. Version 2.3.0 retains the existing stable remote contract and status; do not report inherited verification as a new run. Uploader release checks apply when releasing the uploader itself.
+The real E2E promotion items apply when promoting an Argus preview to stable. Version 2.3.1 retains the existing stable remote contract and status; do not report inherited verification as a new run. Uploader release checks apply when releasing the uploader itself.
 
 ## Repository and versions
 
