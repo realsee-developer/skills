@@ -2,7 +2,7 @@
 
 [English](../usage.md) | 简体中文
 
-2.3.1 包含 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。PanoToVR 从 `v2.3.0` 起提供。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
+2.4.0 包含 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add realsee-developer/skills@v2.4.0 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。PanoToVR 从 `v2.3.0` 起提供。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
 
 本仓库提供可安装到 Claude Code、Codex 和其他 `npx skills` 支持宿主的 `argus`、`panotovr`（PanoToVR）与 `realsee-blender-reconstruction`。
 
@@ -25,10 +25,10 @@ npx skills add . --skill realsee-blender-reconstruction --agent codex
 ## 安装
 
 ```bash
-npx skills add realsee-developer/skills --skill argus
-npx skills add realsee-developer/skills --skill argus --agent claude-code
-npx skills add realsee-developer/skills --skill argus --agent codex
-npx skills add realsee-developer/skills --skill argus --agent '*'
+npx skills add realsee-developer/skills@v2.4.0 --skill argus
+npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent claude-code
+npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent '*'
 ```
 
 从本地 checkout 安装：

@@ -9,11 +9,11 @@ Install and sign in to WorkBuddy from its [official site](https://www.workbuddy.
 For the published stable skill, clone the versioned source:
 
 ```bash
-git clone --branch v2.3.1 --depth 1 https://github.com/realsee-developer/skills.git
+git clone --branch v2.4.0 --depth 1 https://github.com/realsee-developer/skills.git
 cd skills
 ```
 
-For local changes, use that checkout's repository root and record its commit and intended modifications. The new `check-local.mjs` and `inspect-result.mjs` tools are **not in the published `v2.3.1` tag**; use a checkout containing them or follow the older installed `SKILL.md`.
+For local changes, use that checkout's repository root and record its commit and intended modifications. `check-local.mjs` and `inspect-result.mjs` are included from **v2.4.0**. For older installations, follow their installed `SKILL.md`.
 
 ## Install the complete directory
 
@@ -53,7 +53,7 @@ Repeat the installation block from the desired checkout. Keep the backup until l
 
 Open **Experts · Skills · Connectors → Skills → Installed**, confirm `argus` is enabled, then start a new task to load its current instructions.
 
-For a checkout containing the local-check tool, ask WorkBuddy to run it in its own shell:
+Ask WorkBuddy to run the local check in its own shell:
 
 ```bash
 node "$HOME/.workbuddy/skills/argus/scripts/check-local.mjs" --json

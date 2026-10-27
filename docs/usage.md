@@ -2,7 +2,7 @@
 
 [English](usage.md) | [简体中文](zh-CN/usage.md)
 
-Version 2.3.1 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+Version 2.4.0 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.4.0 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
 
 This repository provides `argus`, `panotovr` (PanoToVR), and `realsee-blender-reconstruction` for Claude Code, Codex, and other hosts supported by `npx skills`.
 
@@ -25,10 +25,10 @@ Official resources: [Argus](https://argus.realsee.ai/), [interactive demo](https
 ## Install
 
 ```bash
-npx skills add realsee-developer/skills --skill argus
-npx skills add realsee-developer/skills --skill argus --agent claude-code
-npx skills add realsee-developer/skills --skill argus --agent codex
-npx skills add realsee-developer/skills --skill argus --agent '*'
+npx skills add realsee-developer/skills@v2.4.0 --skill argus
+npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent claude-code
+npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent '*'
 ```
 
 From a local checkout:
