@@ -1,7 +1,5 @@
 import { execFileSync } from 'node:child_process';
 import { access } from 'node:fs/promises';
-import { createRequire } from 'node:module';
-import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -62,9 +60,9 @@ if (checks.length === 0 && help) {
 } else if (checks.length === 0) {
   try {
     const skillRoot = join(root, '.agents', 'skills', skill);
-    const present = await exists(join(skillRoot, 'SKILL.md'));
-    add('skill', present ? 'pass' : 'fail', present ? 'Canonical SKILL.md exists.' : 'Canonical SKILL.md is missing.', present ? undefined : 'Restore the selected skill from the repository.');
     if (skill === 'realsee-blender-reconstruction') {
+      const present = await exists(join(skillRoot, 'SKILL.md'));
+      add('skill', present ? 'pass' : 'fail', present ? 'Canonical SKILL.md exists.' : 'Canonical SKILL.md is missing.', present ? undefined : 'Restore the selected skill from the repository.');
       try {
         const match = runVersion(blender).match(/^Blender (\d+\.\d+(?:\.\d+)?)(?:\s|$)/m);
         if (!match) throw new Error('Unrecognized version');
@@ -73,37 +71,9 @@ if (checks.length === 0 && help) {
         add('blender', 'fail', 'Blender could not run or did not report a valid Blender version.', 'Install Blender locally, then use --blender <executable> if it is not on PATH.');
       }
     } else {
-      const nodeReady = Number(process.versions.node.split('.')[0]) >= 22;
-      add('node', nodeReady ? 'pass' : 'fail', nodeReady ? 'Node satisfies >=22.' : 'Node does not satisfy >=22.', nodeReady ? undefined : 'Install Node >=22 locally.');
-      try {
-        const match = runVersion('npm').match(/^(\d+)\.\d+\.\d+$/);
-        if (!match || Number(match[1]) < 10) throw new Error('Unsupported npm');
-        add('npm', 'pass', 'npm satisfies >=10.');
-      } catch {
-        add('npm', 'fail', 'npm is unavailable or does not satisfy >=10.', 'Install npm >=10 locally.');
-      }
-      const require = createRequire(join(skillRoot, 'package.json'));
-      for (const dependency of ['@aws-sdk/client-s3', '@realsee/universal-uploader', 'ajv', 'yauzl']) {
-        try {
-          require.resolve(dependency);
-          add(`dependency:${dependency}`, 'pass', `${dependency} resolves from the Argus skill.`);
-        } catch {
-          add(`dependency:${dependency}`, 'fail', `${dependency} cannot be resolved from the Argus skill.`, 'Run npm ci --prefix .agents/skills/argus --omit=dev --ignore-scripts --no-audit --no-fund to install locked runtime dependencies.');
-        }
-      }
-      for (const key of ['REALSEE_APP_KEY', 'REALSEE_APP_SECRET', 'REALSEE_REGION']) {
-        const value = process.env[key];
-        if (!value?.trim()) {
-          add(key, 'warn', `${key} is not configured.`, 'Configure the Argus environment locally using docs/usage.md; do not paste credentials into chat.');
-        } else if (key === 'REALSEE_REGION' && !['global', 'cn'].includes(value)) {
-          add(key, 'fail', 'REALSEE_REGION must be global or cn.', 'Set REALSEE_REGION locally to global or cn.');
-        } else {
-          add(key, 'pass', `${key} is configured.`);
-        }
-      }
-      if (checks.some(({ status }) => status === 'warn') && await exists(join(homedir(), '.realsee', 'credentials'))) {
-        add('credentials_file', 'warn', 'An existing local credentials file was found; its contents were not read.', 'Load the intended credentials locally into the environment before running this check again.');
-      }
+      const { checkArgusLocal } = await import('../.agents/skills/argus/src/local-check.mjs');
+      const report = await checkArgusLocal({ skillDir: skillRoot });
+      checks.push(...report.checks);
     }
   } catch {
     add('local_check', 'fail', 'A local diagnostic could not be completed.', 'Check local file permissions and rerun the diagnostic.');

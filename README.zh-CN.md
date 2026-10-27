@@ -53,6 +53,7 @@ npx skills add realsee-developer/skills --skill realsee-blender-reconstruction -
 
 ### 其他安装方式
 
+- **WorkBuddy**：将完整 Argus 目录安装到 `~/.workbuddy/skills/argus`；依赖配置、技能识别与 checkout 新增诊断工具见 [WorkBuddy 指南](docs/zh-CN/workbuddy.md)。
 - **其他 Agent 宿主**：省略 `--agent codex` 以选择宿主，或使用 `--agent '*'` 安装到所有检测到的宿主。
 - **本地检出**：在包含目标 skill 的仓库目录执行 `npx skills add . --skill <skill-id> --agent codex`。
 - **Arkclaw**：Release 附件 `argus.zip` 仅包含 Argus，仅支持 CN 区域。
@@ -94,7 +95,7 @@ Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET`、`REALSEE_REGION`（`glob
 
 | 主题 | 文档 |
 | --- | --- |
-| 安装与宿主支持 | [安装总览](docs/zh-CN/install-guides.md) · [Claude Code](docs/zh-CN/claude-plugin.md) · [Codex](docs/zh-CN/codex.md) |
+| 安装与宿主支持 | [安装总览](docs/zh-CN/install-guides.md) · [Claude Code](docs/zh-CN/claude-plugin.md) · [Codex](docs/zh-CN/codex.md) · [WorkBuddy](docs/zh-CN/workbuddy.md) |
 | 工作流与凭据配置 | [使用指南](docs/zh-CN/usage.md) |
 | Argus 输入、输出与示例 | [Argus 指南](.agents/skills/argus/README.zh-CN.md) · [示例](.agents/skills/argus/references/examples.zh-CN.md) |
 | 原生场景重建与编辑 | [Blender 指南](.agents/skills/realsee-blender-reconstruction/README.zh-CN.md) |

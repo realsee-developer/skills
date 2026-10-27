@@ -1,6 +1,6 @@
 ---
 name: argus
-description: Use this skill to process one to 99 local exact 2:1 equirectangular panorama images with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Trigger for Argus panorama reconstruction, Argus ZIP input, or explicit Argus start/status/collect lifecycle requests. Do not trigger for panorama editing or stitching, arbitrary-photo 3D generation, existing GLB inspection, or research-only questions.
+description: Use this skill to process one to 99 local exact 2:1 equirectangular panorama images with Realsee Argus, producing depth maps, a merged GLB point cloud, camera poses, optional intrinsics, and a validated local output index. Trigger for Argus panorama reconstruction, Argus ZIP input, explicit Argus lifecycle requests, or Argus installation and collected-result checks. Do not trigger for panorama editing or stitching, arbitrary-photo 3D generation, standalone GLB inspection, or research-only questions.
 compatibility: Requires a POSIX shell, Node.js 22+, npm 10+, npm registry access, and network access to app-gateway.realsee.ai or app-gateway.realsee.cn
 metadata:
   version: "2.3.1"
@@ -9,48 +9,53 @@ metadata:
 
 # argus
 
-Use this Skill to submit 1–99 exact 2:1 equirectangular panoramas to Realsee Argus and collect a validated `output.zip`. The public entrypoint is `scripts/run-argus.mjs`; `<skillDir>` below means the directory containing this file.
+Run Argus through `scripts/run-argus.mjs`. `<skillDir>` below means the directory containing this file.
 
-Treat the official product, demo, research, and developer sites as background only. Do not infer arbitrary-photo input or other product workflows from them; follow the narrower Skill 2.0 contract in this file.
+Argus uploads inputs to a remote service. Never print or log credentials, upload tokens, presigned URLs, or raw provider errors. Keep tokens and signed URLs out of persistent state.
 
-Argus is a remote upload. Do not upload until the user has selected the input and consented. Never print or log credentials, upload tokens, presigned URLs, or raw provider errors. Keep tokens and signed URLs out of persistent state; store app credentials only with explicit user authorization as described below. Do not open output files unless the user asks.
+## Match the requested outcome
+
+| Request | Finish condition |
+| --- | --- |
+| Check an installed Argus setup | Run `check-local.mjs`; report missing prerequisites. |
+| Verify a collected Argus result | Run `inspect-result.mjs` for that workspace. |
+| Run the reconstruction, official examples, or a complete verification | Submit once, query until terminal, collect, and inspect the result. Continue without requiring a new user request at each step. |
+| Start or submit and return immediately | Submit once; return `workspace_dir` and current status. |
+| Check status | Perform one `status` request. |
+| Collect or continue an existing task | Reuse its `workspace_dir`; query if needed, collect at terminal, and inspect. |
 
 ## 1. Ensure runtime dependencies
 
-Skill installers copy the canonical package but may not install its Node.js dependencies. Before the first Argus command in an installed Skill directory, check all four runtime packages without printing any sensitive data. If any are absent, install the exact lockfile once:
+For setup checks or before the first live command, run from any working directory:
 
 ```bash
-test -f "<skillDir>/node_modules/@realsee/universal-uploader/package.json" \
-  && test -f "<skillDir>/node_modules/@aws-sdk/client-s3/package.json" \
-  && test -f "<skillDir>/node_modules/ajv/package.json" \
-  && test -f "<skillDir>/node_modules/yauzl/package.json" \
-  || (cd "<skillDir>" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
+node <skillDir>/scripts/check-local.mjs --json
 ```
 
-Do not replace `npm ci` with an unlocked install. If the package cannot be resolved, stop and report the install error; do not begin an upload.
+The check works before runtime dependencies are installed. It checks the package, Node.js, npm, dependency resolution, and environment configuration without network access or reading credential-file contents. Read `status` (`ready`, `needs_configuration`, or `blocked`); exit 0 alone does not mean ready or prove remote service access.
+
+If runtime dependencies are missing, install the lockfile once:
+
+```bash
+(cd "<skillDir>" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)
+```
+
+Rerun the check after resolving dependencies and, for live commands, credentials below. If the locked install fails, report the error before uploading; do not substitute an unlocked install.
 
 ## 2. Resolve credentials
 
-The runtime requires `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`). The Gateway base is unchanged: global uses `app-gateway.realsee.ai`; CN uses `app-gateway.realsee.cn`. In the CN-only Arkclaw distribution, use `cn` and do not offer the global region.
+Live commands require `REALSEE_APP_KEY`, `REALSEE_APP_SECRET`, and `REALSEE_REGION` (`global` or `cn`). The CN-only Arkclaw distribution uses `cn`.
 
-Resolve values in the existing order:
+Use the existing shell environment first. If `check-local.mjs` reports missing configuration and `~/.realsee/credentials` exists, load it in the same shell and rerun the check without displaying the file:
 
-1. Probe the current shell environment without printing values:
+```bash
+set -a
+. "$HOME/.realsee/credentials"
+set +a
+node <skillDir>/scripts/check-local.mjs --json
+```
 
-   ```bash
-   [ -n "${REALSEE_APP_KEY:-}" ] && [ -n "${REALSEE_APP_SECRET:-}" ] \
-     && [ -n "${REALSEE_REGION:-}" ] && echo present || echo missing
-   ```
-
-2. If configuration is incomplete and `~/.realsee/credentials` already exists, load it into the shell and probe presence. Never display the file:
-
-   ```bash
-   [ -f ~/.realsee/credentials ] && set -a && . ~/.realsee/credentials && set +a; \
-     [ -n "$REALSEE_APP_KEY" ] && [ -n "$REALSEE_APP_SECRET" ] && [ -n "$REALSEE_REGION" ] \
-     && echo present || echo missing
-   ```
-
-3. If values are still missing, ask only for the missing configuration. Have the user configure secrets through their local shell or a secure credential interface without echoing them into chat. Never repeat a supplied value. If the user explicitly chooses persistent storage, use `~/.realsee/credentials` with mode 0600 outside the repository. Never place credential values in a CLI argument or environment prefix recorded by the host.
+If configuration is still missing, request only the missing items through a local shell or secure credential interface. Persist app credentials only when explicitly requested, in `~/.realsee/credentials` with mode 0600 outside the repository. Never put credential values in recorded CLI arguments or environment prefixes. Resolve credentials again whenever a live command starts in a new shell.
 
 ## 3. Select the input
 
@@ -61,9 +66,9 @@ Two mutually exclusive modes are supported:
 
 The CLI performs authoritative validation and deterministic packaging. Inputs must be JPEG, PNG, or WebP, RGB, 8-bit, and exactly `width == 2 * height`. A resolution below 2048×1024 emits a warning. Square 1:1 images are rejected; users who require the old square/single-GLB workflow must pin `v1.0.2`.
 
-ZIP mode is not a validation bypass. The CLI safely extracts, validates, Unicode-normalizes, sorts, and repacks it before upload. Do not manually rename output IDs: consumers trust the algorithm's `name_mapping`.
+ZIP input is safely extracted, validated, Unicode-normalized, sorted, and repacked before upload. Use the returned `name_mapping` for output IDs rather than deriving or renaming them.
 
-The Skill ships only `examples/manifest.json`, which lists two first-party example sets and their CDN URLs, byte lengths, and SHA-256 digests. Panorama JPEGs are absent from the current release tree and every generated distribution. If the user wants official examples, ask them for an absolute output directory and use the CN set outside `<skillDir>`, then run:
+`examples/manifest.json` lists two first-party example sets with CDN URLs, byte lengths, and SHA-256 digests; the JPEGs are not bundled. For official examples, use only the CN region, and choose a new absolute output directory in the task workspace outside `<skillDir>`. State the choices; ask only if they cannot be resolved from the task. Create the parent before invoking the downloader:
 
 ```bash
 node <skillDir>/scripts/download-examples.mjs \
@@ -71,13 +76,13 @@ node <skillDir>/scripts/download-examples.mjs \
   --output "/absolute/example-output"
 ```
 
-The downloader publishes the directory only after every file passes its manifest byte-length and SHA-256 checks. Do not create, rename, or replace the requested output path or its parent while the command is running. This CN-only Arkclaw distribution only allows `cn`; do not offer or attempt a Global download. Downloading does not consent to a later Argus upload. Before `start`, the user must still select the downloaded files and consent to sending them to Realsee. See the [example panorama guide](references/examples.md) and its [Chinese version](references/examples.zh-CN.md).
+The downloader publishes the directory after all files pass byte-length and SHA-256 checks. Do not create, rename, or replace the output path or its parent while it runs. This CN-only Arkclaw distribution only allows `cn`; do not offer or attempt a Global download. See the [example panorama guide](references/examples.md) / [中文](references/examples.zh-CN.md) for selection details.
 
 ## 4. Start once
 
-Before starting, ensure the user has selected the files and consented to sending them to Realsee for remote processing. An explicit request to upload those files is sufficient; file selection alone is not consent. If either is missing, ask one question stating that the selected files will leave the machine. Reuse existing consent for the same input and scope. Do not ask a redundant second confirmation.
+Before uploading, require selected inputs and consent to send them to Realsee. An explicit request to upload those inputs is sufficient; file selection or example downloads alone are not consent. If either is missing, ask one question explaining that the files will leave the machine. Reuse existing consent for the same input and scope without reconfirming.
 
-Run lifecycle commands in a shell with credentials resolved in step 2. For repeated images:
+Submit the selected images once:
 
 ```bash
 node <skillDir>/scripts/run-argus.mjs start \
@@ -87,18 +92,9 @@ node <skillDir>/scripts/run-argus.mjs start \
   --yes --json
 ```
 
-For an existing ZIP:
+For a ZIP, replace all `--image` arguments with `--zip "/absolute/path/input.zip"`. `--yes` records existing authorization; it does not create consent. Capture the returned `workspace_dir` for all later commands.
 
-```bash
-node <skillDir>/scripts/run-argus.mjs start \
-  --zip "/absolute/path/input.zip" \
-  --workspace "/absolute/workspace-root" \
-  --yes --json
-```
-
-When starting a new shell for `status` or `collect`, resolve credentials there before invoking the command. Capture `workspace_dir` from the JSON response; it is the durable run handle for later commands.
-
-`start` validates and packages locally, uploads one ZIP, submits once, persists `task_code`, and returns. It does not poll in the background. Never automatically rerun `start` after `submission_unknown`: the submit operation is not idempotent and a blind retry may create a duplicate task.
+`start` validates, packages, uploads, submits, and returns. Never automatically repeat it after `submission_unknown`: submission is not idempotent and a retry may create a duplicate task.
 
 ## 5. Query status explicitly
 
@@ -109,34 +105,43 @@ node <skillDir>/scripts/run-argus.mjs status \
   --workspace "<workspace_dir>" --json
 ```
 
-Interpret `task_status` as `queued`, `processing`, `succeeded`, or `failed`. When queued or processing, report the current state and query again later only when appropriate. There is no detached poller and no `--resume` mode.
+`task_status` is `queued`, `processing`, `succeeded`, or `failed`. For a full run, query until terminal with bounded foreground waits of about 30 seconds, within the host's tool timeout. There is no detached poller or `--resume` mode. After an interruption or transient query/collection failure, continue with `status` or `collect` using the saved workspace; never recover by repeating `start`. If recovery cannot proceed, report the workspace and failed stage. Do not claim ongoing monitoring after the agent stops.
 
 ## 6. Collect a terminal result
 
-When the task succeeds, run:
+When the task is terminal, run:
 
 ```bash
 node <skillDir>/scripts/run-argus.mjs collect \
   --workspace "<workspace_dir>" --json
 ```
 
-`collect` retains the original `output.zip`, safely extracts it, validates `output.json` and all referenced artifacts, and writes a local `result.json` index. Repeating `collect` is safe: a completed run is not resubmitted or downloaded twice.
+`collect` retains `output.zip`, safely extracts and validates its manifest and references, and writes `result.json`. A failed remote task produces a local error result instead. Repeating a completed `collect` does not resubmit or download again.
+
+## 7. Verify and report the collected result
+
+Use the installed offline inspector rather than rewriting Schema or artifact checks:
+
+```bash
+node <skillDir>/scripts/inspect-result.mjs \
+  --workspace "<workspace_dir>" --json --write-report
+```
+
+The inspector reuses the canonical validator offline and needs no credentials. It checks artifact references and available archive integrity metadata; `--write-report` saves `verification.json` in the workspace. Without that option it is read-only. It preserves the original state, result index, archive, and extracted artifacts.
 
 Report these fields separately:
 
-- `task_status`: remote lifecycle state;
-- `result_status`: algorithm result (`success`, `partial`, or `error`);
-- local `output_zip_path`, output directory, manifest, merged GLB, depth-map, pose, and optional intrinsics paths;
-- `missing_ids` and warnings.
+- Recorded local `phase`, remote `task_status`, and algorithm `result_status`; copy them from the report rather than inferring one from another.
+- Every `missing_ids` entry and all input/result warnings.
+- Usable local artifact/report links, counts, and file sizes; do not replace file links with shortened `...` paths.
+- Declared depth resolution and whether optional intrinsics were returned.
 
 For `partial`, the CLI exits 0. Still show a prominent warning and the complete non-empty `missing_ids` list. For `error`, surface the sanitized error and treat the command as failed. Do not present temporary result URLs as durable output.
 
+Keep the response concise. Validation covers the artifact contract: binary checks inspect headers without fully decoding GLB/EXR payloads, and point counts/resolutions come from the manifest. Depth resolution is service-defined and may be lower than input resolution. Visual quality and geometric accuracy remain unassessed. When requested, inspect the original GLB with an available local point-cloud viewer; unsupported host previews do not indicate reconstruction failure. Do not claim visual inspection from metadata alone.
+
 ## References
 
-- [Argus](https://argus.realsee.ai/)
-- [Interactive demo](https://h5.realsee.ai/argus)
-- [Research](https://argus-paper.realsee.ai/)
-- [Realsee Developer Platform](https://developer.realsee.ai/)
 - For lifecycle implementation details: [Gateway workflow](references/api-workflow.md)
 - When checking request/response fields: [Gateway OpenAPI](references/argus-gateway-openapi.json)
 - When interpreting or validating artifacts: [Algorithm I/O contract](references/algorithm-io.md) / [中文](references/algorithm-io.zh-CN.md)

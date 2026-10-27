@@ -839,6 +839,12 @@ for (const scenario of [
 ]) {
   test(`collect validates and indexes a ${scenario.status} output`, async () => {
     const root = await createSubmittedWorkspace({ imageCount: scenario.status === 'partial' ? 2 : 1 });
+    const inputWarning = {
+      code: 'LOW_RESOLUTION', filename: '1.jpg', width: 1024, height: 512,
+      message: 'Recommended panorama resolution is at least 2048x1024; got 1024x512.'
+    };
+    const submitted = await readState(root);
+    await writeState(root, { input: { ...submitted.input, warnings: [inputWarning] } });
     const sourceZip = join(root, 'remote.zip');
     await writeOutputZip(sourceZip, {
       manifest: validManifest({ status: scenario.status, missingIds: scenario.missingIds })
@@ -852,6 +858,10 @@ for (const scenario of [
       assert.equal(result.trace_id, 'trace-collect');
       assert.equal(result.request_id, 'request-collect');
       assert.deepEqual(result.missing_ids, scenario.missingIds);
+      assert.deepEqual(result.warnings.find((warning) => warning?.code === 'LOW_RESOLUTION'), inputWarning);
+      if (scenario.status === 'partial') assert.ok(result.warnings.some((warning) =>
+        typeof warning === 'string' && warning.includes('000001')
+      ));
       assert.equal(calls.inspect, 1);
       assert.equal(calls.download, 1);
       if (scenario.status !== 'error') {
@@ -884,6 +894,32 @@ test('concurrent collect calls share the workspace lock and download exactly onc
     assert.deepEqual(one, two);
     assert.equal(calls.inspect, 1);
     assert.equal(calls.download, 1);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('a low-resolution input warning survives start, collect, and cached collection', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'argus-warning-'));
+  try {
+    const image = join(root, '1.jpg');
+    const zip = join(root, 'remote.zip');
+    await writeFile(image, buildJpegWithDimensions(1024, 512));
+    await writeOutputZip(zip);
+    const calls = { inspect: 0, download: 0 };
+    const lifecycle = lifecycleForOutput(zip, calls);
+    lifecycle.taskPort.allocateUpload = async () => fakeLease();
+    lifecycle.taskPort.submit = async () => ({ task_code: 'warning-task' });
+    lifecycle.transferPort.upload = async () => ({ provider: 'aws', object_path: 'prefix/input.zip', key: 'input.zip' });
+    const started = await lifecycle.start({ images: [image], workspaceRoot: join(root, 'runs'), yes: true, region: 'global' });
+    assert.equal(started.input.warnings.length, 1);
+    assert.equal(started.input.warnings[0].code, 'LOW_RESOLUTION');
+    const collected = await lifecycle.collect({ workspaceDir: started.workspace_dir });
+    assert.deepEqual(collected.warnings, started.input.warnings);
+    const saved = JSON.parse(await readFile(join(started.workspace_dir, 'result.json'), 'utf8'));
+    assert.deepEqual(saved.warnings, started.input.warnings);
+    assert.deepEqual((await lifecycle.collect({ workspaceDir: started.workspace_dir })).warnings, started.input.warnings);
+    assert.deepEqual(calls, { inspect: 1, download: 1 });
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -1084,10 +1120,13 @@ test('collect reports processing without downloading and records remote failure 
       transferPort: { async download() { downloads += 1; } },
       now: fixedNow
     });
+    const inputWarning = { code: 'LOW_RESOLUTION', filename: '1.jpg', width: 1024, height: 512 };
+    await writeState(failedRoot, { input: { image_count: 1, warnings: [inputWarning] } });
     const result = await failed.collect({ workspaceDir: failedRoot });
     assert.equal(result.task_status, 'failed');
     assert.equal(result.result_status, 'error');
     assert.equal(result.error.code, 'ALGORITHM_FAILED');
+    assert.deepEqual(result.warnings, [inputWarning]);
     assert.equal(downloads, 0);
   } finally {
     await rm(processingRoot, { recursive: true, force: true });
