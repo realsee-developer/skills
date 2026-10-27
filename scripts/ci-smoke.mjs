@@ -5,8 +5,7 @@
 //   4. CN-only Arkclaw ZIP
 //
 // Runtime dependencies install from the warmed npm cache; the pinned `skills`
-// CLI may be fetched by npx. The skill is intentionally shaped as SKILL.md
-// instructions + one run-argus.mjs entrypoint with explicit commands.
+// CLI may be fetched by npx. Local inspection helpers never contact Argus.
 import { createReadStream, mkdtempSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { cp, lstat, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -20,6 +19,7 @@ import { syncArkclaw } from './sync-arkclaw.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const SKILLS_CLI_VERSION = '1.5.15';
+const ARGUS_SCRIPTS = ['check-local.mjs', 'download-examples.mjs', 'inspect-result.mjs', 'run-argus.mjs'];
 
 async function exists(path) {
   try {
@@ -160,6 +160,21 @@ async function assertInstalledSkillRuntime(skillDir, label) {
   runChild(`${label} runtime import`, process.execPath, ['--input-type=module', '--eval', probe], {
     cwd: skillDir
   });
+
+  const outside = dirname(skillDir);
+  const env = { ...process.env, HOME: outside };
+  for (const key of Object.keys(env)) if (/^(REALSEE_|ARGUS_)/u.test(key)) delete env[key];
+  const local = JSON.parse(runChild(`${label} local check`, process.execPath,
+    [join(skillDir, 'scripts', 'check-local.mjs'), '--json'], { cwd: outside, env }));
+  if (local.status !== 'needs_configuration' ||
+      local.checks.filter((check) => check.id.startsWith('dependency:') && check.status === 'pass').length !== 4) {
+    throw new Error(`${label} installed preflight must resolve dependencies and report missing credentials`);
+  }
+  const help = runChild(`${label} offline inspection help`, process.execPath,
+    [join(skillDir, 'scripts', 'inspect-result.mjs'), '--help'], { cwd: outside, env });
+  if (!help.includes('--workspace') || !help.includes('--write-report')) {
+    throw new Error(`${label} installed inspector must expose workspace and report options`);
+  }
 }
 
 async function findPanoramaJpegs(rootDir, prefix = '') {
@@ -198,19 +213,12 @@ async function checkCanonicalSkill() {
 }
 
 async function checkSkillSurface() {
-  // The skill has one Argus lifecycle entrypoint and one explicit example
-  // downloader. Any
-  // additional scripts under .agents/skills/argus/scripts/ are a regression
-  // toward the bad pattern of building CLIs the agent should drive via Bash.
+  // Keep the installed entrypoints explicit across all distributions.
   const scriptsDir = join(root, '.agents', 'skills', 'argus', 'scripts');
-  const { readdir } = await import('node:fs/promises');
   const entries = await readdir(scriptsDir);
-  const expectedScripts = ['download-examples.mjs', 'run-argus.mjs'];
-  if (JSON.stringify(entries.sort()) !== JSON.stringify(expectedScripts)) {
+  if (JSON.stringify(entries.sort()) !== JSON.stringify(ARGUS_SCRIPTS)) {
     throw new Error(
-      `skill scripts/ should contain only ${expectedScripts.join(', ')}; got: ${entries.join(', ')}. ` +
-        'Helper scripts (check-credentials, save-credentials, task-status, open-result) ' +
-        'were intentionally removed — SKILL.md drives the agent through Bash instead.'
+      `skill scripts/ must contain ${ARGUS_SCRIPTS.join(', ')}; got: ${entries.join(', ')}`
     );
   }
   // The skill's package.json must NOT advertise removed helper scripts.
@@ -265,12 +273,9 @@ async function checkClaudePluginLayout() {
     throw new Error('claude plugin skill copy frontmatter name must be argus');
   }
   await assertFile('claude plugin run-argus.mjs', join(pluginDir, 'skills', 'argus', 'scripts', 'run-argus.mjs'));
-  // Spot-check the plugin copy didn't smuggle a removed helper back in.
-  const { readdir } = await import('node:fs/promises');
   const syncedScripts = (await readdir(join(pluginDir, 'skills', 'argus', 'scripts'))).sort();
-  const expectedScripts = ['download-examples.mjs', 'run-argus.mjs'];
-  if (JSON.stringify(syncedScripts) !== JSON.stringify(expectedScripts)) {
-    throw new Error(`plugin skill scripts/ should contain only ${expectedScripts.join(', ')}; got: ${syncedScripts.join(', ')}`);
+  if (JSON.stringify(syncedScripts) !== JSON.stringify(ARGUS_SCRIPTS)) {
+    throw new Error(`plugin skill scripts/ must contain ${ARGUS_SCRIPTS.join(', ')}; got: ${syncedScripts.join(', ')}`);
   }
 }
 
@@ -406,10 +411,9 @@ async function checkArkclawIgnoredFixture() {
       await mkdir(dirname(target), { recursive: true });
       await cp(join(root, '.agents', 'skills', 'argus', relativePath), target);
     }
-    await writeFile(
-      join(sourceRoot, 'scripts', 'run-argus.mjs'),
-      'const options = { env: process.env, };\n'
-    );
+    for (const script of ['run-argus.mjs', 'check-local.mjs']) {
+      await writeFile(join(sourceRoot, 'scripts', script), 'const options = { env: process.env, };\n');
+    }
     await writeFile(
       join(sourceRoot, 'scripts', 'download-examples.mjs'),
       "const allowedRegions = ['cn', 'global'];\n"
@@ -501,9 +505,7 @@ function checkMarketplaceManifest() {
 }
 
 async function checkSkillMdDescribesFlow() {
-  // SKILL.md must spell out the agent-driven flow itself; removed helpers
-  // would otherwise just become tribal knowledge in docs. Look for the
-  // load anchors the agent relies on.
+  // Check stable command/file anchors without coupling to prose wording.
   const skillMd = await readFile(join(root, '.agents', 'skills', 'argus', 'SKILL.md'), 'utf8');
   const requiredAnchors = [
     '~/.realsee/credentials',
@@ -517,8 +519,9 @@ async function checkSkillMdDescribesFlow() {
     'result.json',
     'v1.0.2',
     '(cd "<skillDir>" && npm ci --omit=dev --ignore-scripts --no-audit --no-fund)',
-    'Do not ask a redundant second confirmation',
-    'Never place credential values in a CLI argument',
+    'check-local.mjs',
+    'inspect-result.mjs',
+    '--write-report',
     'download-examples.mjs',
     '--output'
   ];
@@ -587,7 +590,7 @@ async function checkCodexInstall() {
 async function main() {
   const checks = [
     ['canonical skill source', checkCanonicalSkill],
-    ['skill surface = lifecycle plus example downloader', checkSkillSurface],
+    ['declared Argus script surface', checkSkillSurface],
     ['marketplace manifest', checkMarketplaceManifest],
     ['claude plugin layout', checkClaudePluginLayout],
     ['claude plugin fresh install', checkClaudePluginInstall],

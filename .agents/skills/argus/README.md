@@ -35,6 +35,8 @@ npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 Node.js 22 or newer is required.
 
+Check the installed package with `node <skillDir>/scripts/check-local.mjs --json` from any working directory, including before dependencies are installed. Follow the [local prerequisite workflow](SKILL.md#1-ensure-runtime-dependencies) for missing configuration or dependencies.
+
 ## Official example manifest
 
 The Skill includes `examples/manifest.json`, which records the CDN URL, byte length, and SHA-256 digest for two first-party Realsee sample sets. The panorama JPEGs themselves are not bundled. Download a set to a new absolute directory outside the Skill:
@@ -79,6 +81,18 @@ node scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir
 ```
 
 There is no detached poller, `--async`, or `--resume`. `start`, `status`, and `collect` are independently resumable through schema-v2 `state.json`. A completed `collect` is idempotent.
+
+For a full reconstruction request, the agent continues through bounded foreground status queries until terminal, then collects and reports. A start-only or status-only request stops after the requested command. Resume interrupted work with the saved workspace rather than another `start`.
+
+## Offline verification and report
+
+After collection, reuse the installed validator and generate the local delivery report:
+
+```bash
+node scripts/inspect-result.mjs --workspace /absolute/workspace-root/<run-dir> --json --write-report
+```
+
+This offline command needs no credentials. It writes `verification.json` only with `--write-report`; otherwise it is read-only. The report includes statuses, warnings, missing IDs, and artifact details. See [verification and delivery](SKILL.md#7-verify-and-report-the-collected-result) for field meanings, validation limits, and visual inspection guidance.
 
 ## Input contract
 

@@ -12,6 +12,7 @@
 | --- | --- | --- | --- |
 | Claude Code | `/plugin marketplace add realsee-developer/skills`，然后 `/plugin install realsee-skills@realsee-developer-skills` | `realsee-skills:argus`, `realsee-skills:panotovr`, `realsee-skills:realsee-blender-reconstruction` | [Claude Code](claude-plugin.md) |
 | Codex | `npx skills add realsee-developer/skills@v2.3.1 --skill argus --agent codex` | `$argus`, `$panotovr`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
+| WorkBuddy | 将选定的完整 Argus 目录复制到 `~/.workbuddy/skills/argus`，再安装锁文件依赖 | `argus` | [WorkBuddy](workbuddy.md) |
 | 所有检测到的宿主 | `npx skills add realsee-developer/skills@v2.3.1 --skill argus --agent '*'` | 按宿主确定 | 本指南 |
 | Arkclaw | 发布的 Arkclaw ZIP | `argus` | 仅 CN |
 
@@ -66,7 +67,7 @@ node scripts/doctor-local.mjs --skill argus --json
 node scripts/doctor-local.mjs --skill realsee-blender-reconstruction --json
 ```
 
-按任务选择一条命令。Blender 不在 PATH 中时，添加 `--blender /path/to/blender`。已安装的 skill 若不带仓库脚本，按其自身 `SKILL.md` 检查前置条件。
+按任务选择一条命令。Blender 不在 PATH 中时，添加 `--blender /path/to/blender`。当前 checkout 还将 `scripts/check-local.mjs --json` 打包到 Argus 中，用于安装后自检；`scripts/inspect-result.mjs --workspace <run-dir> --json --write-report` 用于离线结果复核。已发布的 `v2.3.1` 标签不包含这两个新增工具；已安装版本若不带这些工具，按其自身 `SKILL.md` 检查前置条件。来源选择与安装方法见 [WorkBuddy 指南](workbuddy.md)。
 
 JSON 对象包含 `schema_version: 1`、`skill`、`status` 和 `checks`。每项检查包含 `id`、`status`（`pass`、`warn` 或 `fail`）、`message`，未完成项还有可执行的 `next_step`。总体 `ready` 表示本地检查通过；`needs_configuration` 表示缺少 Argus 环境变量；`blocked` 表示前置条件或参数检查失败。只有 `blocked` 以退出码 1 结束，退出码为 0 时仍需检查 `status`。机器读取时直接运行 Node，避免 npm 自身日志混入输出。
 

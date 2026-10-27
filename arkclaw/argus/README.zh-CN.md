@@ -35,6 +35,8 @@ npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 
 需要 Node.js 22 或更高版本。
 
+可从任意工作目录运行 `node <skillDir>/scripts/check-local.mjs --json` 检查已安装包，依赖尚未安装时也可启动。缺少配置或依赖时，按[本地前置条件流程](SKILL.md#1-ensure-runtime-dependencies)处理。
+
 ## 官方示例清单
 
 Skill 包含 `examples/manifest.json`，其中记录两组 Realsee 第一方示例的 CDN URL、字节数和 SHA-256；当前发布树和生成的安装包都不包含全景 JPEG。请把示例下载到 Skill 目录外一个尚不存在的绝对路径：
@@ -79,6 +81,18 @@ node scripts/run-argus.mjs collect --workspace /absolute/workspace-root/<run-dir
 ```
 
 不再有 detached poller、`--async` 或 `--resume`。`start`、`status`、`collect` 通过 schema-v2 `state.json` 独立恢复；已经完成的 `collect` 可幂等重复调用。
+
+完整重建请求由 Agent 持续执行有界的前台状态查询，直到终态后收集并报告。只启动或只查一次状态时，完成对应命令即返回。中断后使用已保存的工作区继续，不重复 `start`。
+
+## 离线复核与报告
+
+收集后复用已安装的正式校验器，并生成本地交付报告：
+
+```bash
+node scripts/inspect-result.mjs --workspace /absolute/workspace-root/<run-dir> --json --write-report
+```
+
+此命令离线运行，无需凭据。只有带 `--write-report` 时才写入 `verification.json`，否则只读。报告包含状态、警告、缺失 ID 和产物信息。字段含义、校验边界与视觉检查方式见[复核与交付指引](SKILL.md#7-verify-and-report-the-collected-result)。
 
 ## 输入合同
 
