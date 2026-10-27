@@ -9,11 +9,11 @@
 使用已发布的稳定版时，克隆固定版本源码：
 
 ```bash
-git clone --branch v2.3.1 --depth 1 https://github.com/realsee-developer/skills.git
+git clone --branch v2.4.0 --depth 1 https://github.com/realsee-developer/skills.git
 cd skills
 ```
 
-使用本地修改时，在该 checkout 的仓库根目录开始，记录其提交和准备安装的改动。**已发布的 `v2.3.1` 标签不包含**新增的 `check-local.mjs` 和 `inspect-result.mjs`；请使用包含它们的 checkout，或遵循旧版已安装的 `SKILL.md`。
+使用本地修改时，在该 checkout 的仓库根目录开始，记录其提交和准备安装的改动。`check-local.mjs` 和 `inspect-result.mjs` 从 **v2.4.0** 起提供。旧版安装按其自带的 `SKILL.md` 操作。
 
 ## 安装完整目录
 
@@ -53,7 +53,7 @@ mv "$HOME/.workbuddy/skills/argus" "$argus_backup_dir/argus"
 
 打开**专家·技能·连接器 → 技能 → 已安装**，确认 `argus` 已启用，再新建任务以读取当前指令。
 
-对于包含本地检查工具的 checkout，让 WorkBuddy 在它自己的 shell 中运行：
+让 WorkBuddy 在它自己的 shell 中运行本地检查：
 
 ```bash
 node "$HOME/.workbuddy/skills/argus/scripts/check-local.mjs" --json
