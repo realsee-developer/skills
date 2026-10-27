@@ -50,6 +50,10 @@ test('Arkclaw sync omits bundled panorama JPEGs and keeps usable manifest guidan
       'const options = { env: process.env, };\n'
     );
     await writeFile(
+      join(sourceRoot, 'scripts', 'check-local.mjs'),
+      'const options = { env: process.env, };\n'
+    );
+    await writeFile(
       join(sourceRoot, 'scripts', 'download-examples.mjs'),
       "const allowedRegions = ['cn', 'global'];\n"
     );
@@ -113,6 +117,8 @@ test('Arkclaw sync omits bundled panorama JPEGs and keeps usable manifest guidan
     const downloader = await readFile(join(targetRoot, 'scripts', 'download-examples.mjs'), 'utf8');
     assert.match(downloader, /const allowedRegions = \['cn'\];/u);
     assert.doesNotMatch(downloader, /'global'/u);
+    const preflight = await readFile(join(targetRoot, 'scripts', 'check-local.mjs'), 'utf8');
+    assert.match(preflight, /REALSEE_REGION: 'cn'/u);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

@@ -53,6 +53,7 @@ npx skills add realsee-developer/skills --skill realsee-blender-reconstruction -
 
 ### Other installation options
 
+- **WorkBuddy:** install the complete Argus directory into `~/.workbuddy/skills/argus`; see the [WorkBuddy guide](docs/workbuddy.md) for dependency setup, discovery, and checkout-only diagnostic tools.
 - **Other agent hosts:** omit `--agent codex` to choose a host, or use `--agent '*'` for all detected hosts.
 - **Local checkout:** use `npx skills add . --skill <skill-id> --agent codex` from a checkout containing the selected skill.
 - **Arkclaw:** the release asset `argus.zip` contains only Argus and supports the CN region.
@@ -94,7 +95,7 @@ Install with `npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --
 
 | Topic | Guide |
 | --- | --- |
-| Installation and supported hosts | [Install overview](docs/install-guides.md) · [Claude Code](docs/claude-plugin.md) · [Codex](docs/codex.md) |
+| Installation and supported hosts | [Install overview](docs/install-guides.md) · [Claude Code](docs/claude-plugin.md) · [Codex](docs/codex.md) · [WorkBuddy](docs/workbuddy.md) |
 | Workflows and credential setup | [Usage](docs/usage.md) |
 | Argus input, output, and examples | [Argus guide](.agents/skills/argus/README.md) · [Examples](.agents/skills/argus/references/examples.md) |
 | Native scene reconstruction and editing | [Blender guide](.agents/skills/realsee-blender-reconstruction/README.md) |

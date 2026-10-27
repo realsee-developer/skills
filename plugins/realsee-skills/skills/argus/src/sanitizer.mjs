@@ -10,6 +10,10 @@ export function redactText(value) {
     .replace(TOKEN_PAIR_PATTERN, `$1${REDACTED}`);
 }
 
+export function safeReportText(value) {
+  return redactText(value).replace(/https?:\/\/[^\s<>"']+/gu, '[REDACTED_URL]');
+}
+
 export function redactUrlForLog(value) {
   const input = String(value);
 

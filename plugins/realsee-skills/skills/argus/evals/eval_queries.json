@@ -1,6 +1,6 @@
 [
   {
-    "query": "Run Realsee Argus on the exact 2:1 panoramas under /data/site-a and give me the validated depth maps, merged GLB, and camera poses.",
+    "query": "在 WorkBuddy 中用 Argus 官方示例完整跑一次重建。我同意上传与已配置区域一致的示例，完成后收集并复核结果，不要只返回已提交。",
     "should_trigger": true
   },
   {

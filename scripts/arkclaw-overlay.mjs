@@ -1,4 +1,5 @@
 export const ARKCLAW_ENTRYPOINT = 'scripts/run-argus.mjs';
+export const ARKCLAW_LOCAL_CHECK = 'scripts/check-local.mjs';
 export const ARKCLAW_EXAMPLE_DOWNLOADER = 'scripts/download-examples.mjs';
 export const ARKCLAW_SKILL = 'SKILL.md';
 export const ARKCLAW_README = 'README.md';
@@ -7,6 +8,7 @@ export const ARKCLAW_EXAMPLES_GUIDE = 'references/examples.md';
 export const ARKCLAW_EXAMPLES_GUIDE_ZH = 'references/examples.zh-CN.md';
 export const ARKCLAW_OVERLAY_PATHS = new Set([
   ARKCLAW_ENTRYPOINT,
+  ARKCLAW_LOCAL_CHECK,
   ARKCLAW_EXAMPLE_DOWNLOADER,
   ARKCLAW_SKILL,
   ARKCLAW_README,
@@ -16,7 +18,7 @@ export const ARKCLAW_OVERLAY_PATHS = new Set([
 ]);
 
 export function applyArkclawOverlay(source, path) {
-  if (path === ARKCLAW_ENTRYPOINT) {
+  if (path === ARKCLAW_ENTRYPOINT || path === ARKCLAW_LOCAL_CHECK) {
     return replaceExactlyOnce(
       source,
       'env: process.env,',
@@ -36,8 +38,8 @@ export function applyArkclawOverlay(source, path) {
     return replaceExactlyOnce(
       replaceExactlyOnce(
         source,
-        'ask them to choose a region and an absolute output directory',
-        'ask them for an absolute output directory and use the CN set',
+        'For official examples, use the configured region unless the user specifies another,',
+        'For official examples, use only the CN region,',
         path
       ),
       'Use `global` instead of `cn` when appropriate; the CN-only Arkclaw distribution only allows `cn`.',

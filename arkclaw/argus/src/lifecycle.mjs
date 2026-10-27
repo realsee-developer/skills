@@ -276,7 +276,7 @@ export class ArgusTaskLifecycle {
             message: snapshot.errorMessage || 'Argus processing failed'
           },
           missing_ids: [],
-          warnings: []
+          warnings: [...(state.input?.warnings ?? [])]
         });
         await writeState(absoluteWorkspace, { phase: 'failed', result_status: 'error' });
         return result;
@@ -498,7 +498,7 @@ function buildLocalResult({ state, paths, validated, download }) {
     throw new Error(`output validator returned invalid result status ${String(resultStatus)}`);
   }
   const missingIds = validated.missing_ids ?? validated.missingIds ?? [];
-  const warnings = [...(validated.warnings ?? [])];
+  const warnings = [...(state.input?.warnings ?? []), ...(validated.warnings ?? [])];
   if (resultStatus === 'partial') {
     warnings.unshift(`WARNING: Argus returned a partial result; missing IDs: ${missingIds.join(', ')}`);
   }
