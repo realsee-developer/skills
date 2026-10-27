@@ -2,7 +2,7 @@
 
 [English](../install-guides.md) | 简体中文
 
-2.3.1 包含 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。PanoToVR 从 `v2.3.0` 起提供。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
+2.4.0 包含 [PanoToVR](../../.agents/skills/panotovr/README.zh-CN.md)，将本地全景图生成如视 VR 空间和链接；与 Argus 的重建数据输出独立。使用 `npx skills add realsee-developer/skills@v2.4.0 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。PanoToVR 从 `v2.3.0` 起提供。生成的本地 Claude 插件包含 `realsee-skills:panotovr`。依赖安装、环境凭据与续查遵循其 SKILL.md；专用 Codex 安装器、Arkclaw 和现有 doctor 支持范围不变。下文生命周期和凭据文件机制仅针对 Argus。
 
 原有两项 skill：`argus` 将全景图上传到 Realsee 进行远程处理；`realsee-blender-reconstruction` 将已有本地导出重建为可编辑 Blender 场景。规范源码位于 `.agents/skills/`。
 
@@ -11,17 +11,17 @@
 | 宿主 | 安装 | Skill 句柄 | 指南 |
 | --- | --- | --- | --- |
 | Claude Code | `/plugin marketplace add realsee-developer/skills`，然后 `/plugin install realsee-skills@realsee-developer-skills` | `realsee-skills:argus`, `realsee-skills:panotovr`, `realsee-skills:realsee-blender-reconstruction` | [Claude Code](claude-plugin.md) |
-| Codex | `npx skills add realsee-developer/skills@v2.3.1 --skill argus --agent codex` | `$argus`, `$panotovr`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
+| Codex | `npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent codex` | `$argus`, `$panotovr`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
 | WorkBuddy | 将选定的完整 Argus 目录复制到 `~/.workbuddy/skills/argus`，再安装锁文件依赖 | `argus` | [WorkBuddy](workbuddy.md) |
-| 所有检测到的宿主 | `npx skills add realsee-developer/skills@v2.3.1 --skill argus --agent '*'` | 按宿主确定 | 本指南 |
+| 所有检测到的宿主 | `npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent '*'` | 按宿主确定 | 本指南 |
 | Arkclaw | 发布的 Arkclaw ZIP | `argus` | 仅 CN |
 
 只装到当前宿主：
 
 ```bash
-npx skills add realsee-developer/skills@v2.3.1 --skill argus
-npx skills add realsee-developer/skills@v2.3.1 --skill realsee-blender-reconstruction
-npx skills add realsee-developer/skills@v2.3.1 --skill panotovr
+npx skills add realsee-developer/skills@v2.4.0 --skill argus
+npx skills add realsee-developer/skills@v2.4.0 --skill realsee-blender-reconstruction
+npx skills add realsee-developer/skills@v2.4.0 --skill panotovr
 ```
 
 表中 `npx skills` 命令安装 Argus；安装 Blender 时将 `--skill argus` 替换为 `--skill realsee-blender-reconstruction`。Claude 本地生成插件还包含 PanoToVR；Arkclaw 与 `npm run install:codex-skills` 只安装 Argus。
@@ -32,7 +32,7 @@ Argus 需要 POSIX shell、Node.js 22+、npm 10+、npm registry 与区域 Gatewa
 
 ## 可复现版本
 
-三项 skill 均可固定到 `v2.3.1`。旧版 `v2.0.0` 标签仅包含 Argus。
+三项 skill 均可固定到 `v2.4.0`。旧版 `v2.0.0` 标签仅包含 Argus。
 
 只有旧 1:1 方图、旧版单 GLB 输出或旧 preview 行为才固定 `v1.0.2`：
 
@@ -67,7 +67,7 @@ node scripts/doctor-local.mjs --skill argus --json
 node scripts/doctor-local.mjs --skill realsee-blender-reconstruction --json
 ```
 
-按任务选择一条命令。Blender 不在 PATH 中时，添加 `--blender /path/to/blender`。当前 checkout 还将 `scripts/check-local.mjs --json` 打包到 Argus 中，用于安装后自检；`scripts/inspect-result.mjs --workspace <run-dir> --json --write-report` 用于离线结果复核。已发布的 `v2.3.1` 标签不包含这两个新增工具；已安装版本若不带这些工具，按其自身 `SKILL.md` 检查前置条件。来源选择与安装方法见 [WorkBuddy 指南](workbuddy.md)。
+按任务选择一条命令。Blender 不在 PATH 中时，添加 `--blender /path/to/blender`。Argus 从 v2.4.0 起包含 `scripts/check-local.mjs --json`，用于安装后自检；`scripts/inspect-result.mjs --workspace <run-dir> --json --write-report` 用于离线结果复核。旧版已安装包按其自身 `SKILL.md` 检查前置条件。来源选择与安装方法见 [WorkBuddy 指南](workbuddy.md)。
 
 JSON 对象包含 `schema_version: 1`、`skill`、`status` 和 `checks`。每项检查包含 `id`、`status`（`pass`、`warn` 或 `fail`）、`message`，未完成项还有可执行的 `next_step`。总体 `ready` 表示本地检查通过；`needs_configuration` 表示缺少 Argus 环境变量；`blocked` 表示前置条件或参数检查失败。只有 `blocked` 以退出码 1 结束，退出码为 0 时仍需检查 `status`。机器读取时直接运行 Node，避免 npm 自身日志混入输出。
 

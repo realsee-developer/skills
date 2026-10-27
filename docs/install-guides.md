@@ -2,7 +2,7 @@
 
 [English](install-guides.md) | [简体中文](zh-CN/install-guides.md)
 
-Version 2.3.1 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
+Version 2.4.0 includes [PanoToVR](../.agents/skills/panotovr/README.md) for creating a Realsee VR space and URL from local panoramas, independently of Argus reconstruction data. Install with `npx skills add realsee-developer/skills@v2.4.0 --skill panotovr --agent codex`, or use `.` for a local checkout. PanoToVR first ships in `v2.3.0`. The generated local Claude plugin exposes `realsee-skills:panotovr`. Follow its SKILL.md for dependency installation, environment credentials, and polling resume; the dedicated Codex installer, Arkclaw, and current doctor keep their existing scope. The lifecycle and credential-file mechanism below are Argus-specific.
 
 The original two skills are: `argus` uploads panoramas to Realsee for remote processing; `realsee-blender-reconstruction` reconstructs existing local exports as editable Blender scenes. Canonical sources live under `.agents/skills/`.
 
@@ -11,17 +11,17 @@ The original two skills are: `argus` uploads panoramas to Realsee for remote pro
 | Host | Install | Skill handle | Guide |
 | --- | --- | --- | --- |
 | Claude Code | `/plugin marketplace add realsee-developer/skills`, then `/plugin install realsee-skills@realsee-developer-skills` | `realsee-skills:argus`, `realsee-skills:panotovr`, `realsee-skills:realsee-blender-reconstruction` | [Claude Code](claude-plugin.md) |
-| Codex | `npx skills add realsee-developer/skills@v2.3.1 --skill argus --agent codex` | `$argus`, `$panotovr`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
+| Codex | `npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent codex` | `$argus`, `$panotovr`, `$realsee-blender-reconstruction` | [Codex](codex.md) |
 | WorkBuddy | Copy the complete selected Argus directory to `~/.workbuddy/skills/argus`, then install its locked dependencies | `argus` | [WorkBuddy](workbuddy.md) |
-| Any detected host | `npx skills add realsee-developer/skills@v2.3.1 --skill argus --agent '*'` | Host-specific | This guide |
+| Any detected host | `npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent '*'` | Host-specific | This guide |
 | Arkclaw | Published Arkclaw ZIP | `argus` | CN-only |
 
 For the active host only:
 
 ```bash
-npx skills add realsee-developer/skills@v2.3.1 --skill argus
-npx skills add realsee-developer/skills@v2.3.1 --skill realsee-blender-reconstruction
-npx skills add realsee-developer/skills@v2.3.1 --skill panotovr
+npx skills add realsee-developer/skills@v2.4.0 --skill argus
+npx skills add realsee-developer/skills@v2.4.0 --skill realsee-blender-reconstruction
+npx skills add realsee-developer/skills@v2.4.0 --skill panotovr
 ```
 
 The `npx skills` commands in the table install Argus; replace `--skill argus` with `--skill realsee-blender-reconstruction` to install Blender. The generated local Claude plugin also includes PanoToVR; Arkclaw and `npm run install:codex-skills` install only Argus.
@@ -32,7 +32,7 @@ Argus requires a POSIX shell, Node.js 22+, npm 10+, npm registry and regional Ga
 
 ## Reproducible versions
 
-Pin `v2.3.1` for any of the three skills. The older `v2.0.0` tag contains only Argus.
+Pin `v2.4.0` for any of the three skills. The older `v2.0.0` tag contains only Argus.
 
 Pin `v1.0.2` only for legacy square 1:1 input, the old single-GLB output, or legacy preview behavior:
 
@@ -67,7 +67,7 @@ node scripts/doctor-local.mjs --skill argus --json
 node scripts/doctor-local.mjs --skill realsee-blender-reconstruction --json
 ```
 
-Select the command for your task. For Blender outside PATH, add `--blender /path/to/blender`. The current checkout also packages `scripts/check-local.mjs --json` inside Argus for checks after installation, and `scripts/inspect-result.mjs --workspace <run-dir> --json --write-report` for offline result verification. These additions are not in the published `v2.3.1` tag; installed versions without them use the prerequisites in their own `SKILL.md`. See the [WorkBuddy guide](workbuddy.md) for source selection and installation.
+Select the command for your task. For Blender outside PATH, add `--blender /path/to/blender`. Since v2.4.0, Argus includes `scripts/check-local.mjs --json` for checks after installation and `scripts/inspect-result.mjs --workspace <run-dir> --json --write-report` for offline result verification. Older installed versions use the prerequisites in their own `SKILL.md`. See the [WorkBuddy guide](workbuddy.md) for source selection and installation.
 
 The JSON object contains `schema_version: 1`, `skill`, `status`, and `checks`. Each check has `id`, `status` (`pass`, `warn`, or `fail`), `message`, and an actionable `next_step` when incomplete. Overall `ready` means local checks passed; `needs_configuration` means Argus environment values are missing; `blocked` means a prerequisite or argument failed. Only `blocked` exits with code 1. Inspect `status` even when the exit code is 0. Use Node directly for machine output; npm adds its own logging.
 

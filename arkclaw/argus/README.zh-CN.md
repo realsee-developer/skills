@@ -7,7 +7,7 @@
 # argus
 
 ![Skill argus](https://img.shields.io/badge/skill-realsee--argus-6f42c1?style=flat-square)
-![Version 2.3.1](https://img.shields.io/badge/version-2.3.1-blue?style=flat-square)
+![Version 2.4.0](https://img.shields.io/badge/version-2.4.0-blue?style=flat-square)
 ![Upload consent](https://img.shields.io/badge/upload-consent%20required-brown?style=flat-square)
 
 [English](README.md) | 简体中文

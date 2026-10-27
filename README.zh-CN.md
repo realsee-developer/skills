@@ -45,15 +45,15 @@
 安装需要的 skill，或执行两条命令安装全部：
 
 ```bash
-npx skills add realsee-developer/skills --skill argus --agent codex
-npx skills add realsee-developer/skills --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.4.0 --skill realsee-blender-reconstruction --agent codex
 ```
 
 [Codex 指南](docs/zh-CN/codex.md)包含本地检出安装方法。
 
 ### 其他安装方式
 
-- **WorkBuddy**：将完整 Argus 目录安装到 `~/.workbuddy/skills/argus`；依赖配置、技能识别与 checkout 新增诊断工具见 [WorkBuddy 指南](docs/zh-CN/workbuddy.md)。
+- **WorkBuddy**：将完整 Argus 目录安装到 `~/.workbuddy/skills/argus`；依赖配置、技能识别与 v2.4.0 起提供的本地诊断工具见 [WorkBuddy 指南](docs/zh-CN/workbuddy.md)。
 - **其他 Agent 宿主**：省略 `--agent codex` 以选择宿主，或使用 `--agent '*'` 安装到所有检测到的宿主。
 - **本地检出**：在包含目标 skill 的仓库目录执行 `npx skills add . --skill <skill-id> --agent codex`。
 - **Arkclaw**：Release 附件 `argus.zip` 仅包含 Argus，仅支持 CN 区域。
@@ -87,7 +87,7 @@ Argus 需要 `REALSEE_APP_KEY`、`REALSEE_APP_SECRET`、`REALSEE_REGION`（`glob
 
 ## PanoToVR：全景图 → VR 空间
 
-运行 `npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。可要求 Agent 使用 PanoToVR 上传选定全景图目录并创建 VR 空间。依赖、凭据、命令与续查见 [PanoToVR 指南](.agents/skills/panotovr/README.zh-CN.md)。它使用独立于 Argus 的 API。
+运行 `npx skills add realsee-developer/skills@v2.4.0 --skill panotovr --agent codex` 安装，或用 `.` 从本地检出安装。可要求 Agent 使用 PanoToVR 上传选定全景图目录并创建 VR 空间。依赖、凭据、命令与续查见 [PanoToVR 指南](.agents/skills/panotovr/README.zh-CN.md)。它使用独立于 Argus 的 API。
 
 ## 文档导航
 
@@ -117,8 +117,9 @@ Argus 产品资料：[官网](https://argus.realsee.ai/) · [Demo](https://h5.re
 | 来源 | 内容 |
 | --- | --- |
 | 当前 `main` | Argus、PanoToVR 和 Blender 重建 |
-| 稳定版本 `v2.3.1` | 包含三项 skill 及 fast-uri 告警修复；固定 `realsee-developer/skills@v2.3.1` |
-| 旧版 `v2.3.0` | 首个包含 PanoToVR 的版本；依赖修复请使用 v2.3.1 |
+| 稳定版本 `v2.4.0` | 包含三项 skill，新增 Argus 本地自检、离线报告与 WorkBuddy 指南；固定 `realsee-developer/skills@v2.4.0` |
+| 旧版 `v2.3.1` | 包含三项 skill 及 fast-uri 告警修复 |
+| 旧版 `v2.3.0` | 首个包含 PanoToVR 的版本；依赖告警于 v2.3.1 修复 |
 | 旧版 `v2.2.0` | 包含 Argus 和 Blender，不含 PanoToVR |
 | 旧版 `v2.0.0` | 仅含 Argus，不含 Blender 重建 |
 | 历史版本 `v1.0.2` | 旧方图与单 GLB 工作流，见[迁移说明](.agents/skills/argus/references/migration-v2.zh-CN.md) |

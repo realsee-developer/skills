@@ -10,12 +10,12 @@ Agent skills for panorama reconstruction, VR space creation, and editable Blende
 
 ## Install the selected skill
 
-Current stable distribution: v2.3.1. Select one command; install only the capabilities needed.
+Current stable distribution: v2.4.0. Select one command; install only the capabilities needed.
 
 ```bash
-npx skills add realsee-developer/skills@v2.3.1 --skill argus --agent codex
-npx skills add realsee-developer/skills@v2.3.1 --skill realsee-blender-reconstruction --agent codex
-npx skills add realsee-developer/skills@v2.3.1 --skill panotovr --agent codex
+npx skills add realsee-developer/skills@v2.4.0 --skill argus --agent codex
+npx skills add realsee-developer/skills@v2.4.0 --skill realsee-blender-reconstruction --agent codex
+npx skills add realsee-developer/skills@v2.4.0 --skill panotovr --agent codex
 ```
 
 For another host, use the [installation guide](docs/install-guides.md). The generated local Claude plugin includes all three skills. The dedicated repository Codex installer and Arkclaw ZIP contain only Argus. From a local checkout, replace the repository source with `.` to install the checked-out skill.
@@ -35,7 +35,7 @@ node scripts/doctor-local.mjs --skill realsee-blender-reconstruction --json
 
 Use `--blender /path/to/blender` when Blender is not on PATH. `status` is `ready`, `needs_configuration`, or `blocked`; each failing or incomplete check includes a next step. This is a local prerequisite check, not proof of service access, input validity, or reconstruction quality. If the skill is already installed without this repository, follow its SKILL.md prerequisite checks instead.
 
-The current checkout adds installed Argus scripts: `node <skillDir>/scripts/check-local.mjs --json` for local prerequisites and `node <skillDir>/scripts/inspect-result.mjs --workspace <run-dir> --json --write-report` for offline artifact verification and a workspace `verification.json`. These tools are not in the published `v2.3.1` tag. Report artifact-contract validation separately from visual quality.
+Argus v2.4.0 includes installed scripts: `node <skillDir>/scripts/check-local.mjs --json` for local prerequisites and `node <skillDir>/scripts/inspect-result.mjs --workspace <run-dir> --json --write-report` for offline artifact verification and a workspace `verification.json`. Report artifact-contract validation separately from visual quality.
 
 ## Execute
 
