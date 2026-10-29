@@ -140,3 +140,8 @@ npm run ci
 ## 许可
 
 本仓库依据 [Realsee SDK License Agreement](LICENSE) 提供源码，不使用 OSI 认可的开源许可证。
+
+
+### 本次许可更新范围
+
+通用工具包及非 Argus 技能使用日期为 2026-09-22 的 Realsee SDK License Agreement。Argus 研究项目、模型权重及 Argus 技能目录保留各自现有许可证，本次不修改这些文件。

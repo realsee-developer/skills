@@ -390,7 +390,7 @@
     {
       "source": ".agents/skills/panotovr/LICENSE",
       "target": "plugins/realsee-skills/skills/panotovr/LICENSE",
-      "size": 17396
+      "size": 19044
     },
     {
       "source": ".agents/skills/panotovr/package-lock.json",
@@ -515,7 +515,7 @@
     {
       "source": ".agents/skills/realsee-blender-reconstruction/LICENSE",
       "target": "plugins/realsee-skills/skills/realsee-blender-reconstruction/LICENSE",
-      "size": 17396
+      "size": 19044
     },
     {
       "source": ".agents/skills/realsee-blender-reconstruction/README.md",
