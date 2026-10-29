@@ -140,3 +140,8 @@ See the [development guide](docs/development.md) for prerequisites and focused c
 ## License
 
 Source-available under the [Realsee SDK License Agreement](LICENSE). This is not an OSI-approved open source license.
+
+
+### License update scope
+
+The shared tooling package and non-Argus skills use the Realsee SDK License Agreement dated 2026-09-22. The Argus research project, model weights and Argus skill directories retain their separate existing licenses; their files are unchanged by this update.
